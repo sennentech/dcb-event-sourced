@@ -1,0 +1,5 @@
+require("ts-node/register")
+require("source-map-support").install()
+const chai = require("chai")
+const chaiAsPromised = require("chai-as-promised")
+chai.use(chaiAsPromised)

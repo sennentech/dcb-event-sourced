@@ -1,0 +1,7 @@
+/dist
+node_modules
+.idea
+.history
+npm-debug.log
+*.log
+.npmrc
