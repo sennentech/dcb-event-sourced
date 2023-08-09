@@ -1,25 +1,27 @@
 import { SequenceNumber } from "./valueObjects/SequenceNumber"
 import { Timestamp } from "./valueObjects/TimeStamp"
 
+export type Tags = Record<string, string | string[]>
+
 export interface EsEvent {
     type: string
-    domainIds: Array<Record<string, string>>
+    tags: Tags
     data: any
 }
 
-export interface StoredEvent {
+export interface EventEnvelope {
     event: EsEvent
     timestamp: Timestamp
     sequenceNumber: SequenceNumber
 }
 
 export interface EsQueryCriterion {
-    domainIds: Array<Record<string, string>>
-    eventTypes: Array<string>
+    tags: Tags
+    eventTypes: string[]
 }
 
 export interface EsQuery {
-    criteria: Array<EsQueryCriterion>
+    criteria: EsQueryCriterion[]
 }
 
 export class AppendCondition {
@@ -30,13 +32,12 @@ export class AppendCondition {
     maxSequenceNumber: SequenceNumber
 }
 
-export type ReadOptions = { limit?: number; fromSequenceNumber?: SequenceNumber }
 export interface EventStore {
     append: (
-        events: EsEvent | Array<EsEvent>,
-        appendCondition: AppendCondition | "None"
+        events: EsEvent | EsEvent[],
+        condition: AppendCondition | "None"
     ) => Promise<{ lastSequenceNumber: SequenceNumber }>
 
-    readForward: (query: EsQuery, readOptions?: ReadOptions) => Promise<StoredEvent[]>
-    readBackward: (query: EsQuery, readOptions?: ReadOptions) => Promise<StoredEvent[]>
+    read: (query: EsQuery, fromSequenceNumber?: SequenceNumber) => AsyncGenerator<EventEnvelope>
+    readBackward: (query: EsQuery, fromSequenceNumber?: SequenceNumber) => AsyncGenerator<EventEnvelope>
 }

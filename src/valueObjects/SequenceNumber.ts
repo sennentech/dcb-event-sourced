@@ -1,28 +1,28 @@
 export class SequenceNumber {
-    private internalValue: number
+    #value: number
 
     get value(): number {
-        return this.internalValue
+        return this.#value
     }
 
     private constructor(value: number) {
-        this.internalValue = value
+        this.#value = value
     }
 
     equals(otherSequenceNumber: SequenceNumber) {
-        return this.internalValue === otherSequenceNumber.value
+        return this.#value === otherSequenceNumber.value
     }
     greaterThan(otherSequenceNumber: SequenceNumber) {
-        return this.internalValue > otherSequenceNumber.value
+        return this.#value > otherSequenceNumber.value
     }
     lessThan(otherSequenceNumber: SequenceNumber) {
-        return this.internalValue < otherSequenceNumber.value
+        return this.#value < otherSequenceNumber.value
     }
     greaterThanOrEqualTo(otherSequenceNumber: SequenceNumber) {
-        return this.internalValue >= otherSequenceNumber.value
+        return this.#value >= otherSequenceNumber.value
     }
     lessThanOrEqualTo(otherSequenceNumber: SequenceNumber) {
-        return this.internalValue <= otherSequenceNumber.value
+        return this.#value <= otherSequenceNumber.value
     }
 
     static create(sequenceNumber: number): SequenceNumber {

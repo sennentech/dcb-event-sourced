@@ -1,21 +1,14 @@
-import { ValueObject } from "./ValueObject"
 import { DateTime } from "luxon"
 
-interface TimestampProps {
-    value: string
-}
-
-export class Timestamp extends ValueObject<TimestampProps> {
+export class Timestamp {
     get toISO(): string {
-        return this.props.value
+        return this.value
     }
 
-    private constructor(props: TimestampProps) {
-        super(props)
-    }
+    private constructor(private value: string) {}
 
     public static now(): Timestamp {
-        return new Timestamp({ value: DateTime.utc().toISO() })
+        return new Timestamp(DateTime.utc().toISO())
     }
 
     public static isValid(timestamp: string) {
@@ -30,6 +23,6 @@ export class Timestamp extends ValueObject<TimestampProps> {
     public static create(timestamp: string): Timestamp {
         if (timestamp === undefined || timestamp === null) throw new Error("Timestamp cannot be null")
         if (!DateTime.fromISO(timestamp).valid()) throw new Error("Invalid timestamp")
-        return new Timestamp({ value: timestamp })
+        return new Timestamp(timestamp)
     }
 }

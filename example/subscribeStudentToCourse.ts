@@ -1,6 +1,6 @@
 import { reconstitute } from "../src/Reconsitute"
 import { EventStore } from "../src/EventStore"
-import { CourseExists, CourseCapacity, StudentSubscriptions, StudentAlreadySubscribed } from "./courseProjections"
+import { CourseExists, CourseCapacity, StudentSubscriptions, StudentAlreadySubscribed } from "./projections"
 import { StudentSubscribedEvent } from "./eventDefinitions"
 
 export interface SubscribeStudentToCourseCmd {
