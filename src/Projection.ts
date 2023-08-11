@@ -1,7 +1,7 @@
-import { EsEvent } from "./EventStore"
+import { EsEvent, Tags } from "./EventStore"
 
-interface ProjectionDef {
-    domainIds: Array<Record<string, string>>
+export interface ProjectionDef {
+    tags: Tags
     state: any
     eventHandlers: EsEvent
 }
@@ -11,7 +11,7 @@ type ProjectionEventsObject<Def extends ProjectionDef> = {
 }
 
 export type Projection<Def extends ProjectionDef> = {
-    domainIds: Def["domainIds"]
+    tags: Def["tags"]
     init: Def["state"]
     when: ProjectionEventsObject<Def>
 }

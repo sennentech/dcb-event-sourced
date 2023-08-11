@@ -1,7 +1,7 @@
 import { reconstitute } from "../src/Reconsitute"
 import { EventStore } from "../src/EventStore"
-import { CourseExists, CourseCapacity, StudentSubscriptions, StudentAlreadySubscribed } from "./projections"
-import { StudentSubscribedEvent } from "./eventDefinitions"
+import { CourseExists, CourseCapacity, StudentSubscriptions, StudentAlreadySubscribed } from "../test/projections"
+import { StudentSubscribedEvent } from "../test/eventDefinitions"
 
 export interface SubscribeStudentToCourseCmd {
     studentId: string
@@ -14,13 +14,12 @@ export const subscribeStudentCmdHandler =
         const {
             states: { courseExists, courseCapacity, studentAlreadySubscribed, studentSubscriptions },
             appendCondition
-        } = await reconstitute(
-            eventStore,
-            CourseExists(courseId),
-            CourseCapacity(courseId),
-            StudentAlreadySubscribed({ courseId: courseId, studentId: studentId }),
-            StudentSubscriptions(studentId)
-        )
+        } = await reconstitute(eventStore, {
+            courseExists: CourseExists(courseId),
+            courseCapacity: CourseCapacity(courseId),
+            studentAlreadySubscribed: StudentAlreadySubscribed({ courseId: courseId, studentId: studentId }),
+            studentSubscriptions: StudentSubscriptions(studentId)
+        })
 
         if (!courseExists) throw new Error(`Course doesn't exist.`)
         if (courseCapacity.isFull) throw new Error(`Course is at capacity.`)

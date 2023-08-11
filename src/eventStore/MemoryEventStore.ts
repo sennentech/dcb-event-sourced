@@ -64,12 +64,12 @@ export class MemoryEventStore implements EventStore {
         if (!appendCondition) throw new Error("No append condition provided. Use AppendCondition.None if not required.")
         if (appendCondition !== "None") {
             const { query, maxSequenceNumber } = appendCondition
-            const newEvents = getNextMatchingEvent(this.events, {
+            const newEvent = getNextMatchingEvent(this.events, {
                 direction: "forwards",
                 query,
                 fromSequenceNumber: SequenceNumber.create(maxSequenceNumber.value + 1)
             })
-            if (newEvents) throw new Error("Expected Version fail: New events matching appendCondition found.")
+            if (newEvent) throw new Error("Expected Version fail: New events matching appendCondition found.")
         }
 
         this.events.push(...storedEvents)

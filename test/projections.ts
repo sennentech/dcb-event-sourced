@@ -10,10 +10,10 @@ export const CourseCapacity = (
     courseId: string
 ): Projection<{
     state: { isFull: boolean; subscriberCount: number; capacity: number }
-    domainIds: Array<{ courseId: string }>
+    tags: { courseId: string }
     eventHandlers: CourseCreatedEvent | CourseCapacityChangedEvent | StudentSubscribedEvent | StudentUnsubscribedEvent
 }> => ({
-    domainIds: [{ courseId }],
+    tags: { courseId },
     init: { isFull: true, subscriberCount: 0, capacity: 0 },
     when: {
         courseCreated: (state, { data: { capacity } }) => ({
@@ -43,10 +43,10 @@ export const CourseExists = (
     courseId: string
 ): Projection<{
     state: boolean
-    domainIds: Array<{ courseId: string }>
+    tags: { courseId: string }
     eventHandlers: CourseCreatedEvent
 }> => ({
-    domainIds: [{ courseId }],
+    tags: { courseId },
     init: false,
     when: {
         courseCreated: async () => true
@@ -54,25 +54,42 @@ export const CourseExists = (
 })
 
 const STUDENT_SUBSCRIPTION_LIMIT = 10
-export const StudentSubscriptions = (studentId: string) => ({
-    domainIds: [{ studentId }],
+export const StudentSubscriptions = (
+    studentId: string
+): Projection<{
+    state: { maxedOut: boolean; subscriptionCount: number }
+    tags: { studentId: string }
+    eventHandlers: StudentSubscribedEvent | StudentUnsubscribedEvent
+}> => ({
+    tags: { studentId },
     init: { maxedOut: false, subscriptionCount: 0 },
     when: {
         studentSubscribed: ({ subscriptionCount }) => ({
             maxedOut: STUDENT_SUBSCRIPTION_LIMIT <= subscriptionCount + 1,
             subscriptionCount: subscriptionCount + 1
         }),
-        studentUnSubscribed: ({ subscriptionCount }) => ({
+        studentUnsubscribed: ({ subscriptionCount }) => ({
             maxedOut: STUDENT_SUBSCRIPTION_LIMIT <= subscriptionCount - 1,
             subscriptionCount: subscriptionCount - 1
         })
     }
 })
 
-export const StudentAlreadySubscribed = ({ courseId, studentId }: { courseId: string; studentId: string }) => ({
-    domainIds: [{ courseId, studentId }],
+export const StudentAlreadySubscribed = ({
+    courseId,
+    studentId
+}: {
+    courseId: string
+    studentId: string
+}): Projection<{
+    state: boolean
+    tags: { courseId: string; studentId: string }
+    eventHandlers: StudentSubscribedEvent | StudentUnsubscribedEvent
+}> => ({
+    tags: { courseId, studentId },
     init: false,
     when: {
-        studentSubscribed: () => true
+        studentSubscribed: () => true,
+        studentUnsubscribed: () => false
     }
 })
