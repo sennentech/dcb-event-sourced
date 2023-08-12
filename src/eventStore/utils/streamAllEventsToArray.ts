@@ -1,6 +1,6 @@
-import { EventEnvelope } from "./EventStore"
+import { StoredEsEvent } from "../EventStore"
 
-export const toArray = async (generator: AsyncGenerator<EventEnvelope>): Promise<EventEnvelope[]> => {
+export const streamAllEventsToArray = async (generator: AsyncGenerator<StoredEsEvent>): Promise<StoredEsEvent[]> => {
     const results = []
     let done = false
     while (!done) {

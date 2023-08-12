@@ -1,9 +1,9 @@
-import { EsEvent, Tags } from "./EventStore"
+import { StoredEsEvent, Tags } from "../eventStore/EventStore"
 
 export interface ProjectionDef {
     tags: Tags
     state: any
-    eventHandlers: EsEvent
+    eventHandlers: StoredEsEvent
 }
 
 type ProjectionEventsObject<Def extends ProjectionDef> = {

@@ -1,7 +1,10 @@
-import { reconstitute } from "../src/Reconsitute"
-import { EventStore } from "../src/EventStore"
-import { CourseExists, CourseCapacity, StudentSubscriptions, StudentAlreadySubscribed } from "../test/projections"
-import { StudentSubscribedEvent } from "../test/eventDefinitions"
+import { reconstitute } from "../../src/projection/Reconsitute"
+import { EventStore } from "../../src/eventStore/EventStore"
+import { StudentSubscribedEvent } from "./events"
+import { CourseCapacity } from "./projections/CourseCapacity"
+import { CourseExists } from "./projections/CourseExists"
+import { StudentAlreadySubscribed } from "./projections/StudentAlreadySubscribed"
+import { StudentSubscriptions } from "./projections/StudentSubscriptions"
 
 export interface SubscribeStudentToCourseCmd {
     studentId: string
@@ -27,6 +30,5 @@ export const subscribeStudentCmdHandler =
         if (studentSubscriptions.maxedOut)
             throw new Error(`Student is already subscribed to the maximum number of courses`)
 
-        const subscribeEvent = new StudentSubscribedEvent({ courseId, studentId })
-        await eventStore.append(subscribeEvent, appendCondition)
+        await eventStore.append(new StudentSubscribedEvent({ courseId, studentId }), appendCondition)
     }

@@ -1,22 +1,22 @@
-import { EsEvent, EventEnvelope, EventStore, AppendCondition, EsQuery } from "../EventStore"
+import { StoredEsEvent, EventStore, AppendCondition, EsQuery, EsEvent } from "../EventStore"
 import * as R from "ramda"
-import { SequenceNumber } from "../valueObjects/SequenceNumber"
-import { Timestamp } from "../valueObjects/TimeStamp"
+import { SequenceNumber } from "../SequenceNumber"
+import { Timestamp } from "../TimeStamp"
 import { getNextMatchingEvent } from "./getNextMatchingEvent"
 
-export const ensureArray = (domainEvents: EsEvent | EsEvent[]) =>
-    R.is(Array, domainEvents) ? <EsEvent[]>domainEvents : [<EsEvent>domainEvents]
+export const ensureArray = (events: EsEvent | EsEvent[]) =>
+    R.is(Array, events) ? <EsEvent[]>events : [<EsEvent>events]
 
-const maxSeqNo = R.pipe<any[], EventEnvelope, number, number>(
+const maxSeqNo = R.pipe<any[], StoredEsEvent, number, number>(
     R.last,
     R.path(["sequenceNumber", "value"]),
     R.defaultTo(0)
 )
 
 export class MemoryEventStore implements EventStore {
-    private events: Array<EventEnvelope> = []
+    private events: Array<StoredEsEvent> = []
 
-    async *read(query: EsQuery, fromSequenceNumber?: SequenceNumber): AsyncGenerator<EventEnvelope> {
+    async *read(query: EsQuery, fromSequenceNumber?: SequenceNumber): AsyncGenerator<StoredEsEvent> {
         let currentSequenceNumberValue = fromSequenceNumber?.value ?? 1
 
         while (currentSequenceNumberValue <= maxSeqNo(this.events)) {
@@ -32,7 +32,7 @@ export class MemoryEventStore implements EventStore {
         }
     }
 
-    async *readBackward(query: EsQuery, fromSequenceNumber?: SequenceNumber): AsyncGenerator<EventEnvelope> {
+    async *readBackward(query: EsQuery, fromSequenceNumber?: SequenceNumber): AsyncGenerator<StoredEsEvent> {
         let currentSequenceNumberValue = fromSequenceNumber?.value ?? maxSeqNo(this.events)
         while (currentSequenceNumberValue > 0) {
             const resultEvent = getNextMatchingEvent(this.events, {
@@ -55,8 +55,8 @@ export class MemoryEventStore implements EventStore {
         lastSequenceNumber: SequenceNumber
     }> {
         const nextSequenceNumberValue = maxSeqNo(this.events) + 1
-        const storedEvents: Array<EventEnvelope> = ensureArray(events).map((ev, i) => ({
-            event: ev,
+        const storedEvents: Array<StoredEsEvent> = ensureArray(events).map((ev, i) => ({
+            ...ev,
             timestamp: Timestamp.now(),
             sequenceNumber: SequenceNumber.create(nextSequenceNumberValue + i)
         }))
