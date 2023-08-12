@@ -27,7 +27,7 @@ export async function reconstitute<T extends Record<string, Projection<Projectio
             const { event, sequenceNumber } = eventEnvelope
             const handler = R.has(event.type, projection.when) ? projection.when[event.type] : R.identity
 
-            states[stateKey] = await handler(states[stateKey], eventEnvelope)
+            states[stateKey] = (await handler(states[stateKey], eventEnvelope)) as any
             if (sequenceNumber.value > highestSeqNoSeen.value) highestSeqNoSeen = sequenceNumber
         }
     }
