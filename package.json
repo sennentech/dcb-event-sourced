@@ -18,7 +18,8 @@
     "url": "git+https://bitbucket.org/sennentech/event-store.git"
   },
   "dependencies": {
-    "luxon": "^3.3.0",
+    "@types/luxon": "^3.3.1",
+    "luxon": "^3.4.0",
     "ramda": "^0.29.0"
   },
   "devDependencies": {

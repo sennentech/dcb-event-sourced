@@ -1,4 +1,4 @@
-import { StoredEsEvent, EventStore, AppendCondition, EsQuery, EsEvent } from "../EventStore"
+import { EsEventEnvelope, EventStore, AppendCondition, EsQuery, EsEvent } from "../EventStore"
 import * as R from "ramda"
 import { SequenceNumber } from "../SequenceNumber"
 import { Timestamp } from "../TimeStamp"
@@ -7,16 +7,16 @@ import { getNextMatchingEvent } from "./getNextMatchingEvent"
 export const ensureArray = (events: EsEvent | EsEvent[]) =>
     R.is(Array, events) ? <EsEvent[]>events : [<EsEvent>events]
 
-const maxSeqNo = R.pipe<any[], StoredEsEvent, number, number>(
+const maxSeqNo = R.pipe<any[], EsEventEnvelope, number, number>(
     R.last,
     R.path(["sequenceNumber", "value"]),
     R.defaultTo(0)
 )
 
 export class MemoryEventStore implements EventStore {
-    private events: Array<StoredEsEvent> = []
+    private events: Array<EsEventEnvelope> = []
 
-    async *read(query: EsQuery, fromSequenceNumber?: SequenceNumber): AsyncGenerator<StoredEsEvent> {
+    async *read(query: EsQuery, fromSequenceNumber?: SequenceNumber): AsyncGenerator<EsEventEnvelope> {
         let currentSequenceNumberValue = fromSequenceNumber?.value ?? 1
 
         while (currentSequenceNumberValue <= maxSeqNo(this.events)) {
@@ -32,7 +32,7 @@ export class MemoryEventStore implements EventStore {
         }
     }
 
-    async *readBackward(query: EsQuery, fromSequenceNumber?: SequenceNumber): AsyncGenerator<StoredEsEvent> {
+    async *readBackward(query: EsQuery, fromSequenceNumber?: SequenceNumber): AsyncGenerator<EsEventEnvelope> {
         let currentSequenceNumberValue = fromSequenceNumber?.value ?? maxSeqNo(this.events)
         while (currentSequenceNumberValue > 0) {
             const resultEvent = getNextMatchingEvent(this.events, {
@@ -55,8 +55,8 @@ export class MemoryEventStore implements EventStore {
         lastSequenceNumber: SequenceNumber
     }> {
         const nextSequenceNumberValue = maxSeqNo(this.events) + 1
-        const storedEvents: Array<StoredEsEvent> = ensureArray(events).map((ev, i) => ({
-            ...ev,
+        const eventEnvelopes: Array<EsEventEnvelope> = ensureArray(events).map((ev, i) => ({
+            event: ev,
             timestamp: Timestamp.now(),
             sequenceNumber: SequenceNumber.create(nextSequenceNumberValue + i)
         }))
@@ -72,7 +72,7 @@ export class MemoryEventStore implements EventStore {
             if (newEvent) throw new Error("Expected Version fail: New events matching appendCondition found.")
         }
 
-        this.events.push(...storedEvents)
+        this.events.push(...eventEnvelopes)
         return {
             lastSequenceNumber: SequenceNumber.create(maxSeqNo(this.events))
         }

@@ -9,7 +9,8 @@ export interface EsEvent {
     data: any
 }
 
-export interface StoredEsEvent extends EsEvent {
+export interface EsEventEnvelope {
+    event: EsEvent
     timestamp: Timestamp
     sequenceNumber: SequenceNumber
 }
@@ -34,10 +35,10 @@ export interface AppendCondition {
 
 export interface EventStore {
     append: (
-        events: StoredEsEvent | StoredEsEvent[],
+        events: EsEvent | EsEvent[],
         condition: AppendCondition | NoCondition
     ) => Promise<{ lastSequenceNumber: SequenceNumber }>
 
-    read: (query: EsQuery, fromSequenceNumber?: SequenceNumber) => AsyncGenerator<StoredEsEvent>
-    readBackward: (query: EsQuery, fromSequenceNumber?: SequenceNumber) => AsyncGenerator<StoredEsEvent>
+    read: (query: EsQuery, fromSequenceNumber?: SequenceNumber) => AsyncGenerator<EsEventEnvelope>
+    readBackward: (query: EsQuery, fromSequenceNumber?: SequenceNumber) => AsyncGenerator<EsEventEnvelope>
 }

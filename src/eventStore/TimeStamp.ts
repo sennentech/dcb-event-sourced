@@ -22,7 +22,7 @@ export class Timestamp {
 
     public static create(timestamp: string): Timestamp {
         if (timestamp === undefined || timestamp === null) throw new Error("Timestamp cannot be null")
-        if (!DateTime.fromISO(timestamp).valid()) throw new Error("Invalid timestamp")
+        if (!DateTime.fromISO(timestamp).isValid) throw new Error("Invalid timestamp")
         return new Timestamp(timestamp)
     }
 }

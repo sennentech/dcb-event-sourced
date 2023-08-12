@@ -66,7 +66,7 @@ describe("memoryEventStore.query", () => {
                 )
 
                 expect(events.length).to.equal(1)
-                expect(events[0].type).to.equal("testEvent1")
+                expect(events[0].event.type).to.equal("testEvent1")
             })
         })
 
@@ -89,7 +89,7 @@ describe("memoryEventStore.query", () => {
                 )
 
                 expect(events.length).to.equal(1)
-                expect(events[0].tags.testId).to.equal("ev-1")
+                expect(events[0].event.tags.testId).to.equal("ev-1")
             })
         })
     })
@@ -106,8 +106,8 @@ describe("memoryEventStore.query", () => {
             )
 
             expect(events.length).to.equal(2)
-            expect(events[0].type).to.equal("testEvent2")
-            expect(events[1].type).to.equal("testEvent2")
+            expect(events[0].event.type).to.equal("testEvent2")
+            expect(events[1].event.type).to.equal("testEvent2")
         })
 
         it("multiple criteria treated as OR correctly", async () => {

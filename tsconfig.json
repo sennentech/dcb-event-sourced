@@ -4,7 +4,8 @@
         "target": "es2022",
         "sourceMap": true,
         "declaration": true,
-        "outDir": "dist"
+        "outDir": "dist",
+        "noImplicitAny": true
     },
     
     "exclude": ["./node_modules", "./dist"]

@@ -1,18 +1,18 @@
 import R = require("ramda")
-import { StoredEsEvent, EsQuery, EsQueryCriterion } from "../EventStore"
+import { EsEventEnvelope, EsQuery, EsQueryCriterion } from "../EventStore"
 import { SequenceNumber } from "../SequenceNumber"
 
 const makeArray = (str: string | string[]) => (R.is(Array, str) ? str : [str])
 
 export const getNextMatchingEvent = (
-    storedEvents: StoredEsEvent[],
+    eventEnvelopes: EsEventEnvelope[],
     {
         direction,
         query,
         fromSequenceNumber
     }: { direction: "forwards" | "backwards"; query: EsQuery; fromSequenceNumber?: SequenceNumber }
-): StoredEsEvent => {
-    const filtered = storedEvents.filter(event => {
+): EsEventEnvelope => {
+    const filtered = eventEnvelopes.filter(event => {
         if (
             fromSequenceNumber &&
             ((direction === "forwards" && event.sequenceNumber.lessThan(fromSequenceNumber)) ||
@@ -33,7 +33,7 @@ export const getNextMatchingEvent = (
     return R.head(ordered)
 }
 
-const matchesCriterion = ({ eventTypes, tags }: EsQueryCriterion, event: StoredEsEvent) => {
+const matchesCriterion = ({ eventTypes, tags }: EsQueryCriterion, { event }: EsEventEnvelope) => {
     if (eventTypes.length > 0 && !R.includes(event.type, eventTypes)) return false
 
     const tagKeys = R.keys(tags)

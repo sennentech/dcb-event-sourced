@@ -19,11 +19,16 @@ export async function reconstitute<T extends Record<string, Projection<Projectio
     const fromSequenceNumber = SequenceNumber.create(1) //restore from lowest snapshots if found
 
     let highestSeqNoSeen = SequenceNumber.create(1)
-    for await (const event of eventStore.read(query, fromSequenceNumber)) {
-        for (const [stateKey, projection] of R.toPairs(projections) as [string, Projection<ProjectionDef>][]) {
+    for await (const eventEnvelope of eventStore.read(query, fromSequenceNumber)) {
+        for (const [stateKey, projection] of R.toPairs(projections) as [
+            R.KeysOfUnion<T>,
+            Projection<ProjectionDef>
+        ][]) {
+            const { event, sequenceNumber } = eventEnvelope
             const handler = R.has(event.type, projection.when) ? projection.when[event.type] : R.identity
-            states[stateKey] = await handler(states[stateKey], event)
-            if (event.sequenceNumber.value > highestSeqNoSeen.value) highestSeqNoSeen = event.sequenceNumber
+
+            states[stateKey] = await handler(states[stateKey], eventEnvelope)
+            if (sequenceNumber.value > highestSeqNoSeen.value) highestSeqNoSeen = sequenceNumber
         }
     }
 

@@ -16,15 +16,15 @@ export const CourseCapacity = (
     tags: { courseId },
     init: { isFull: true, subscriberCount: 0, capacity: 0 },
     when: {
-        courseCreated: (state, { data: { capacity } }) => ({
-            isFull: capacity === 0,
-            capacity,
+        courseCreated: (state, { event }) => ({
+            isFull: event.data.capacity === 0,
+            capacity: event.data.capacity,
             subscriberCount: 0
         }),
-        courseCapacityChanged: ({ subscriberCount }, { data: { newCapacity } }) => ({
+        courseCapacityChanged: ({ subscriberCount }, { event }) => ({
             subscriberCount,
-            isFull: newCapacity <= subscriberCount,
-            capacity: newCapacity
+            isFull: event.data.newCapacity <= subscriberCount,
+            capacity: event.data.newCapacity
         }),
         studentSubscribed: ({ capacity, subscriberCount }) => ({
             isFull: capacity <= subscriberCount + 1,
