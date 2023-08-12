@@ -1,6 +1,6 @@
+import * as R from "ramda"
 import { AppendCondition, EsQuery, EventStore } from "../eventStore/EventStore"
 import { Projection, ProjectionDef } from "./Projection"
-import * as R from "ramda"
 import { SequenceNumber } from "../eventStore/SequenceNumber"
 
 type ExtractStateType<T> = {
@@ -11,14 +11,14 @@ export async function reconstitute<T extends Record<string, Projection<Projectio
     eventStore: EventStore,
     projections: T
 ): Promise<{ states: ExtractStateType<T>; appendCondition: AppendCondition }> {
-    const states = R.map(R.prop("init"), projections) // restore from snapshots if found
+    const states = R.map(R.prop("init"), projections) //TODO: restore from snapshots if found
 
     const query: EsQuery = {
         criteria: R.values(R.map(proj => ({ tags: proj.tags, eventTypes: R.keys(proj.when) as string[] }), projections))
     }
-    const fromSequenceNumber = SequenceNumber.create(1) //restore from lowest snapshots if found
+    const fromSequenceNumber = SequenceNumber.first() //TODO: restore from lowest snapshots if found
 
-    let highestSeqNoSeen = SequenceNumber.create(1)
+    let highestSeqNoSeen = SequenceNumber.first()
     for await (const eventEnvelope of eventStore.read(query, fromSequenceNumber)) {
         for (const [stateKey, projection] of R.toPairs(projections) as [
             R.KeysOfUnion<T>,

@@ -17,7 +17,7 @@ export class MemoryEventStore implements EventStore {
     private events: Array<EsEventEnvelope> = []
 
     async *read(query: EsQuery, fromSequenceNumber?: SequenceNumber): AsyncGenerator<EsEventEnvelope> {
-        let currentSequenceNumberValue = fromSequenceNumber?.value ?? 1
+        let currentSequenceNumberValue = fromSequenceNumber?.value ?? SequenceNumber.first().value
 
         while (currentSequenceNumberValue <= maxSeqNo(this.events)) {
             const resultEvent = getNextMatchingEvent(this.events, {

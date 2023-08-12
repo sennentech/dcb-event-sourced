@@ -32,4 +32,8 @@ export class SequenceNumber {
 
         return new SequenceNumber(sequenceNumber)
     }
+
+    static first(): SequenceNumber {
+        return SequenceNumber.create(1)
+    }
 }
