@@ -6,7 +6,7 @@ export type Tags = Record<string, string | string[]>
 export interface EsEvent {
     type: string
     tags: Tags
-    data: any
+    data: unknown
 }
 
 export interface EsEventEnvelope {

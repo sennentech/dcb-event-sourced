@@ -7,7 +7,7 @@ import { getNextMatchingEvent } from "./getNextMatchingEvent"
 export const ensureArray = (events: EsEvent | EsEvent[]) =>
     R.is(Array, events) ? <EsEvent[]>events : [<EsEvent>events]
 
-const maxSeqNo = R.pipe<any[], EsEventEnvelope, number, number>(
+const maxSeqNo = R.pipe<unknown[], EsEventEnvelope, number, number>(
     R.last,
     R.path(["sequenceNumber", "value"]),
     R.defaultTo(0)

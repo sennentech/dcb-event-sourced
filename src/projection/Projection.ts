@@ -4,7 +4,7 @@ import { Timestamp } from "../eventStore/TimeStamp"
 
 export interface ProjectionDef {
     tags: Tags
-    state: any
+    state: unknown
     eventHandlers: EsEvent
 }
 
