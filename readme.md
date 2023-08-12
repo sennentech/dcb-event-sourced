@@ -9,7 +9,7 @@ For now, best to view the examples in the tests starting with the "testData" dir
 
 ## Specification
 
-See [Specification.md](https://hackmd.io/@MO2N35ijRmqCDeo2uyGFNQ/By581Oz53) (work in progress)
+See [Specifications](https://hackmd.io/@MO2N35ijRmqCDeo2uyGFNQ/By581Oz53) (work in progress)
 
 ## Contribution
 
