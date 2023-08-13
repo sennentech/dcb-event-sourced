@@ -9,20 +9,8 @@ export class SequenceNumber {
         this.#value = value
     }
 
-    equals(otherSequenceNumber: SequenceNumber) {
-        return this.#value === otherSequenceNumber.value
-    }
-    greaterThan(otherSequenceNumber: SequenceNumber) {
-        return this.#value > otherSequenceNumber.value
-    }
-    lessThan(otherSequenceNumber: SequenceNumber) {
-        return this.#value < otherSequenceNumber.value
-    }
-    greaterThanOrEqualTo(otherSequenceNumber: SequenceNumber) {
-        return this.#value >= otherSequenceNumber.value
-    }
-    lessThanOrEqualTo(otherSequenceNumber: SequenceNumber) {
-        return this.#value <= otherSequenceNumber.value
+    [Symbol.toPrimitive]() {
+        return this.#value
     }
 
     static create(sequenceNumber: number): SequenceNumber {

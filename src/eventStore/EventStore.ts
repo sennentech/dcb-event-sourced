@@ -9,8 +9,8 @@ export interface EsEvent {
     data: unknown
 }
 
-export interface EsEventEnvelope {
-    event: EsEvent
+export interface EsEventEnvelope<T extends EsEvent = EsEvent> {
+    event: T
     timestamp: Timestamp
     sequenceNumber: SequenceNumber
 }

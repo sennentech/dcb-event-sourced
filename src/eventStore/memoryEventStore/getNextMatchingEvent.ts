@@ -15,8 +15,8 @@ export const getNextMatchingEvent = (
     const filtered = eventEnvelopes.filter(event => {
         if (
             fromSequenceNumber &&
-            ((direction === "forwards" && event.sequenceNumber.lessThan(fromSequenceNumber)) ||
-                (direction === "backwards" && event.sequenceNumber.greaterThan(fromSequenceNumber)))
+            ((direction === "forwards" && event.sequenceNumber < fromSequenceNumber) ||
+                (direction === "backwards" && event.sequenceNumber > fromSequenceNumber))
         ) {
             return false
         }

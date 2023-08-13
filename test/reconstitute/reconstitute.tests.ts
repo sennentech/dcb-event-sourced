@@ -2,10 +2,10 @@ import { expect } from "chai"
 import { AppendConditions } from "../../src/eventStore/EventStore"
 import { MemoryEventStore } from "../../src/eventStore/memoryEventStore/MemoryEventStore"
 import { CourseCapacityChangedEvent, CourseCreatedEvent } from "../testData/events"
-import { reconstitute } from "../../src/projection/Reconsitute"
 import * as R from "ramda"
 import { CourseCapacity } from "../testData/projections/CourseCapacity"
 import { CourseExists } from "../testData/projections/CourseExists"
+import { reconstitute } from "../../src/projection/reconstitute"
 
 describe("reconstitute", () => {
     describe("when event store has no events", () => {

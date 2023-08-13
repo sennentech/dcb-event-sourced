@@ -1,5 +1,5 @@
-import { reconstitute } from "../../src/projection/Reconsitute"
 import { EventStore } from "../../src/eventStore/EventStore"
+import { reconstitute } from "../../src/projection/reconstitute"
 import { StudentSubscribedEvent } from "./events"
 import { CourseCapacity } from "./projections/CourseCapacity"
 import { CourseExists } from "./projections/CourseExists"
