@@ -1,20 +1,39 @@
 import { EsEvent, EsEventEnvelope, Tags } from "../eventStore/EventStore"
 
 export interface ProjectionDef {
-    tags: Tags
+    tagFilter?: Tags
     state: unknown
     eventHandlers: EsEvent
 }
 
-type ProjectionEventsObject<Def extends ProjectionDef> = {
-    [E in Def["eventHandlers"] as E["type"]]: (
-        state: Def["state"],
-        eventEnvelope: EsEventEnvelope<E>
-    ) => Def["state"] | Promise<Def["state"]>
+type ProjectionEventsObject<TDef extends ProjectionDef> = {
+    [E in TDef["eventHandlers"] as E["type"]]: (
+        eventEnvelope: EsEventEnvelope<E>,
+        state: TDef["state"]
+    ) => TDef["state"] | Promise<TDef["state"]>
 }
 
-export type Projection<Def extends ProjectionDef = ProjectionDef> = {
-    tags: Def["tags"]
-    init: Def["state"]
-    when: ProjectionEventsObject<Def>
+export interface Projection<TDef extends ProjectionDef = ProjectionDef> {
+    tagFilter?: TDef["tagFilter"]
+    init?: TDef["state"]
+    when: ProjectionEventsObject<TDef>
+}
+
+export interface PartitionedStateManager<TState> {
+    read: (partitionKey: string) => Promise<TState>
+    save: (partitionKey: string, state: TState) => Promise<void>
+}
+
+export interface UnpartionedStateManager<TState> {
+    read: () => Promise<TState>
+    save: (state: TState) => Promise<void>
+}
+
+export interface PersistentProjection<TDef extends ProjectionDef = ProjectionDef> extends Projection<TDef> {
+    stateManager: UnpartionedStateManager<TDef["state"]>
+}
+
+export interface PartitionedPersistentProjection<TDef extends ProjectionDef = ProjectionDef> extends Projection<TDef> {
+    partitionByTags: (tags: TDef["eventHandlers"]["tags"]) => string
+    stateManager: PartitionedStateManager<TDef["state"]>
 }

@@ -6,17 +6,17 @@ export const StudentSubscriptions = (
     studentId: string
 ): Projection<{
     state: { maxedOut: boolean; subscriptionCount: number }
-    tags: { studentId: string }
+    tagFilter: { studentId: string }
     eventHandlers: StudentSubscribedEvent | StudentUnsubscribedEvent
 }> => ({
-    tags: { studentId },
+    tagFilter: { studentId },
     init: { maxedOut: false, subscriptionCount: 0 },
     when: {
-        studentSubscribed: ({ subscriptionCount }) => ({
+        studentSubscribed: (_eventEnvelope, { subscriptionCount }) => ({
             maxedOut: STUDENT_SUBSCRIPTION_LIMIT <= subscriptionCount + 1,
             subscriptionCount: subscriptionCount + 1
         }),
-        studentUnsubscribed: ({ subscriptionCount }) => ({
+        studentUnsubscribed: (_eventEnvelope, { subscriptionCount }) => ({
             maxedOut: STUDENT_SUBSCRIPTION_LIMIT <= subscriptionCount - 1,
             subscriptionCount: subscriptionCount - 1
         })

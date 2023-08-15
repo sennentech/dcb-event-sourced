@@ -1,10 +1,10 @@
-import { EventStore } from "../../src/eventStore/EventStore"
-import { reconstitute } from "../../src/projection/reconstitute"
-import { StudentSubscribedEvent } from "./events"
-import { CourseCapacity } from "./projections/CourseCapacity"
-import { CourseExists } from "./projections/CourseExists"
-import { StudentAlreadySubscribed } from "./projections/StudentAlreadySubscribed"
-import { StudentSubscriptions } from "./projections/StudentSubscriptions"
+import { EventStore } from "../src/eventStore/EventStore"
+import { reconstitute } from "../src/projection/reconstitute"
+import { StudentSubscribedEvent } from "../test/testData/events"
+import { CourseCapacity } from "../test/testData/projections/CourseCapacity"
+import { CourseExists } from "../test/testData/projections/CourseExists"
+import { StudentAlreadySubscribed } from "../test/testData/projections/StudentAlreadySubscribed"
+import { StudentSubscriptions } from "../test/testData/projections/StudentSubscriptions"
 
 export interface SubscribeStudentToCourseCmd {
     studentId: string

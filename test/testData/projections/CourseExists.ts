@@ -5,10 +5,10 @@ export const CourseExists = (
     courseId: string
 ): Projection<{
     state: boolean
-    tags: { courseId: string }
+    tagFilter: { courseId: string }
     eventHandlers: CourseCreatedEvent
 }> => ({
-    tags: { courseId },
+    tagFilter: { courseId },
     init: false,
     when: {
         courseCreated: async () => true

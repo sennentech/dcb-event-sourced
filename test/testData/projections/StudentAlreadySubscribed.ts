@@ -9,10 +9,10 @@ export const StudentAlreadySubscribed = ({
     studentId: string
 }): Projection<{
     state: boolean
-    tags: { courseId: string; studentId: string }
+    tagFilter: { courseId: string; studentId: string }
     eventHandlers: StudentSubscribedEvent | StudentUnsubscribedEvent
 }> => ({
-    tags: { courseId, studentId },
+    tagFilter: { courseId, studentId },
     init: false,
     when: {
         studentSubscribed: () => true,

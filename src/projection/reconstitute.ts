@@ -15,7 +15,9 @@ export async function reconstitute<T extends Projections>(
     const states = R.map(R.prop("init"), projections) as ProjectionStates<T>
 
     const query: EsQuery = {
-        criteria: R.values(R.map(proj => ({ tags: proj.tags, eventTypes: R.keys(proj.when) as string[] }), projections))
+        criteria: R.values(
+            R.map(proj => ({ tags: proj.tagFilter, eventTypes: R.keys(proj.when) as string[] }), projections)
+        )
     }
     const fromSequenceNumber = SequenceNumber.first()
 
@@ -25,7 +27,7 @@ export async function reconstitute<T extends Projections>(
             const { event, sequenceNumber } = eventEnvelope
             const handler = R.has(event.type, projection.when) ? projection.when[event.type] : R.identity
 
-            states[stateKey] = await handler(states[stateKey], eventEnvelope)
+            states[stateKey] = await handler(eventEnvelope, states[stateKey])
             if (sequenceNumber > highestSeqNoSeen) highestSeqNoSeen = sequenceNumber
         }
     }
