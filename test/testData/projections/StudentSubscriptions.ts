@@ -6,7 +6,6 @@ export const StudentSubscriptions = (
     studentId: string
 ): Projection<{
     state: { maxedOut: boolean; subscriptionCount: number }
-    tagFilter: { studentId: string }
     eventHandlers: StudentSubscribedEvent | StudentUnsubscribedEvent
 }> => ({
     tagFilter: { studentId },

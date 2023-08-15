@@ -10,7 +10,6 @@ export const CourseCapacity = (
     courseId: string
 ): Projection<{
     state: { isFull: boolean; subscriberCount: number; capacity: number }
-    tagFilter: { courseId: string }
     eventHandlers: CourseCreatedEvent | CourseCapacityChangedEvent | StudentSubscribedEvent | StudentUnsubscribedEvent
 }> => ({
     tagFilter: { courseId },
@@ -38,3 +37,6 @@ export const CourseCapacity = (
         })
     }
 })
+
+const c = CourseCapacity("hello")
+c.tagFilter.courseId

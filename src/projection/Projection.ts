@@ -1,7 +1,6 @@
 import { EsEvent, EsEventEnvelope, Tags } from "../eventStore/EventStore"
 
 export interface ProjectionDef {
-    tagFilter?: Tags
     state: unknown
     eventHandlers: EsEvent
 }
@@ -14,7 +13,7 @@ type ProjectionEventsObject<TDef extends ProjectionDef> = {
 }
 
 export interface Projection<TDef extends ProjectionDef = ProjectionDef> {
-    tagFilter?: TDef["tagFilter"]
+    tagFilter?: Partial<Record<keyof TDef["eventHandlers"]["tags"], string>>
     init?: TDef["state"]
     when: ProjectionEventsObject<TDef>
 }
