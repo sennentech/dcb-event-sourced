@@ -12,12 +12,6 @@ type ProjectionEventsObject<TDef extends ProjectionDef> = {
     ) => TDef["state"] | Promise<TDef["state"]>
 }
 
-export interface Projection<TDef extends ProjectionDef = ProjectionDef> {
-    tagFilter?: Partial<Record<keyof TDef["eventHandlers"]["tags"], string>>
-    init?: TDef["state"]
-    when: ProjectionEventsObject<TDef>
-}
-
 export interface PartitionedStateManager<TState> {
     read: (partitionKey: string) => Promise<TState>
     save: (partitionKey: string, state: TState) => Promise<void>
@@ -26,6 +20,12 @@ export interface PartitionedStateManager<TState> {
 export interface UnpartionedStateManager<TState> {
     read: () => Promise<TState>
     save: (state: TState) => Promise<void>
+}
+
+export interface Projection<TDef extends ProjectionDef = ProjectionDef> {
+    tagFilter?: Partial<Record<keyof TDef["eventHandlers"]["tags"], string>>
+    init?: TDef["state"]
+    when: ProjectionEventsObject<TDef>
 }
 
 export interface PersistentProjection<TDef extends ProjectionDef = ProjectionDef> extends Projection<TDef> {
