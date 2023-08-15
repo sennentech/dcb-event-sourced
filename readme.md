@@ -5,7 +5,7 @@ Implementation of the Dynamic Consistency Boundary pattern for nodejs/typescript
 Work in progress, but the idea is to create an NPM package, allowing creation of different storage adapaters.
 
 ## Usage
-For now, best to view the examples in the tests starting with the "testData" directory, to get an idea of how it should be used.
+For now, best to view the examples, and some of the testData to get an idea of how it should be used.
 
 ## Specification
 
