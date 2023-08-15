@@ -11,7 +11,7 @@ interface CourseRepository {
     save(id: string, course: Course): Promise<void>
 }
 
-const CourseManager = (
+const PersistentCourseProjection = (
     repository: CourseRepository
 ): PartitionedPersistentProjection<{
     state: Course
@@ -40,5 +40,3 @@ const CourseManager = (
         }
     }
 })
-
-console.log(CourseManager)
