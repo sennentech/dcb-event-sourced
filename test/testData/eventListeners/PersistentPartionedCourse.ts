@@ -1,30 +1,31 @@
-import { PartitionedPersistentProjection, PersistentProjection, Projection } from "../src/projection/Projection"
-import { CourseCapacityChangedEvent, CourseCreatedEvent } from "../test/testData/events"
+import { PartitionedStateEventListener } from "../../../src/eventListener/EsEventListener"
+import { CourseCapacityChangedEvent, CourseCreatedEvent } from "../events"
 import * as R from "ramda"
 
-interface Course {
+export interface Course {
     id: string
     capacity: number
+    subscriptions: number
 }
-interface CourseRepository {
-    findById(id: string): Promise<Course>
-    save(id: string, course: Course): Promise<void>
+export interface CourseRepository {
+    findById(id: string): Course
+    save(id: string, course: Course): void
 }
 
-const PersistentCourseProjection = (
+export const PersistentPartitionedCourse = (
     repository: CourseRepository
-): PartitionedPersistentProjection<{
+): PartitionedStateEventListener<{
     state: Course
     eventHandlers: CourseCreatedEvent | CourseCapacityChangedEvent
 }> => ({
-    init: null,
+    init: { id: undefined, capacity: 0, subscriptions: 0 },
     partitionByTags: ({ courseId }) => courseId,
     when: {
-        courseCreated: async ({ event, timestamp }) => {
+        courseCreated: async ({ event }, { subscriptions }) => {
             return {
                 id: event.tags.courseId,
                 capacity: event.data.capacity,
-                timestamp
+                subscriptions
             }
         },
         courseCapacityChanged: async ({ event }, course) => {
@@ -36,7 +37,7 @@ const PersistentCourseProjection = (
             return repository.findById(courseId)
         },
         save: async (courseId, course) => {
-            await repository.save(courseId, course)
+            repository.save(courseId, course)
         }
     }
 })

@@ -1,9 +1,9 @@
-import { Projection } from "../../../src/projection/Projection"
+import { EsEventListener } from "../../../src/eventListener/EsEventListener"
 import { CourseCreatedEvent } from "../events"
 
 export const CourseExists = (
     courseId: string
-): Projection<{
+): EsEventListener<{
     state: boolean
     tagFilter: { courseId: string }
     eventHandlers: CourseCreatedEvent

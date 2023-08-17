@@ -13,15 +13,16 @@ export const getNextMatchingEvent = (
     }: { direction: "forwards" | "backwards"; query: EsQuery; fromSequenceNumber?: SequenceNumber }
 ): EsEventEnvelope => {
     const filtered = eventEnvelopes.filter(event => {
-        if (
+        const { sequenceNumber } = event
+        const seqNoOutOfRange =
             fromSequenceNumber &&
-            ((direction === "forwards" && event.sequenceNumber < fromSequenceNumber) ||
-                (direction === "backwards" && event.sequenceNumber > fromSequenceNumber))
-        ) {
-            return false
-        }
+            ((direction === "forwards" && sequenceNumber < fromSequenceNumber) ||
+                (direction === "backwards" && sequenceNumber > fromSequenceNumber))
 
-        if (!query.criteria || query.criteria.length === 0) return true
+        const noQueryCriteria = !query.criteria || query.criteria.length === 0
+
+        if (seqNoOutOfRange) return false
+        if (noQueryCriteria) return true
 
         for (const criterion of query.criteria) {
             if (matchesCriterion(criterion, event)) return true
@@ -34,19 +35,20 @@ export const getNextMatchingEvent = (
 }
 
 const matchesCriterion = ({ eventTypes, tags }: EsQueryCriterion, { event }: EsEventEnvelope) => {
-    if (eventTypes.length > 0 && !R.includes(event.type, eventTypes)) return false
+    const hasEventTypesNotOnEvent = eventTypes.length > 0 && !R.includes(event.type, eventTypes)
+    if (hasEventTypesNotOnEvent) return false
 
     const tagKeys = R.keys(tags)
 
-    //query contains tag key that is not on event
-    if (tagKeys.length > 0 && R.difference(tagKeys, R.keys(event.tags)).length > 0) return false
+    const hasTagKeyNotOnEvent = tagKeys.length > 0 && R.difference(tagKeys, R.keys(event.tags)).length > 0
+    if (hasTagKeyNotOnEvent) return false
 
     for (const tagKey of tagKeys) {
         const queryTagValues = makeArray(tags[tagKey])
         const eventTagValues = makeArray(event.tags[tagKey])
 
-        //no matching tag values
-        if (R.intersection(queryTagValues, eventTagValues).length === 0) return false
+        const noTagValuesMatch = R.intersection(queryTagValues, eventTagValues).length === 0
+        if (noTagValuesMatch) return false
     }
     return true
 }

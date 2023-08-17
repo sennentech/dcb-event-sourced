@@ -4,8 +4,7 @@ import { SequenceNumber } from "../SequenceNumber"
 import { Timestamp } from "../TimeStamp"
 import { getNextMatchingEvent } from "./getNextMatchingEvent"
 
-export const ensureArray = (events: EsEvent | EsEvent[]) =>
-    R.is(Array, events) ? <EsEvent[]>events : [<EsEvent>events]
+export const ensureIsArray = (events: EsEvent | EsEvent[]) => (R.is(Array, events) ? events : [events])
 
 const maxSeqNo = R.pipe<unknown[], EsEventEnvelope, number, number>(
     R.last,
@@ -48,6 +47,10 @@ export class MemoryEventStore implements EventStore {
         }
     }
 
+    async reset() {
+        this.events = []
+    }
+
     async append(
         events: EsEvent | EsEvent[],
         appendCondition: AppendCondition | "None"
@@ -55,7 +58,7 @@ export class MemoryEventStore implements EventStore {
         lastSequenceNumber: SequenceNumber
     }> {
         const nextSequenceNumberValue = maxSeqNo(this.events) + 1
-        const eventEnvelopes: Array<EsEventEnvelope> = ensureArray(events).map((ev, i) => ({
+        const eventEnvelopes: Array<EsEventEnvelope> = ensureIsArray(events).map((ev, i) => ({
             event: ev,
             timestamp: Timestamp.now(),
             sequenceNumber: SequenceNumber.create(nextSequenceNumberValue + i)

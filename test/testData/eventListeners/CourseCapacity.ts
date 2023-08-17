@@ -1,4 +1,4 @@
-import { Projection } from "../../../src/projection/Projection"
+import { EsEventListener } from "../../../src/eventListener/EsEventListener"
 import {
     CourseCreatedEvent,
     CourseCapacityChangedEvent,
@@ -8,7 +8,7 @@ import {
 
 export const CourseCapacity = (
     courseId: string
-): Projection<{
+): EsEventListener<{
     state: { isFull: boolean; subscriberCount: number; capacity: number }
     eventHandlers: CourseCreatedEvent | CourseCapacityChangedEvent | StudentSubscribedEvent | StudentUnsubscribedEvent
 }> => ({

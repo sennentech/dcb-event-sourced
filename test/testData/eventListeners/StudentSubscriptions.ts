@@ -1,10 +1,10 @@
-import { Projection } from "../../../src/projection/Projection"
+import { EsEventListener } from "../../../src/eventListener/EsEventListener"
 import { StudentSubscribedEvent, StudentUnsubscribedEvent } from "../events"
 
 const STUDENT_SUBSCRIPTION_LIMIT = 10
 export const StudentSubscriptions = (
     studentId: string
-): Projection<{
+): EsEventListener<{
     state: { maxedOut: boolean; subscriptionCount: number }
     eventHandlers: StudentSubscribedEvent | StudentUnsubscribedEvent
 }> => ({

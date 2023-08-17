@@ -3,13 +3,13 @@ import { AppendConditions } from "../../src/eventStore/EventStore"
 import { MemoryEventStore } from "../../src/eventStore/memoryEventStore/MemoryEventStore"
 import { CourseCapacityChangedEvent, CourseCreatedEvent } from "../testData/events"
 import * as R from "ramda"
-import { CourseCapacity } from "../testData/projections/CourseCapacity"
-import { CourseExists } from "../testData/projections/CourseExists"
-import { reconstitute } from "../../src/projection/reconstitute"
+import { CourseCapacity } from "../testData/eventListeners/CourseCapacity"
+import { CourseExists } from "../testData/eventListeners/CourseExists"
+import { reconstitute } from "../../src/eventListener/reconstitute"
 
 describe("reconstitute", () => {
     describe("when event store has no events", () => {
-        it("course exists projection returns default state", async () => {
+        it("course exists eventListener returns default state", async () => {
             const eventStore = new MemoryEventStore()
             const courseId = "course-1"
 
@@ -39,7 +39,7 @@ describe("reconstitute", () => {
         await eventStore.append(new CourseCreatedEvent({ courseId, capacity: 10 }), AppendConditions.None)
         await eventStore.append(new CourseCapacityChangedEvent({ courseId, newCapacity: 15 }), AppendConditions.None)
 
-        it("course exists projection sees event", async () => {
+        it("course exists eventListener sees event", async () => {
             const {
                 states: { courseExists },
                 appendCondition
@@ -58,7 +58,7 @@ describe("reconstitute", () => {
             expect(tags.courseId).to.equal("course-1")
         })
 
-        it("course capacity projection state has updated capacity", async () => {
+        it("course capacity eventListener state has updated capacity", async () => {
             const {
                 states: { courseCapacity },
                 appendCondition
@@ -86,7 +86,7 @@ describe("reconstitute", () => {
             expect(maxSequenceNumber.value).to.equal(2)
         })
 
-        it("course capacity and course exists projection states updated", async () => {
+        it("course capacity and course exists eventListener states updated", async () => {
             const {
                 states: { courseCapacity, courseExists },
                 appendCondition
