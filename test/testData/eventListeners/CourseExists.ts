@@ -1,4 +1,4 @@
-import { EsEventListener } from "../../../src/eventListener/EsEventListener"
+import { EsEventListener } from "../../../eventHandlers/src/EventHandler"
 import { CourseCreatedEvent } from "../events"
 
 export const CourseExists = (

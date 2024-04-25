@@ -1,9 +1,9 @@
 import { expect } from "chai"
-import { MemoryEventStore } from "../../src/eventStore/memoryEventStore/MemoryEventStore"
-import { AppendConditions } from "../../src/eventStore/EventStore"
-import { SequenceNumber } from "../../src/eventStore/SequenceNumber"
+import { MemoryEventStore } from "../../eventStore/src/memoryEventStore/MemoryEventStore"
+import { AppendConditions } from "../../eventStore/src/EventStore"
+import { SequenceNumber } from "../../eventStore/src/SequenceNumber"
 import { TestEvent1, TestEvent2 } from "./TestEvent"
-import { streamAllEventsToArray } from "../../src/eventStore/utils/streamAllEventsToArray"
+import { streamAllEventsToArray } from "../../eventStore/src/utils/streamAllEventsToArray"
 
 describe("memoryEventStore.query", () => {
     describe("when event store empty", () => {

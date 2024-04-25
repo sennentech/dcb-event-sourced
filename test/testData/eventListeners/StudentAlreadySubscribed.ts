@@ -1,4 +1,4 @@
-import { EsEventListener } from "../../../src/eventListener/EsEventListener"
+import { EsEventListener } from "../../../eventHandlers/src/EventHandler"
 import { StudentSubscribedEvent, StudentUnsubscribedEvent } from "../events"
 
 export const StudentAlreadySubscribed = ({

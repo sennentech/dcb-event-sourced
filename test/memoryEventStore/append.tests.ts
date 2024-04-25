@@ -1,8 +1,8 @@
 import { expect } from "chai"
-import { MemoryEventStore } from "../../src/eventStore/memoryEventStore/MemoryEventStore"
-import { AppendCondition, AppendConditions } from "../../src/eventStore/EventStore"
+import { MemoryEventStore } from "../../eventStore/src/memoryEventStore/MemoryEventStore"
+import { AppendCondition, AppendConditions } from "../../eventStore/src/EventStore"
 import { TestEvent1 } from "./TestEvent"
-import { SequenceNumber } from "../../src/eventStore/SequenceNumber"
+import { SequenceNumber } from "../../eventStore/src/SequenceNumber"
 
 describe("memoryEventStore.append", () => {
     describe("when event store empty", () => {

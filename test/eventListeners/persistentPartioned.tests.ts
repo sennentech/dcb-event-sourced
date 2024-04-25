@@ -1,11 +1,11 @@
 import { expect } from "chai"
-import { AppendConditions } from "../../src/eventStore/EventStore"
-import { MemoryEventStore } from "../../src/eventStore/memoryEventStore/MemoryEventStore"
+import { AppendConditions } from "../../eventStore/src/EventStore"
+import { MemoryEventStore } from "../../eventStore/src/memoryEventStore/MemoryEventStore"
 import { CourseCreatedEvent } from "../testData/events"
 import { Course, PersistentPartitionedCourse } from "../testData/eventListeners/PersistentPartionedCourse"
 import * as sinon from "sinon"
-import { applyEventsToListener } from "../../src/eventListener/applyEventsToListener"
-import { SequenceNumber } from "../../src/eventStore/SequenceNumber"
+import { handleEvents } from "../../eventHandlers/src/applyEventsToHandler"
+import { SequenceNumber } from "../../eventStore/src/SequenceNumber"
 const sandbox = sinon.createSandbox()
 
 describe("persistentPartitionedEventListeners", () => {
@@ -25,7 +25,7 @@ describe("persistentPartitionedEventListeners", () => {
             let lastSequenceNumberSeen: SequenceNumber
             beforeEach(async () => {
                 eventStore.append(new CourseCreatedEvent({ courseId: "course-1", capacity: 10 }), AppendConditions.None)
-                lastSequenceNumberSeen = (await applyEventsToListener(eventStore, courseEventListener))
+                lastSequenceNumberSeen = (await handleEvents(eventStore, courseEventListener))
                     .lastSequenceNumberSeen
             })
             it("last sequence number is one", async () => {

@@ -1,12 +1,12 @@
-import { EsEvent, EsEventEnvelope } from "../eventStore/EventStore"
+import { EsEvent, EsEventEnvelope } from "../../eventStore/src/EventStore"
 
-interface EsEventListenerDef {
+interface EsEventHandlerDef {
     state: unknown
     eventHandlers: EsEvent
 }
 
 type EventHandler<TEvent, TState> = (eventEnvelope: TEvent, state: TState) => TState | Promise<TState>
-type EventHandlers<TDef extends EsEventListenerDef> = {
+type EventHandlers<TDef extends EsEventHandlerDef> = {
     [E in TDef["eventHandlers"] as E["type"]]: EventHandler<EsEventEnvelope<E>, TDef["state"]>
 }
 
@@ -22,19 +22,19 @@ export interface UnpartionedStateManager<TState> {
     save: (state: TState) => Promise<void>
 }
 
-export interface EsEventListener<TDef extends EsEventListenerDef = EsEventListenerDef> {
+export interface EventHandler<TDef extends EsEventHandlerDef = EsEventHandlerDef> {
     tagFilter?: Partial<Record<keyof TDef["eventHandlers"]["tags"], string>>
     init?: TDef["state"]
     when: EventHandlers<TDef>
 }
 
-export interface PersistentStateEventListener<TDef extends EsEventListenerDef = EsEventListenerDef>
-    extends EsEventListener<TDef> {
+export interface PersistentStateEventHandler<TDef extends EsEventHandlerDef = EsEventHandlerDef>
+    extends EventHandler<TDef> {
     stateManager: UnpartionedStateManager<TDef["state"]>
 }
 
-export interface PartitionedStateEventListener<TDef extends EsEventListenerDef = EsEventListenerDef>
-    extends EsEventListener<TDef> {
+export interface PartitionedStateEventHandler<TDef extends EsEventHandlerDef = EsEventHandlerDef>
+    extends EventHandler<TDef> {
     partitionByTags: (tags: TDef["eventHandlers"]["tags"]) => string
     stateManager: PartitionedStateManager<TDef["state"]>
 }

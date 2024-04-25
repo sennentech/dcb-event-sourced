@@ -1,24 +1,24 @@
-import { EsQuery, EventStore } from "../eventStore/EventStore"
-import { SequenceNumber } from "../eventStore/SequenceNumber"
-import { PersistentStateEventListener, PartitionedStateEventListener, EsEventListener } from "./EsEventListener"
+import { EsQuery, EventStore } from "../../eventStore/src/EventStore"
+import { SequenceNumber } from "../../eventStore/src/SequenceNumber"
+import { PersistentStateEventHandler, PartitionedStateEventHandler, EventHandler as EventHandler } from "./EventHandler"
 import * as R from "ramda"
 
-const buildQuery = (eventListener: EsEventListener): EsQuery => ({
-    criteria: [{ tags: eventListener.tagFilter, eventTypes: R.keys(eventListener.when) as string[] }]
+const buildQuery = (eventHandler: EventHandler): EsQuery => ({
+    criteria: [{ tags: eventHandler.tagFilter, eventTypes: R.keys(eventHandler.when) as string[] }]
 })
 
-export async function applyEventsToListener<
-    TEventListener extends PersistentStateEventListener | PartitionedStateEventListener
+export async function handleEvents<
+    TEventHandler extends PersistentStateEventHandler | PartitionedStateEventHandler
 >(
     eventStore: EventStore,
-    eventListener: TEventListener,
+    eventHandler: TEventHandler,
     lastSequenceNumberSeen?: SequenceNumber
 ): Promise<{ lastSequenceNumberSeen: SequenceNumber }> {
-    type State = TEventListener["init"]
+    type State = TEventHandler["init"]
 
-    const query = buildQuery(eventListener)
-    const { stateManager: unpartitionedStateManager } = eventListener as PersistentStateEventListener
-    const { partitionByTags, stateManager: partitionedStateManager } = eventListener as PartitionedStateEventListener
+    const query = buildQuery(eventHandler)
+    const { stateManager: unpartitionedStateManager } = eventHandler as PersistentStateEventHandler
+    const { partitionByTags, stateManager: partitionedStateManager } = eventHandler as PartitionedStateEventHandler
 
     const stateCache: Record<string, State> = {}
     for await (const eventEnvelope of eventStore.read(query, lastSequenceNumberSeen)) {
@@ -37,10 +37,10 @@ export async function applyEventsToListener<
         const { partitionKey, readState, writeState } = partitionByTags ? partititionedHandler : unpartitionedHandler
 
         if (!stateCache[partitionKey]) {
-            stateCache[partitionKey] = (await readState()) ?? eventListener.init
+            stateCache[partitionKey] = (await readState()) ?? eventHandler.init
         }
-        const eventHandler = R.has(event.type, eventListener.when) ? eventListener.when[event.type] : R.identity
-        const newState = await eventHandler(eventEnvelope, stateCache[partitionKey])
+        const handlerFn = R.has(event.type, eventHandler.when) ? eventHandler.when[event.type] : R.identity
+        const newState = await handlerFn(eventEnvelope, stateCache[partitionKey])
         await writeState(newState)
         lastSequenceNumberSeen = sequenceNumber
     }

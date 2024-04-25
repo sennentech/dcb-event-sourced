@@ -1,4 +1,4 @@
-import { EsEventListener } from "../../../src/eventListener/EsEventListener"
+import { EventHandler } from "../../../eventHandlers/src/EventHandler"
 import {
     CourseCreatedEvent,
     CourseCapacityChangedEvent,
@@ -8,7 +8,7 @@ import {
 
 export const CourseCapacity = (
     courseId: string
-): EsEventListener<{
+): EventHandler<{
     state: { isFull: boolean; subscriberCount: number; capacity: number }
     eventHandlers: CourseCreatedEvent | CourseCapacityChangedEvent | StudentSubscribedEvent | StudentUnsubscribedEvent
 }> => ({
