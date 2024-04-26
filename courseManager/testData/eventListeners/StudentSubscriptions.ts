@@ -1,10 +1,10 @@
-import { EsEventListener } from "../../../eventHandlers/src/EventHandler"
+import { EventHandler } from "../../../eventHandlers/src/EventHandler"
 import { StudentSubscribedEvent, StudentUnsubscribedEvent } from "../events"
 
 const STUDENT_SUBSCRIPTION_LIMIT = 10
 export const StudentSubscriptions = (
     studentId: string
-): EsEventListener<{
+): EventHandler<{
     state: { maxedOut: boolean; subscriptionCount: number }
     eventHandlers: StudentSubscribedEvent | StudentUnsubscribedEvent
 }> => ({

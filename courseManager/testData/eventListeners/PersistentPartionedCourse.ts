@@ -1,4 +1,4 @@
-import { PartitionedStateEventListener } from "../../../eventHandlers/src/EventHandler"
+import { PartitionedStateEventHandler } from "../../../eventHandlers/src/EventHandler"
 import { CourseCapacityChangedEvent, CourseCreatedEvent } from "../events"
 import * as R from "ramda"
 
@@ -14,7 +14,7 @@ export interface CourseRepository {
 
 export const PersistentPartitionedCourse = (
     repository: CourseRepository
-): PartitionedStateEventListener<{
+): PartitionedStateEventHandler<{
     state: Course
     eventHandlers: CourseCreatedEvent | CourseCapacityChangedEvent
 }> => ({

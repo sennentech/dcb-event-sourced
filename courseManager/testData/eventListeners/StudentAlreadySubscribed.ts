@@ -1,4 +1,4 @@
-import { EsEventListener } from "../../../eventHandlers/src/EventHandler"
+import { EventHandler } from "../../../eventHandlers/src/EventHandler"
 import { StudentSubscribedEvent, StudentUnsubscribedEvent } from "../events"
 
 export const StudentAlreadySubscribed = ({
@@ -7,7 +7,7 @@ export const StudentAlreadySubscribed = ({
 }: {
     courseId: string
     studentId: string
-}): EsEventListener<{
+}): EventHandler<{
     state: boolean
     tagFilter: { courseId: string; studentId: string }
     eventHandlers: StudentSubscribedEvent | StudentUnsubscribedEvent

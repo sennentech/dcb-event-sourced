@@ -25,8 +25,7 @@ describe("persistentPartitionedEventListeners", () => {
             let lastSequenceNumberSeen: SequenceNumber
             beforeEach(async () => {
                 eventStore.append(new CourseCreatedEvent({ courseId: "course-1", capacity: 10 }), AppendConditions.None)
-                lastSequenceNumberSeen = (await handleEvents(eventStore, courseEventListener))
-                    .lastSequenceNumberSeen
+                lastSequenceNumberSeen = (await handleEvents(eventStore, courseEventListener)).lastSequenceNumberSeen
             })
             it("last sequence number is one", async () => {
                 expect(lastSequenceNumberSeen.value).to.equal(1)

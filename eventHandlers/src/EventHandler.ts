@@ -5,9 +5,9 @@ interface EsEventHandlerDef {
     eventHandlers: EsEvent
 }
 
-type EventHandler<TEvent, TState> = (eventEnvelope: TEvent, state: TState) => TState | Promise<TState>
+type EventHandlerFn<TEvent, TState> = (eventEnvelope: TEvent, state: TState) => TState | Promise<TState>
 type EventHandlers<TDef extends EsEventHandlerDef> = {
-    [E in TDef["eventHandlers"] as E["type"]]: EventHandler<EsEventEnvelope<E>, TDef["state"]>
+    [E in TDef["eventHandlers"] as E["type"]]: EventHandlerFn<EsEventEnvelope<E>, TDef["state"]>
 }
 
 export interface PartitionedStateManager<TState> {
