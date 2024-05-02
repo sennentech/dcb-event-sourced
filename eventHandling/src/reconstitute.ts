@@ -21,7 +21,7 @@ export async function reconstitute<T extends EventHandlers>(
     }
 
     let maxSequenceNumber = SequenceNumber.zero()
-    for await (const eventEnvelope of eventStore.read(query, SequenceNumber.zero())) {
+    for await (const eventEnvelope of eventStore.read(query)) {
         for (const [stateKey, eventHandler] of R.toPairs(eventHandlers)) {
             const { event, sequenceNumber } = eventEnvelope
             const defaultHandler = (_event: EsEventEnvelope, state: EventHandlerStates<T>) => state
