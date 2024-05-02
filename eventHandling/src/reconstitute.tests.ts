@@ -34,10 +34,10 @@ describe("reconstitute", () => {
                 expect(appendCondition?.maxSequenceNumber.value).to.equal(SequenceNumber.zero().value)
             })
 
-            it("should have a single eventType of 'courseCreated' in appendCondition", async () => {
+            it("should have a single eventType of 'courseWasCreated' in appendCondition", async () => {
                 const { eventTypes } = appendCondition.query.criteria[0]
                 expect(eventTypes.length).to.equal(1)
-                expect(eventTypes[0]).to.equal("courseCreated")
+                expect(eventTypes[0]).to.equal("courseWasCreated")
             })
 
             it("should include 'courseId' as a tag in appendCondition", async () => {
@@ -69,10 +69,10 @@ describe("reconstitute", () => {
             expect(appendCondition?.maxSequenceNumber.value).to.equal(1)
         })
 
-        it("should have a single eventType of 'courseCreated' in appendCondition", async () => {
+        it("should have a single eventType of 'courseWasCreated' in appendCondition", async () => {
             const { eventTypes } = appendCondition.query.criteria[0]
             expect(eventTypes.length).to.equal(1)
-            expect(eventTypes[0]).to.equal("courseCreated")
+            expect(eventTypes[0]).to.equal("courseWasCreated")
         })
 
         it("should include 'courseId' as a tag in appendCondition", async () => {
@@ -110,10 +110,10 @@ describe("reconstitute", () => {
             const { eventTypes } = appendCondition.query.criteria[0]
             expect(eventTypes.length).to.equal(4)
             expect([
-                "courseCreated",
+                "courseWasCreated",
                 "courseCapacityWasChanged",
-                "studentUnsubscribed",
-                "studentSubscribed"
+                "studentWasUnsubscribed",
+                "studentWasSubscribed"
             ]).to.have.all.members(eventTypes)
         })
 
@@ -157,10 +157,10 @@ describe("reconstitute", () => {
             const { eventTypes } = appendCondition.query.criteria[0]
             expect(eventTypes.length).to.equal(4)
             expect([
-                "courseCreated",
+                "courseWasCreated",
                 "courseCapacityWasChanged",
-                "studentUnsubscribed",
-                "studentSubscribed"
+                "studentWasUnsubscribed",
+                "studentWasSubscribed"
             ]).to.have.all.members(eventTypes)
         })
 
