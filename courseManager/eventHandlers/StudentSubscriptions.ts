@@ -1,4 +1,4 @@
-import { EventHandler } from "../../../eventHandlers/src/EventHandler"
+import { EventHandler } from "../../eventHandling/src/EventHandler"
 import { StudentSubscribedEvent, StudentUnsubscribedEvent } from "../events"
 
 const STUDENT_SUBSCRIPTION_LIMIT = 10

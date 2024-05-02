@@ -7,7 +7,7 @@
     "scripts": {
         "build": "./node_modules/.bin/tsc",
         "watch": "./node_modules/.bin/tsc --watch",
-        "test": "mocha -r ./bootstrap-tests.js 'eventStore/**/*.tests.ts' 'eventHandlers/**/*.tests.ts' 'courseManager/**/*.tests.ts'",
+        "test": "mocha -r ./bootstrap-tests.js 'eventStore/**/*.tests.ts' 'eventHandling/**/*.tests.ts' 'courseManager/**/*.tests.ts'",
         "lint": "./node_modules/.bin/eslint . --ext .ts,.tsx --max-warnings 0",
         "lint-fix": "./node_modules/.bin/eslint . --ext .ts,.tsx --fix",
         "publish": "",

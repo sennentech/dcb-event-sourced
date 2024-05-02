@@ -19,10 +19,9 @@ export async function reconstitute<T extends EventHandlers>(
             R.map(proj => ({ tags: proj.tagFilter, eventTypes: R.keys(proj.when) as string[] }), eventHandlers)
         )
     }
-    const fromSequenceNumber = SequenceNumber.first()
 
-    let maxSequenceNumber = SequenceNumber.first()
-    for await (const eventEnvelope of eventStore.read(query, fromSequenceNumber)) {
+    let maxSequenceNumber = SequenceNumber.zero()
+    for await (const eventEnvelope of eventStore.read(query, SequenceNumber.zero())) {
         for (const [stateKey, eventHandler] of R.toPairs(eventHandlers)) {
             const { event, sequenceNumber } = eventEnvelope
             const defaultHandler = (_event: EsEventEnvelope, state: EventHandlerStates<T>) => state

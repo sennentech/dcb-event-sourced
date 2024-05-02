@@ -1,4 +1,4 @@
-import { PartitionedStateEventHandler } from "../../../eventHandlers/src/EventHandler"
+import { PartitionedStateEventHandler } from "../../eventHandling/src/EventHandler"
 import { CourseCapacityChangedEvent, CourseCreatedEvent } from "../events"
 import * as R from "ramda"
 

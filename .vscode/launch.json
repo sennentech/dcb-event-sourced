@@ -2,24 +2,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "type": "node",
+            "command": "yarn test",
+            "name": "Debug tests",
             "request": "launch",
-            "name": "Run All tests",
-            "runtimeVersion": "18.13.0",
-            "program": "${workspaceFolder}/node_modules/mocha/bin/_mocha",
-            "args": [
-                "-r",
-                "test/bootstrap.js",
-                "-r",
-                "ts-node/register",
-                "--timeout",
-                "999999",
-                "--colors",
-                "${workspaceFolder}/test/**/**/*.tests.ts",
-            ],
-            "console": "integratedTerminal",
-            "internalConsoleOptions": "neverOpen",
-            "protocol": "inspector"
+            "type": "node-terminal"
         }
     ]
 }

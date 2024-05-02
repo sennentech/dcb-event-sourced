@@ -1,17 +1,17 @@
 import { EventStore } from "../eventStore/src/EventStore"
-import { reconstitute } from "../eventHandlers/src/reconstitute"
-import { StudentSubscribedEvent } from "./testData/events"
-import { CourseCapacity } from "./testData/eventListeners/CourseCapacity"
-import { CourseExists } from "./testData/eventListeners/CourseExists"
-import { StudentAlreadySubscribed } from "./testData/eventListeners/StudentAlreadySubscribed"
-import { StudentSubscriptions } from "./testData/eventListeners/StudentSubscriptions"
+import { reconstitute } from "../eventHandling/src/reconstitute"
+import { StudentSubscribedEvent } from "./events"
+import { CourseCapacity } from "./eventHandlers/CourseCapacity"
+import { CourseExists } from "./eventHandlers/CourseExists"
+import { StudentAlreadySubscribed } from "./eventHandlers/StudentAlreadySubscribed"
+import { StudentSubscriptions } from "./eventHandlers/StudentSubscriptions"
 
 export interface SubscribeStudentToCourseCmd {
     studentId: string
     courseId: string
 }
 
-export const subscribeStudentCmdHandler =
+export const subscribeStudentCommandHandler =
     (eventStore: EventStore) =>
     async ({ courseId, studentId }: SubscribeStudentToCourseCmd) => {
         const {

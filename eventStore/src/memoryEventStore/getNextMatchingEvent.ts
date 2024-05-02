@@ -10,7 +10,7 @@ export const getNextMatchingEvent = (
         direction,
         query,
         fromSequenceNumber
-    }: { direction: "forwards" | "backwards"; query: EsQuery; fromSequenceNumber?: SequenceNumber }
+    }: { direction: "forwards" | "backwards"; query?: EsQuery; fromSequenceNumber?: SequenceNumber }
 ): EsEventEnvelope => {
     const filtered = eventEnvelopes.filter(event => {
         const { sequenceNumber } = event
@@ -19,7 +19,7 @@ export const getNextMatchingEvent = (
             ((direction === "forwards" && sequenceNumber < fromSequenceNumber) ||
                 (direction === "backwards" && sequenceNumber > fromSequenceNumber))
 
-        const noQueryCriteria = !query.criteria || query.criteria.length === 0
+        const noQueryCriteria = !query || !query.criteria || query.criteria.length === 0
 
         if (seqNoOutOfRange) return false
         if (noQueryCriteria) return true

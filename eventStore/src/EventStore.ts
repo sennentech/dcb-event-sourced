@@ -24,11 +24,12 @@ export interface EsQuery {
     criteria: EsQueryCriterion[]
 }
 
-type NoCondition = "None"
-export const AppendConditions: Record<NoCondition, NoCondition> = {
-    None: "None"
+export type AnyCondition = "Any"
+
+export const AppendConditions: Record<AnyCondition, AnyCondition> = {
+    Any: "Any"
 }
-export interface AppendCondition {
+export type AppendCondition = {
     query: EsQuery
     maxSequenceNumber: SequenceNumber
 }
@@ -36,9 +37,8 @@ export interface AppendCondition {
 export interface EventStore {
     append: (
         events: EsEvent | EsEvent[],
-        condition: AppendCondition | NoCondition
+        condition: AppendCondition | AnyCondition
     ) => Promise<{ lastSequenceNumber: SequenceNumber }>
-
-    read: (query: EsQuery, fromSequenceNumber?: SequenceNumber) => AsyncGenerator<EsEventEnvelope>
+    read: (query?: EsQuery, fromSequenceNumber?: SequenceNumber) => AsyncGenerator<EsEventEnvelope>
     readBackward: (query: EsQuery, fromSequenceNumber?: SequenceNumber) => AsyncGenerator<EsEventEnvelope>
 }

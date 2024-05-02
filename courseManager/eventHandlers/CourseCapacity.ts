@@ -1,4 +1,4 @@
-import { EventHandler } from "../../../eventHandlers/src/EventHandler"
+import { EventHandler } from "../../eventHandling/src/EventHandler"
 import {
     CourseCreatedEvent,
     CourseCapacityChangedEvent,
@@ -37,6 +37,3 @@ export const CourseCapacity = (
         })
     }
 })
-
-const c = CourseCapacity("hello")
-c.tagFilter.courseId

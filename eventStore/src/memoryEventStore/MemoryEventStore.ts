@@ -1,4 +1,4 @@
-import { EsEventEnvelope, EventStore, AppendCondition, EsQuery, EsEvent } from "../EventStore"
+import { EsEventEnvelope, EventStore, AppendCondition, EsQuery, EsEvent, AnyCondition } from "../EventStore"
 import * as R from "ramda"
 import { SequenceNumber } from "../SequenceNumber"
 import { Timestamp } from "../TimeStamp"
@@ -15,8 +15,11 @@ const maxSeqNo = R.pipe<unknown[], EsEventEnvelope, number, number>(
 export class MemoryEventStore implements EventStore {
     private events: Array<EsEventEnvelope> = []
 
-    async *read(query: EsQuery, fromSequenceNumber?: SequenceNumber): AsyncGenerator<EsEventEnvelope> {
-        let currentSequenceNumberValue = fromSequenceNumber?.value ?? SequenceNumber.first().value
+    constructor(initialEvents: Array<EsEventEnvelope> = []) {
+        this.events = [...initialEvents]
+    }
+    async *read(query?: EsQuery, fromSequenceNumber?: SequenceNumber): AsyncGenerator<EsEventEnvelope> {
+        let currentSequenceNumberValue = fromSequenceNumber?.value ?? SequenceNumber.zero().value
 
         while (currentSequenceNumberValue <= maxSeqNo(this.events)) {
             const resultEvent = getNextMatchingEvent(this.events, {
@@ -53,7 +56,7 @@ export class MemoryEventStore implements EventStore {
 
     async append(
         events: EsEvent | EsEvent[],
-        appendCondition: AppendCondition | "None"
+        appendCondition: AppendCondition | AnyCondition
     ): Promise<{
         lastSequenceNumber: SequenceNumber
     }> {
@@ -65,7 +68,7 @@ export class MemoryEventStore implements EventStore {
         }))
 
         if (!appendCondition) throw new Error("No append condition provided. Use AppendCondition.None if not required.")
-        if (appendCondition !== "None") {
+        if (appendCondition !== "Any") {
             const { query, maxSequenceNumber } = appendCondition
             const newEvent = getNextMatchingEvent(this.events, {
                 direction: "forwards",
