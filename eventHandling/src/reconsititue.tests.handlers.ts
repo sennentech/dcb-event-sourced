@@ -1,9 +1,9 @@
 import { EventHandler } from "./EventHandler"
 import {
-    CourseCreatedEvent,
-    CourseCapacityChangedEvent,
-    StudentSubscribedEvent,
-    StudentUnsubscribedEvent
+    CourseWasCreatedEvent,
+    CourseCapacityWasChangedEvent,
+    StudentWasSubscribedEvent,
+    StudentWasUnsubscribedEvent
 } from "./reconstitute.tests.events"
 
 export const CourseExists = (
@@ -11,12 +11,12 @@ export const CourseExists = (
 ): EventHandler<{
     state: boolean
     tagFilter: { courseId: string }
-    eventHandlers: CourseCreatedEvent
+    eventHandlers: CourseWasCreatedEvent
 }> => ({
     tagFilter: { courseId },
     init: false,
     when: {
-        courseCreated: async () => true
+        courseWasCreated: async () => true
     }
 })
 
@@ -24,27 +24,31 @@ export const CourseCapacity = (
     courseId: string
 ): EventHandler<{
     state: { isFull: boolean; subscriberCount: number; capacity: number }
-    eventHandlers: CourseCreatedEvent | CourseCapacityChangedEvent | StudentSubscribedEvent | StudentUnsubscribedEvent
+    eventHandlers:
+        | CourseWasCreatedEvent
+        | CourseCapacityWasChangedEvent
+        | StudentWasSubscribedEvent
+        | StudentWasUnsubscribedEvent
 }> => ({
     tagFilter: { courseId },
     init: { isFull: true, subscriberCount: 0, capacity: 0 },
     when: {
-        courseCreated: ({ event }) => ({
+        courseWasCreated: ({ event }) => ({
             isFull: event.data.capacity === 0,
             capacity: event.data.capacity,
             subscriberCount: 0
         }),
-        courseCapacityChanged: ({ event }, { subscriberCount }) => ({
+        courseCapacityWasChanged: ({ event }, { subscriberCount }) => ({
             subscriberCount,
             isFull: event.data.newCapacity <= subscriberCount,
             capacity: event.data.newCapacity
         }),
-        studentSubscribed: (_eventEnvelope, { capacity, subscriberCount }) => ({
+        studentWasSubscribed: (_eventEnvelope, { capacity, subscriberCount }) => ({
             isFull: capacity <= subscriberCount + 1,
             subscriberCount: subscriberCount + 1,
             capacity
         }),
-        studentUnsubscribed: (eventEnvelope, { capacity, subscriberCount }) => ({
+        studentWasUnsubscribed: (eventEnvelope, { capacity, subscriberCount }) => ({
             isFull: capacity <= subscriberCount - 1,
             subscriberCount: subscriberCount - 1,
             capacity

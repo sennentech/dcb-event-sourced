@@ -1,5 +1,5 @@
 import { PartitionedStateEventHandler } from "../../eventHandling/src/EventHandler"
-import { CourseCapacityChangedEvent, CourseCreatedEvent } from "../events"
+import { CourseCapacityWasChangedEvent, CourseWasCreatedEvent } from "../events"
 import * as R from "ramda"
 
 export interface Course {
@@ -16,19 +16,19 @@ export const PersistentPartitionedCourse = (
     repository: CourseRepository
 ): PartitionedStateEventHandler<{
     state: Course
-    eventHandlers: CourseCreatedEvent | CourseCapacityChangedEvent
+    eventHandlers: CourseWasCreatedEvent | CourseCapacityWasChangedEvent
 }> => ({
     init: { id: undefined, capacity: 0, subscriptions: 0 },
     partitionByTags: ({ courseId }) => courseId,
     when: {
-        courseCreated: async ({ event }, { subscriptions }) => {
+        courseWasCreated: async ({ event }, { subscriptions }) => {
             return {
                 id: event.tags.courseId,
                 capacity: event.data.capacity,
                 subscriptions
             }
         },
-        courseCapacityChanged: async ({ event }, course) => {
+        courseCapacityWasChanged: async ({ event }, course) => {
             return R.assoc("capacity", event.data.newCapacity, course)
         }
     },

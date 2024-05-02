@@ -1,5 +1,5 @@
 import { EventHandler } from "../../eventHandling/src/EventHandler"
-import { StudentSubscribedEvent, StudentUnsubscribedEvent } from "../events"
+import { StudentWasSubscribedEvent, StudentWasUnsubscribedEvent } from "../events"
 
 export const StudentAlreadySubscribed = ({
     courseId,
@@ -10,12 +10,12 @@ export const StudentAlreadySubscribed = ({
 }): EventHandler<{
     state: boolean
     tagFilter: { courseId: string; studentId: string }
-    eventHandlers: StudentSubscribedEvent | StudentUnsubscribedEvent
+    eventHandlers: StudentWasSubscribedEvent | StudentWasUnsubscribedEvent
 }> => ({
     tagFilter: { courseId, studentId },
     init: false,
     when: {
-        studentSubscribed: () => true,
-        studentUnsubscribed: () => false
+        studentWasSubscribed: () => true,
+        studentWasUnsubscribed: () => false
     }
 })

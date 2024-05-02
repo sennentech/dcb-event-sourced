@@ -1,6 +1,6 @@
 import { EventStore } from "../eventStore/src/EventStore"
 import { reconstitute } from "../eventHandling/src/reconstitute"
-import { StudentSubscribedEvent } from "./events"
+import { StudentWasSubscribedEvent } from "./events"
 import { CourseCapacity } from "./eventHandlers/CourseCapacity"
 import { CourseExists } from "./eventHandlers/CourseExists"
 import { StudentAlreadySubscribed } from "./eventHandlers/StudentAlreadySubscribed"
@@ -30,5 +30,5 @@ export const subscribeStudentCommandHandler =
         if (studentSubscriptions.maxedOut)
             throw new Error(`Student is already subscribed to the maximum number of courses`)
 
-        await eventStore.append(new StudentSubscribedEvent({ courseId, studentId }), appendCondition)
+        await eventStore.append(new StudentWasSubscribedEvent({ courseId, studentId }), appendCondition)
     }

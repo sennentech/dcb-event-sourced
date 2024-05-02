@@ -1,16 +1,16 @@
 import { EventHandler } from "../../eventHandling/src/EventHandler"
-import { CourseCreatedEvent } from "../events"
+import { CourseWasCreatedEvent } from "../events"
 
 export const CourseExists = (
     courseId: string
 ): EventHandler<{
     state: boolean
     tagFilter: { courseId: string }
-    eventHandlers: CourseCreatedEvent
+    eventHandlers: CourseWasCreatedEvent
 }> => ({
     tagFilter: { courseId },
     init: false,
     when: {
-        courseCreated: async () => true
+        courseWasCreated: async () => true
     }
 })

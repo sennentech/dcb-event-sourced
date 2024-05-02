@@ -1,7 +1,7 @@
 import { EsEvent } from "../eventStore/src/EventStore"
 
-export class CourseCreatedEvent implements EsEvent {
-    public type: "courseCreated" = "courseCreated"
+export class CourseWasCreatedEvent implements EsEvent {
+    public type: "courseWasCreated" = "courseWasCreated"
     public tags: { courseId: string }
     public data: { capacity: number }
 
@@ -11,8 +11,8 @@ export class CourseCreatedEvent implements EsEvent {
     }
 }
 
-export class CourseCapacityChangedEvent implements EsEvent {
-    type: "courseCapacityChanged" = "courseCapacityChanged"
+export class CourseCapacityWasChangedEvent implements EsEvent {
+    type: "courseCapacityWasChanged" = "courseCapacityWasChanged"
     public tags: { courseId: string }
     public data: { newCapacity: number }
 
@@ -22,8 +22,8 @@ export class CourseCapacityChangedEvent implements EsEvent {
     }
 }
 
-export class StudentSubscribedEvent implements EsEvent {
-    type: "studentSubscribed" = "studentSubscribed"
+export class StudentWasSubscribedEvent implements EsEvent {
+    type: "studentWasSubscribed" = "studentWasSubscribed"
     public tags: { courseId: string; studentId: string }
     public data: Record<string, never> = {}
 
@@ -32,8 +32,8 @@ export class StudentSubscribedEvent implements EsEvent {
     }
 }
 
-export class StudentUnsubscribedEvent implements EsEvent {
-    type: "studentUnsubscribed" = "studentUnsubscribed"
+export class StudentWasUnsubscribedEvent implements EsEvent {
+    type: "studentWasUnsubscribed" = "studentWasUnsubscribed"
     public tags: { courseId: string; studentId: string }
     public data: Record<string, never> = {}
 

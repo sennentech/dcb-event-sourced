@@ -1,36 +1,40 @@
 import { EventHandler } from "../../eventHandling/src/EventHandler"
 import {
-    CourseCreatedEvent,
-    CourseCapacityChangedEvent,
-    StudentSubscribedEvent,
-    StudentUnsubscribedEvent
+    CourseWasCreatedEvent,
+    CourseCapacityWasChangedEvent,
+    StudentWasSubscribedEvent,
+    StudentWasUnsubscribedEvent
 } from "../events"
 
 export const CourseCapacity = (
     courseId: string
 ): EventHandler<{
     state: { isFull: boolean; subscriberCount: number; capacity: number }
-    eventHandlers: CourseCreatedEvent | CourseCapacityChangedEvent | StudentSubscribedEvent | StudentUnsubscribedEvent
+    eventHandlers:
+        | CourseWasCreatedEvent
+        | CourseCapacityWasChangedEvent
+        | StudentWasSubscribedEvent
+        | StudentWasUnsubscribedEvent
 }> => ({
     tagFilter: { courseId },
     init: { isFull: true, subscriberCount: 0, capacity: 0 },
     when: {
-        courseCreated: ({ event }) => ({
+        courseWasCreated: ({ event }) => ({
             isFull: event.data.capacity === 0,
             capacity: event.data.capacity,
             subscriberCount: 0
         }),
-        courseCapacityChanged: ({ event }, { subscriberCount }) => ({
+        courseCapacityWasChanged: ({ event }, { subscriberCount }) => ({
             subscriberCount,
             isFull: event.data.newCapacity <= subscriberCount,
             capacity: event.data.newCapacity
         }),
-        studentSubscribed: (_eventEnvelope, { capacity, subscriberCount }) => ({
+        studentWasSubscribed: (_eventEnvelope, { capacity, subscriberCount }) => ({
             isFull: capacity <= subscriberCount + 1,
             subscriberCount: subscriberCount + 1,
             capacity
         }),
-        studentUnsubscribed: (eventEnvelope, { capacity, subscriberCount }) => ({
+        studentWasUnsubscribed: (eventEnvelope, { capacity, subscriberCount }) => ({
             isFull: capacity <= subscriberCount - 1,
             subscriberCount: subscriberCount - 1,
             capacity
