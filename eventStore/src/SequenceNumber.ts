@@ -17,6 +17,14 @@ export class SequenceNumber {
         return this.#value
     }
 
+    inc(): SequenceNumber {
+        return SequenceNumber.create(this.#value + 1)
+    }
+
+    plus(value: number): SequenceNumber {
+        return SequenceNumber.create(this.#value + value)
+    }
+
     static create(sequenceNumber: number): SequenceNumber {
         if (sequenceNumber === undefined || sequenceNumber === null) throw new Error("Sequence number cannot be null")
         if (!Number.isInteger(sequenceNumber)) throw new Error("Sequence number needs to be a valid integer")

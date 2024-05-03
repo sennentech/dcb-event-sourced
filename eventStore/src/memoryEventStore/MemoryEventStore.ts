@@ -14,10 +14,10 @@ import { getNextMatchingEvent } from "./getNextMatchingEvent"
 
 export const ensureIsArray = (events: EsEvent | EsEvent[]) => (R.is(Array, events) ? events : [events])
 
-const maxSeqNo = R.pipe<unknown[], EsEventEnvelope, number, number>(
+const maxSeqNo = R.pipe<unknown[], EsEventEnvelope, SequenceNumber, SequenceNumber>(
     R.last,
-    R.path(["sequenceNumber", "value"]),
-    R.defaultTo(0)
+    R.prop("sequenceNumber"),
+    R.defaultTo(SequenceNumber.zero())
 )
 
 export class MemoryEventStore implements EventStore {
@@ -36,26 +36,27 @@ export class MemoryEventStore implements EventStore {
     }
 
     async *#read({ query, options }: { query?: EsQuery; options?: EsReadOptions }): AsyncGenerator<EsEventEnvelope> {
+        const step = options?.backwards ? -1 : 1
         const backwards = options?.backwards
         const maxSequenceNumber = maxSeqNo(this.events)
-        const defaultSeqNumber = backwards ? maxSequenceNumber : SequenceNumber.zero().value
-        let currentSequenceNumberValue = options?.fromSequenceNumber?.value ?? defaultSeqNumber
+        const defaultSeqNumber = backwards ? maxSequenceNumber : SequenceNumber.zero()
 
-        while (currentSequenceNumberValue <= maxSeqNo(this.events)) {
+        let currentSequenceNumber = options?.fromSequenceNumber ?? defaultSeqNumber
+
+        while (currentSequenceNumber <= maxSequenceNumber) {
+            console.log(SequenceNumber.create(5) >= SequenceNumber.create(5))
             const resultEvent = getNextMatchingEvent(this.events, {
                 direction: options?.backwards ? "backwards" : "forwards",
                 query,
-                fromSequenceNumber: SequenceNumber.create(currentSequenceNumberValue)
+                fromSequenceNumber: currentSequenceNumber
             })
             if (resultEvent) {
                 yield resultEvent
+                currentSequenceNumber = resultEvent.sequenceNumber.plus(step)
+            } else {
+                break
             }
-            currentSequenceNumberValue = resultEvent?.sequenceNumber?.value + (options?.backwards ? -1 : 1)
         }
-    }
-
-    async reset() {
-        this.events = []
     }
 
     async append(
@@ -64,11 +65,11 @@ export class MemoryEventStore implements EventStore {
     ): Promise<{
         lastSequenceNumber: SequenceNumber
     }> {
-        const nextSequenceNumberValue = maxSeqNo(this.events) + 1
+        const nextSequenceNumber = maxSeqNo(this.events).inc()
         const eventEnvelopes: Array<EsEventEnvelope> = ensureIsArray(events).map((ev, i) => ({
             event: ev,
             timestamp: Timestamp.now(),
-            sequenceNumber: SequenceNumber.create(nextSequenceNumberValue + i)
+            sequenceNumber: nextSequenceNumber.plus(i)
         }))
 
         if (!appendCondition) throw new Error("No append condition provided. Use AppendCondition.None if not required.")
@@ -77,14 +78,14 @@ export class MemoryEventStore implements EventStore {
             const newEvent = getNextMatchingEvent(this.events, {
                 direction: "forwards",
                 query,
-                fromSequenceNumber: SequenceNumber.create(maxSequenceNumber.value + 1)
+                fromSequenceNumber: maxSequenceNumber.plus(1)
             })
             if (newEvent) throw new Error("Expected Version fail: New events matching appendCondition found.")
         }
 
         this.events.push(...eventEnvelopes)
         return {
-            lastSequenceNumber: SequenceNumber.create(maxSeqNo(this.events))
+            lastSequenceNumber: maxSeqNo(this.events)
         }
     }
 }

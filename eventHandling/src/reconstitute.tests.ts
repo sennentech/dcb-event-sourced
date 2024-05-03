@@ -31,7 +31,7 @@ describe("reconstitute", () => {
             })
 
             it("should set the maximum sequence number to 0 in appendCondition", async () => {
-                expect(appendCondition?.maxSequenceNumber.value).to.equal(SequenceNumber.zero().value)
+                expect(appendCondition?.maxSequenceNumber.value).to.equal(0)
             })
 
             it("should have a single eventType of 'courseWasCreated' in appendCondition", async () => {
