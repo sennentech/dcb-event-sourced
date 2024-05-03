@@ -44,7 +44,6 @@ export class MemoryEventStore implements EventStore {
         let currentSequenceNumber = options?.fromSequenceNumber ?? defaultSeqNumber
 
         while (currentSequenceNumber <= maxSequenceNumber) {
-            console.log(SequenceNumber.create(5) >= SequenceNumber.create(5))
             const resultEvent = getNextMatchingEvent(this.events, {
                 direction: options?.backwards ? "backwards" : "forwards",
                 query,

@@ -85,6 +85,13 @@ describe("memoryEventStore.query", () => {
                 expect(events.length).to.equal(1)
                 expect(events[0].sequenceNumber.value).to.equal(1)
             })
+
+            it("should return both first and second event when read backward from sequence number 2", async () => {
+                const events = await streamAllEventsToArray(
+                    eventStore.readAll({ fromSequenceNumber: SequenceNumber.create(2), backwards: true })
+                )
+                expect(events.length).to.equal(2)
+            })
         })
 
         describe("when filtered by event types", () => {
