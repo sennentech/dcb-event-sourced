@@ -24,7 +24,7 @@ describe("memoryEventStore.append", () => {
         })
 
         it("should return an empty array when no events are stored", async () => {
-            const events = await streamAllEventsToArray(eventStore.read())
+            const events = await streamAllEventsToArray(eventStore.readAll())
             expect(events.length).to.equal(0)
         })
         it("should assign a sequence number of 1 on appending the first event", async () => {

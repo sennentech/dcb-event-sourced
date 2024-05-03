@@ -7,9 +7,7 @@ const buildQuery = (eventHandler: EventHandler): EsQuery => ({
     criteria: [{ tags: eventHandler.tagFilter, eventTypes: R.keys(eventHandler.when) as string[] }]
 })
 
-export async function handleEvents<
-    TEventHandler extends PersistentStateEventHandler | PartitionedStateEventHandler
->(
+export async function handleEvents<TEventHandler extends PersistentStateEventHandler | PartitionedStateEventHandler>(
     eventStore: EventStore,
     eventHandler: TEventHandler,
     lastSequenceNumberSeen?: SequenceNumber
@@ -21,7 +19,7 @@ export async function handleEvents<
     const { partitionByTags, stateManager: partitionedStateManager } = eventHandler as PartitionedStateEventHandler
 
     const stateCache: Record<string, State> = {}
-    for await (const eventEnvelope of eventStore.read(query, lastSequenceNumberSeen)) {
+    for await (const eventEnvelope of eventStore.read(query, { fromSequenceNumber: lastSequenceNumberSeen })) {
         const { event, sequenceNumber } = eventEnvelope
 
         const partititionedHandler = {

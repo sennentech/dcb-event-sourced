@@ -1,4 +1,12 @@
-import { EsEventEnvelope, EventStore, AppendCondition, EsQuery, EsEvent, AnyCondition } from "../EventStore"
+import {
+    EsEventEnvelope,
+    EventStore,
+    AppendCondition,
+    EsQuery,
+    EsEvent,
+    AnyCondition,
+    EsReadOptions
+} from "../EventStore"
 import * as R from "ramda"
 import { SequenceNumber } from "../SequenceNumber"
 import { Timestamp } from "../TimeStamp"
@@ -18,35 +26,31 @@ export class MemoryEventStore implements EventStore {
     constructor(initialEvents: Array<EsEventEnvelope> = []) {
         this.events = [...initialEvents]
     }
-    async *read(query?: EsQuery, fromSequenceNumber?: SequenceNumber): AsyncGenerator<EsEventEnvelope> {
-        let currentSequenceNumberValue = fromSequenceNumber?.value ?? SequenceNumber.zero().value
+
+    async *readAll(options?: EsReadOptions): AsyncGenerator<EsEventEnvelope> {
+        yield* this.#read({ query: null, options: options })
+    }
+
+    async *read(query: EsQuery, options?: EsReadOptions): AsyncGenerator<EsEventEnvelope> {
+        yield* this.#read({ query, options })
+    }
+
+    async *#read({ query, options }: { query?: EsQuery; options?: EsReadOptions }): AsyncGenerator<EsEventEnvelope> {
+        const backwards = options?.backwards
+        const maxSequenceNumber = maxSeqNo(this.events)
+        const defaultSeqNumber = backwards ? maxSequenceNumber : SequenceNumber.zero().value
+        let currentSequenceNumberValue = options?.fromSequenceNumber?.value ?? defaultSeqNumber
 
         while (currentSequenceNumberValue <= maxSeqNo(this.events)) {
             const resultEvent = getNextMatchingEvent(this.events, {
-                direction: "forwards",
+                direction: options?.backwards ? "backwards" : "forwards",
                 query,
                 fromSequenceNumber: SequenceNumber.create(currentSequenceNumberValue)
             })
             if (resultEvent) {
                 yield resultEvent
             }
-            currentSequenceNumberValue = resultEvent?.sequenceNumber?.value + 1
-        }
-    }
-
-    async *readBackward(query: EsQuery, fromSequenceNumber?: SequenceNumber): AsyncGenerator<EsEventEnvelope> {
-        let currentSequenceNumberValue = fromSequenceNumber?.value ?? maxSeqNo(this.events)
-        while (currentSequenceNumberValue > 0) {
-            const resultEvent = getNextMatchingEvent(this.events, {
-                direction: "backwards",
-                query,
-                fromSequenceNumber: SequenceNumber.create(currentSequenceNumberValue)
-            })
-            if (resultEvent) {
-                yield resultEvent
-            }
-
-            currentSequenceNumberValue = resultEvent?.sequenceNumber?.value - 1 ?? 0
+            currentSequenceNumberValue = resultEvent?.sequenceNumber?.value + (options?.backwards ? -1 : 1)
         }
     }
 

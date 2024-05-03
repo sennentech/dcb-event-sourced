@@ -35,12 +35,12 @@ describe("memoryEventStore.query", () => {
         })
 
         it("should return no events when read forward", async () => {
-            const events = await streamAllEventsToArray(eventStore.read({ criteria: [] }))
+            const events = await streamAllEventsToArray(eventStore.readAll())
             expect(events.length).to.equal(0)
         })
 
         it("should return no events when read backward", async () => {
-            const events = await streamAllEventsToArray(eventStore.read({ criteria: [] }))
+            const events = await streamAllEventsToArray(eventStore.readAll())
             expect(events.length).to.equal(0)
         })
     })
@@ -52,12 +52,12 @@ describe("memoryEventStore.query", () => {
         })
 
         it("should return a single event when read forward", async () => {
-            const events = await streamAllEventsToArray(eventStore.read({ criteria: [] }))
+            const events = await streamAllEventsToArray(eventStore.readAll())
             expect(events.length).to.equal(1)
         })
 
         it("should return a single event when read backward", async () => {
-            const events = await streamAllEventsToArray(eventStore.readBackward({ criteria: [] }))
+            const events = await streamAllEventsToArray(eventStore.readAll({ backwards: true }))
             expect(events.length).to.equal(1)
         })
     })
@@ -71,14 +71,16 @@ describe("memoryEventStore.query", () => {
 
         describe("with a fromSequenceNumber filter applied", () => {
             it("should return the second event when read forward from sequence number 2", async () => {
-                const events = await streamAllEventsToArray(eventStore.read({ criteria: [] }, SequenceNumber.create(2)))
+                const events = await streamAllEventsToArray(
+                    eventStore.readAll({ fromSequenceNumber: SequenceNumber.create(2) })
+                )
                 expect(events.length).to.equal(1)
                 expect(events[0].sequenceNumber.value).to.equal(2)
             })
 
             it("should return the first event when read backward from sequence number 1", async () => {
                 const events = await streamAllEventsToArray(
-                    eventStore.readBackward({ criteria: [] }, SequenceNumber.create(1))
+                    eventStore.readAll({ fromSequenceNumber: SequenceNumber.create(1), backwards: true })
                 )
                 expect(events.length).to.equal(1)
                 expect(events[0].sequenceNumber.value).to.equal(1)

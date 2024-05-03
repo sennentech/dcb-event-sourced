@@ -34,11 +34,16 @@ export type AppendCondition = {
     maxSequenceNumber: SequenceNumber
 }
 
+export interface EsReadOptions {
+    backwards?: boolean
+    fromSequenceNumber?: SequenceNumber
+}
 export interface EventStore {
     append: (
         events: EsEvent | EsEvent[],
         condition: AppendCondition | AnyCondition
     ) => Promise<{ lastSequenceNumber: SequenceNumber }>
-    read: (query?: EsQuery, fromSequenceNumber?: SequenceNumber) => AsyncGenerator<EsEventEnvelope>
-    readBackward: (query: EsQuery, fromSequenceNumber?: SequenceNumber) => AsyncGenerator<EsEventEnvelope>
+
+    read: (query: EsQuery, options?: EsReadOptions) => AsyncGenerator<EsEventEnvelope>
+    readAll: (options?: EsReadOptions) => AsyncGenerator<EsEventEnvelope>
 }
