@@ -1,4 +1,3 @@
-import { expect } from "chai"
 import { MemoryEventStore } from "./MemoryEventStore"
 import { AppendCondition, AppendConditions, EsEvent } from "../EventStore"
 import { SequenceNumber } from "../SequenceNumber"
@@ -23,13 +22,13 @@ describe("memoryEventStore.append", () => {
             eventStore = new MemoryEventStore()
         })
 
-        it("should return an empty array when no events are stored", async () => {
+        test("should return an empty array when no events are stored", async () => {
             const events = await streamAllEventsToArray(eventStore.readAll())
-            expect(events.length).to.equal(0)
+            expect(events.length).toBe(0)
         })
-        it("should assign a sequence number of 1 on appending the first event", async () => {
+        test("should assign a sequence number of 1 on appending the first event", async () => {
             const { lastSequenceNumber } = await eventStore.append(new EventType1(), AppendConditions.Any)
-            expect(lastSequenceNumber.value).to.equal(1)
+            expect(lastSequenceNumber.value).toBe(1)
         })
         describe("when append condition with eventTypes filter and maxSequenceNumber provided", () => {
             const appendCondition: AppendCondition = {
@@ -38,9 +37,9 @@ describe("memoryEventStore.append", () => {
                 },
                 maxSequenceNumber: SequenceNumber.create(1)
             }
-            it("should successfully append an event without throwing under specified conditions", async () => {
+            test("should successfully append an event without throwing under specified conditions", async () => {
                 const { lastSequenceNumber } = await eventStore.append(new EventType1(), appendCondition)
-                expect(lastSequenceNumber.value).to.equal(1)
+                expect(lastSequenceNumber.value).toBe(1)
             })
         })
     })
@@ -51,18 +50,18 @@ describe("memoryEventStore.append", () => {
             await eventStore.append(new EventType1(), AppendConditions.Any)
         })
 
-        it("should increment sequence number to 2 when a second event is appended", async () => {
+        test("should increment sequence number to 2 when a second event is appended", async () => {
             const { lastSequenceNumber } = await eventStore.append(new EventType1(), AppendConditions.Any)
-            expect(lastSequenceNumber.value).to.equal(2)
+            expect(lastSequenceNumber.value).toBe(2)
         })
 
-        it("should update the sequence number to 3 after appending two more events", async () => {
+        test("should update the sequence number to 3 after appending two more events", async () => {
             const { lastSequenceNumber } = await eventStore.append(
                 [new EventType1(), new EventType1()],
                 AppendConditions.Any
             )
 
-            expect(lastSequenceNumber.value).to.equal(3)
+            expect(lastSequenceNumber.value).toBe(3)
         })
 
         describe("when append condition with eventTypes filter and maxSequenceNumber provided", () => {
@@ -72,11 +71,12 @@ describe("memoryEventStore.append", () => {
                 },
                 maxSequenceNumber: SequenceNumber.zero()
             }
-            it("should throw an error if appended event exceeds the maximum allowed sequence number", async () => {
-                await expect(eventStore.append(new EventType1(), appendCondition)).to.be.rejectedWith(
-                    "Expected Version fail: New events matching appendCondition found."
-                )
-            })
+            test("should throw an error if appended event exceeds the maximum allowed sequence number", async () => {
+                await expect(eventStore.append(new EventType1(), appendCondition))
+                    .rejects
+                    .toThrow("Expected Version fail: New events matching appendCondition found.");
+            });
+            
         })
     })
 })

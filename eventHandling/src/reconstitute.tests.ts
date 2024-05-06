@@ -1,4 +1,3 @@
-import { expect } from "chai"
 import { AppendCondition, AppendConditions } from "../../eventStore/src/EventStore"
 import { MemoryEventStore } from "../../eventStore/src/memoryEventStore/MemoryEventStore"
 import * as R from "ramda"
@@ -26,24 +25,24 @@ describe("reconstitute", () => {
                 appendCondition = result.appendCondition
             })
 
-            it("should indicate course does not exist", async () => {
-                expect(courseExists).to.equal(false)
+            test("should indicate course does not exist", async () => {
+                expect(courseExists).toBe(false)
             })
 
-            it("should set the maximum sequence number to 0 in appendCondition", async () => {
-                expect(appendCondition?.maxSequenceNumber.value).to.equal(0)
+            test("should set the maximum sequence number to 0 in appendCondition", async () => {
+                expect(appendCondition?.maxSequenceNumber.value).toBe(0)
             })
 
-            it("should have a single eventType of 'courseWasCreated' in appendCondition", async () => {
+            test("should have a single eventType of 'courseWasCreated' in appendCondition", async () => {
                 const { eventTypes } = appendCondition.query.criteria[0]
-                expect(eventTypes.length).to.equal(1)
-                expect(eventTypes[0]).to.equal("courseWasCreated")
+                expect(eventTypes.length).toBe(1)
+                expect(eventTypes[0]).toBe("courseWasCreated")
             })
 
-            it("should include 'courseId' as a tag in appendCondition", async () => {
+            test("should include 'courseId' as a tag in appendCondition", async () => {
                 const { tags } = appendCondition.query.criteria[0]
-                expect(R.keys(tags).length).to.equal(1)
-                expect(tags.courseId).to.equal("course-1")
+                expect(R.keys(tags).length).toBe(1)
+                expect(tags.courseId).toBe("course-1")
             })
         })
     })
@@ -61,24 +60,24 @@ describe("reconstitute", () => {
             appendCondition = result.appendCondition
         })
 
-        it("should detect existing course via eventHandler", async () => {
-            expect(courseExists).to.be.true
+        test("should detect existing course via eventHandler", async () => {
+            expect(courseExists).toBe(true)
         })
 
-        it("should set the maximum sequence number to 1 in appendCondition", async () => {
-            expect(appendCondition?.maxSequenceNumber.value).to.equal(1)
+        test("should set the maximum sequence number to 1 in appendCondition", async () => {
+            expect(appendCondition?.maxSequenceNumber.value).toBe(1)
         })
 
-        it("should have a single eventType of 'courseWasCreated' in appendCondition", async () => {
+        test("should have a single eventType of 'courseWasCreated' in appendCondition", async () => {
             const { eventTypes } = appendCondition.query.criteria[0]
-            expect(eventTypes.length).to.equal(1)
-            expect(eventTypes[0]).to.equal("courseWasCreated")
+            expect(eventTypes.length).toBe(1)
+            expect(eventTypes[0]).toBe("courseWasCreated")
         })
 
-        it("should include 'courseId' as a tag in appendCondition", async () => {
+        test("should include 'courseId' as a tag in appendCondition", async () => {
             const { tags } = appendCondition.query.criteria[0]
-            expect(R.keys(tags).length).to.equal(1)
-            expect(tags.courseId).to.equal("course-1")
+            expect(R.keys(tags).length).toBe(1)
+            expect(tags.courseId).toBe("course-1")
         })
     })
 
@@ -98,29 +97,29 @@ describe("reconstitute", () => {
             appendCondition = result.appendCondition
         })
 
-        it("should have assigned the new capacity of 15 to the course", async () => {
-            expect(courseCapacity.capacity).to.equal(15)
+        test("should have assigned the new capacity of 15 to the course", async () => {
+            expect(courseCapacity.capacity).toBe(15)
         })
 
-        it("should set the maximum sequence number to 2 in appendCondition", async () => {
-            expect(appendCondition?.maxSequenceNumber.value).to.equal(2)
+        test("should set the maximum sequence number to 2 in appendCondition", async () => {
+            expect(appendCondition?.maxSequenceNumber.value).toBe(2)
         })
 
-        it("should have the 4 correct eventTypes in appendCondition", async () => {
+        test("should have the 4 correct eventTypes in appendCondition", async () => {
             const { eventTypes } = appendCondition.query.criteria[0]
-            expect(eventTypes.length).to.equal(4)
+            expect(eventTypes.length).toBe(4)
             expect([
                 "courseWasCreated",
                 "courseCapacityWasChanged",
                 "studentWasUnsubscribed",
                 "studentWasSubscribed"
-            ]).to.have.all.members(eventTypes)
+            ].sort()).toEqual(expect.arrayContaining(eventTypes.sort()));            
         })
 
-        it("should include 'courseId' as a tag in appendCondition", async () => {
+        test("should include 'courseId' as a tag in appendCondition", async () => {
             const { tags } = appendCondition.query.criteria[0]
-            expect(R.keys(tags).length).to.equal(1)
-            expect(tags.courseId).to.equal("course-1")
+            expect(R.keys(tags).length).toBe(1)
+            expect(tags.courseId).toBe("course-1")
         })
     })
 
@@ -145,33 +144,34 @@ describe("reconstitute", () => {
             appendCondition = result.appendCondition
         })
 
-        it("should have assigned the new capacity of 15 to the course", async () => {
-            expect(courseCapacity.capacity).to.equal(15)
+        test("should have assigned the new capacity of 15 to the course", async () => {
+            expect(courseCapacity.capacity).toBe(15)
         })
 
-        it("should set the maximum sequence number to 2 in appendCondition", async () => {
-            expect(appendCondition?.maxSequenceNumber.value).to.equal(2)
+        test("should set the maximum sequence number to 2 in appendCondition", async () => {
+            expect(appendCondition?.maxSequenceNumber.value).toBe(2)
         })
 
-        it("should have the 4 correct eventTypes in appendCondition", async () => {
+        test("should have the 4 correct eventTypes in appendCondition", async () => {
             const { eventTypes } = appendCondition.query.criteria[0]
-            expect(eventTypes.length).to.equal(4)
+            expect(eventTypes.length).toBe(4)
             expect([
                 "courseWasCreated",
                 "courseCapacityWasChanged",
                 "studentWasUnsubscribed",
                 "studentWasSubscribed"
-            ]).to.have.all.members(eventTypes)
+            ].sort()).toEqual(expect.arrayContaining(eventTypes.sort()));
+            
         })
 
-        it("should include 'courseId' as a tag in appendCondition", async () => {
+        test("should include 'courseId' as a tag in appendCondition", async () => {
             const { tags } = appendCondition.query.criteria[0]
-            expect(R.keys(tags).length).to.equal(1)
-            expect(tags.courseId).to.equal("course-1")
+            expect(R.keys(tags).length).toBe(1)
+            expect(tags.courseId).toBe("course-1")
         })
 
-        it("should indicate course exists", async () => {
-            expect(courseExists).to.be.true
+        test("should indicate course exists", async () => {
+            expect(courseExists).toBe(true)
         })
     })
 })

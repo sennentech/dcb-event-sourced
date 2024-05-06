@@ -1,12 +1,20 @@
 {
+    "ts-node": {
+        "transpileOnly": true,
+        "compilerOptions": {
+            "module": "CommonJS"
+        }
+    },
     "compilerOptions": {
-        "module": "commonjs",
-        "target": "es2022",
+        "module": "CommonJS",
+        "target": "ES2022",
         "sourceMap": true,
         "declaration": true,
         "outDir": "dist",
         "noImplicitAny": true
     },
-    
-    "exclude": ["./node_modules", "./dist"]
+    "exclude": [
+        "./node_modules",
+        "./dist"
+    ]
 }
