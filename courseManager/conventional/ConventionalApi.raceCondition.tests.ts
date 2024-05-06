@@ -1,9 +1,9 @@
 import { newDb } from "pg-mem"
 import { Pool } from "pg"
-import { CourseSubscriptionRepository } from "../repository/Repositories"
 import { PostgresCourseSubscriptionRepository } from "../repository/PostgresCourseSubscriptionRespository"
-import { Api } from "./api"
-import { set } from "types-ramda"
+import { ConventionalApi } from "./ConventionalApi"
+import { Api } from "../Api"
+
 const COURSE_1 = {
     id: "course-1",
     capacity: 5
@@ -12,13 +12,14 @@ const COURSE_1 = {
 describe("Api stress tests", () => {
     let pool: Pool
     let repository: PostgresCourseSubscriptionRepository
-    let api
+    let api: Api
+
     beforeEach(async () => {
         pool = new (newDb().adapters.createPg().Pool)()
         repository = new PostgresCourseSubscriptionRepository(pool)
         await repository.install()
 
-        api = await Api(repository)
+        api = await ConventionalApi(repository)
         api.registerCourse(COURSE_1.id, COURSE_1.capacity)
 
         const studentRegistraionPromises = []
@@ -44,7 +45,6 @@ describe("Api stress tests", () => {
 
         for (let i = 0; i < 10; i++) {
             studentSubscriptionPromises.push(api.subscribeStudentToCourse(courseId, `student-${i}`))
-            await new Promise(resolve => setTimeout(resolve, 1))
         }
 
         const results = await Promise.allSettled(studentSubscriptionPromises)

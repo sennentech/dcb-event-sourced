@@ -1,6 +1,7 @@
 import { Course, Student } from "../readModel/readModels"
 
 export interface CourseSubscriptionRepository {
+    install(): Promise<void>
     findCourseById(courseId: string): Promise<Course>
     findStudentById(studentId: string): Promise<Student>
 

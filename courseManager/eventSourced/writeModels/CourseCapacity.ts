@@ -4,7 +4,7 @@ import {
     CourseCapacityWasChangedEvent,
     StudentWasSubscribedEvent,
     StudentWasUnsubscribedEvent
-} from "../events"
+} from "../Events"
 
 export const CourseCapacity = (
     courseId: string

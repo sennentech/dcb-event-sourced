@@ -1,7 +1,7 @@
 import { EventHandler } from "../../../eventHandling/src/EventHandler"
-import { StudentWasSubscribedEvent, StudentWasUnsubscribedEvent } from "../events"
+import { STUDENT_SUBSCRIPTION_LIMIT } from "../../readModel/readModels"
+import { StudentWasSubscribedEvent, StudentWasUnsubscribedEvent } from "../Events"
 
-const STUDENT_SUBSCRIPTION_LIMIT = 10
 export const StudentSubscriptions = (
     studentId: string
 ): EventHandler<{

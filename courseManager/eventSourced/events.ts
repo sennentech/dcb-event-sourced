@@ -11,6 +11,17 @@ export class CourseWasCreatedEvent implements EsEvent {
     }
 }
 
+export class StudentWasRegistered implements EsEvent {
+    public type: "studentWasRegistered" = "studentWasRegistered"
+    public tags: { studentId: string }
+    public data: {}
+
+    constructor({ studentId }: { studentId: string }) {
+        this.tags = { studentId }
+        this.data = {}
+    }
+}
+
 export class CourseCapacityWasChangedEvent implements EsEvent {
     type: "courseCapacityWasChanged" = "courseCapacityWasChanged"
     public tags: { courseId: string }

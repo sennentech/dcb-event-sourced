@@ -1,5 +1,5 @@
 import { EventHandler } from "../../../eventHandling/src/EventHandler"
-import { StudentWasSubscribedEvent, StudentWasUnsubscribedEvent } from "../events"
+import { StudentWasSubscribedEvent, StudentWasUnsubscribedEvent } from "../Events"
 
 export const StudentAlreadySubscribed = ({
     courseId,

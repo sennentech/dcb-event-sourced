@@ -1,10 +1,8 @@
-import { Pool } from "pg"
-import { newDb } from "pg-mem"
-import { PostgresCourseSubscriptionRepository } from "../repository/PostgresCourseSubscriptionRespository"
 import { CourseSubscriptionRepository } from "../repository/Repositories"
 import { STUDENT_SUBSCRIPTION_LIMIT } from "../readModel/readModels"
+import { Api } from "../Api"
 
-export const Api = async (repository: CourseSubscriptionRepository) => {
+export const ConventionalApi = (repository: CourseSubscriptionRepository): Api => {
     return {
         findCourseById: async (courseId: string) => {
             return repository.findCourseById(courseId)
@@ -24,7 +22,6 @@ export const Api = async (repository: CourseSubscriptionRepository) => {
 
             return repository.registerStudent(id, name)
         },
-
         subscribeStudentToCourse: async (courseId: string, studentId: string) => {
             const course = await repository.findCourseById(courseId)
             if (!course) throw new Error(`Course with id ${courseId} does not exist.`)
