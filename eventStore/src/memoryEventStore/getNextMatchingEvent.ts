@@ -1,4 +1,4 @@
-import R = require("ramda")
+import * as R from "ramda"
 import { EsEventEnvelope, EsQuery, EsQueryCriterion } from "../EventStore"
 import { SequenceNumber } from "../SequenceNumber"
 

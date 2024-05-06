@@ -1,20 +1,12 @@
 {
-    "ts-node": {
-        "transpileOnly": true,
-        "compilerOptions": {
-            "module": "CommonJS"
-        }
-    },
     "compilerOptions": {
-        "module": "CommonJS",
-        "target": "ES2022",
-        "sourceMap": true,
-        "declaration": true,
-        "outDir": "dist",
-        "noImplicitAny": true
+        "module": "ESNext",
+        "target": "ESNext",
+        "moduleResolution": "node",
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "experimentalDecorators": true,
+        "outDir": "./dist"
     },
-    "exclude": [
-        "./node_modules",
-        "./dist"
-    ]
+    "exclude": ["./node_modules", "./dist"]
 }

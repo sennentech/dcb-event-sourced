@@ -1,4 +1,4 @@
-import { EventHandler } from "../../eventHandling/src/EventHandler"
+import { EventHandler } from "../../../eventHandling/src/EventHandler"
 import { CourseWasCreatedEvent } from "../events"
 
 export const CourseExists = (

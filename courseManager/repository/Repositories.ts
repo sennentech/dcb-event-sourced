@@ -1,39 +1,12 @@
-export interface Course {
-    id: string
-    capacity: number
-}
+import { Course, Student } from "../readModel/readModels"
 
-export interface Student {
-    id: string
-    name: string
-}
+export interface CourseSubscriptionRepository {
+    findCourseById(courseId: string): Promise<Course>
+    findStudentById(studentId: string): Promise<Student>
 
-export interface CourseRepository {
-    insert(course: Course): Promise<void>
-    update(course: Course): Promise<void>
-    delete(courseId: string): Promise<void>
-
-    findById(courseId: string): Promise<Course>
-    findAll(): Promise<Course[]>
-}
-
-export interface StudentRepository {
-    insert(student: Student): Promise<void>
-    update(student: Student): Promise<void>
-    delete(studentId: string): Promise<void>
-
-    findById(studentId: string): Promise<Student>
-    findAll(): Promise<Student[]>
-}
-
-export interface CourseSubscription {
-    courseId: string
-    studentId: string
-}
-
-export interface SubscriptionRepository {
-    addSubscription(subscription: CourseSubscription): Promise<void>
-    removeSubscription(subscription: CourseSubscription): Promise<void>
-    findCoursesByStudent(studentId: string): Promise<Course[]>
-    findStudentsByCourse(courseId: string): Promise<Student[]>
+    registerCourse(courseId: string, capacity: number): Promise<void>
+    registerStudent(studentId: string, name: string): Promise<void>
+    updateCourseCapacity(courseId: string, newCapacity: number): Promise<void>
+    subscribeStudentToCourse(courseId: string, studentId: string): Promise<void>
+    unsubscribeStudentFromCourse(courseId: string, studentId: string): Promise<void>
 }

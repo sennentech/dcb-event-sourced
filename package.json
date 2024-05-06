@@ -10,7 +10,8 @@
         "build": "./node_modules/.bin/tsc",
         "watch": "./node_modules/.bin/tsc --watch",
         "lint": "./node_modules/.bin/eslint **/*.ts .",
-        "lint-fix": "./node_modules/.bin/eslint **/*.ts . --fix"
+        "lint-fix": "./node_modules/.bin/eslint **/*.ts . --fix",
+        "start": "node ./dist/courseManager/index.js"
     },
     "repository": {
         "type": "git",
@@ -18,12 +19,15 @@
     },
     "dependencies": {
         "@types/luxon": "^3.4.2",
+        "inquirer": "^9.2.20",
+        "interactive-cli": "^1.1.6",
         "luxon": "^3.4.4",
         "pg": "^8.11.5",
         "ramda": "^0.29.0"
     },
     "devDependencies": {
         "@eslint/js": "^9.2.0",
+        "@types/inquirer": "^9.0.7",
         "@types/jest": "^29.5.12",
         "@types/pg": "^8.11.6",
         "@types/ramda": "^0.30.0",
@@ -37,6 +41,7 @@
         "prettier": "^3.2.5",
         "sinon": "^17.0.1",
         "ts-jest": "^29.1.2",
+        "ts-node": "^10.9.2",
         "typescript": "^5.4.5",
         "typescript-eslint": "^7.8.0"
     }

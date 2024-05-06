@@ -1,5 +1,5 @@
-import { EventStore } from "../eventStore/src/EventStore"
-import { reconstitute } from "../eventHandling/src/reconstitute"
+import { EventStore } from "../../eventStore/src/EventStore"
+import { reconstitute } from "../../eventHandling/src/reconstitute"
 import { StudentWasSubscribedEvent } from "./events"
 import { CourseCapacity } from "./eventHandlers/CourseCapacity"
 import { CourseExists } from "./eventHandlers/CourseExists"
