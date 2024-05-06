@@ -1,15 +1,27 @@
-import { CourseRepository, Course } from "./CourseRepository"
+import { CourseRepository, Course } from "./Repositories"
 import { Pool } from "pg"
 
 export class PostgresCourseRepository implements CourseRepository {
     constructor(private pool: Pool) {}
 
-    async create(course: Course): Promise<void> {
-        this.pool.query("INSERT INTO courses (id, capacity) VALUES ($1, $2)", [course.id, course.capacity])
+    async insert(course: Course): Promise<void> {
+        try {
+            await this.pool.query("INSERT INTO courses (id, capacity) VALUES ($1, $2)", [course.id, course.capacity])
+        } catch (e) {
+            if (e.code === "23505") {
+                throw new Error(`Course with id ${course.id} already exists.`)
+            }
+            throw e
+        }
     }
 
     async update(course: Course): Promise<void> {
-        this.pool.query("UPDATE courses SET capacity = $1 WHERE id = $2", [course.capacity, course.id])
+        const result = await this.pool.query("UPDATE courses SET capacity = $1 WHERE id = $2", [
+            course.capacity,
+            course.id
+        ])
+
+        if (result.rowCount === 0) throw new Error(`Course with id ${course.id} does not exist.`)
     }
 
     async delete(courseId: string): Promise<void> {
