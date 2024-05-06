@@ -9,7 +9,6 @@
         "test:watch": "jest --watch",
         "build": "./node_modules/.bin/tsc",
         "watch": "./node_modules/.bin/tsc --watch",
-        "testMoc": "mocha -r ./bootstrap-tests.js 'eventStore/**/*.tests.ts' 'eventHandling/**/*.tests.ts' 'courseManager/**/*.tests.ts'",
         "lint": "./node_modules/.bin/eslint . --ext .ts,.tsx --max-warnings 0",
         "lint-fix": "./node_modules/.bin/eslint . --ext .ts,.tsx --fix",
         "publish": "",
@@ -36,7 +35,6 @@
         "prettier": "^3.2.5",
         "sinon": "^17.0.1",
         "ts-jest": "^29.1.2",
-        "ts-node": "^10.9.2",
         "typescript": "^5.4.5"
     }
 }
