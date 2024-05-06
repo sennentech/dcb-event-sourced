@@ -20,7 +20,10 @@ export const subscribeStudentCommandHandler =
         } = await reconstitute(eventStore, {
             courseExists: CourseExists(courseId),
             courseCapacity: CourseCapacity(courseId),
-            studentAlreadySubscribed: StudentAlreadySubscribed({ courseId: courseId, studentId: studentId }),
+            studentAlreadySubscribed: StudentAlreadySubscribed({
+                courseId: courseId,
+                studentId: studentId
+            }),
             studentSubscriptions: StudentSubscriptions(studentId)
         })
 

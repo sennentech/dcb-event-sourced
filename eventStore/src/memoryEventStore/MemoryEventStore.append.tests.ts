@@ -72,11 +72,10 @@ describe("memoryEventStore.append", () => {
                 maxSequenceNumber: SequenceNumber.zero()
             }
             test("should throw an error if appended event exceeds the maximum allowed sequence number", async () => {
-                await expect(eventStore.append(new EventType1(), appendCondition))
-                    .rejects
-                    .toThrow("Expected Version fail: New events matching appendCondition found.");
-            });
-            
+                await expect(eventStore.append(new EventType1(), appendCondition)).rejects.toThrow(
+                    "Expected Version fail: New events matching appendCondition found."
+                )
+            })
         })
     })
 })

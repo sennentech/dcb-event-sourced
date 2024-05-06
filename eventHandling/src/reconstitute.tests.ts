@@ -4,7 +4,7 @@ import * as R from "ramda"
 import { reconstitute } from "./reconstitute"
 import { CourseCapacity, CourseExists } from "./reconsititue.tests.handlers"
 import { CourseCapacityWasChangedEvent, CourseWasCreatedEvent } from "./reconstitute.tests.events"
-import { SequenceNumber } from "../../eventStore/src/SequenceNumber"
+
 const COURSE_ID = "course-1"
 
 describe("reconstitute", () => {
@@ -20,7 +20,9 @@ describe("reconstitute", () => {
             let courseExists: boolean
 
             beforeEach(async () => {
-                const result = await reconstitute(eventStore, { courseExists: CourseExists(COURSE_ID) })
+                const result = await reconstitute(eventStore, {
+                    courseExists: CourseExists(COURSE_ID)
+                })
                 courseExists = result.states.courseExists
                 appendCondition = result.appendCondition
             })
@@ -51,11 +53,16 @@ describe("reconstitute", () => {
         let courseExists: boolean
         beforeEach(async () => {
             await eventStore.append(
-                new CourseWasCreatedEvent({ courseId: COURSE_ID, capacity: 10 }),
+                new CourseWasCreatedEvent({
+                    courseId: COURSE_ID,
+                    capacity: 10
+                }),
                 AppendConditions.Any
             )
 
-            const result = await reconstitute(eventStore, { courseExists: CourseExists(COURSE_ID) })
+            const result = await reconstitute(eventStore, {
+                courseExists: CourseExists(COURSE_ID)
+            })
             courseExists = result.states.courseExists
             appendCondition = result.appendCondition
         })
@@ -85,14 +92,22 @@ describe("reconstitute", () => {
         let courseCapacity: ReturnType<typeof CourseCapacity>["init"]
         beforeEach(async () => {
             await eventStore.append(
-                new CourseWasCreatedEvent({ courseId: COURSE_ID, capacity: 10 }),
+                new CourseWasCreatedEvent({
+                    courseId: COURSE_ID,
+                    capacity: 10
+                }),
                 AppendConditions.Any
             )
             await eventStore.append(
-                new CourseCapacityWasChangedEvent({ courseId: COURSE_ID, newCapacity: 15 }),
+                new CourseCapacityWasChangedEvent({
+                    courseId: COURSE_ID,
+                    newCapacity: 15
+                }),
                 AppendConditions.Any
             )
-            const result = await reconstitute(eventStore, { courseCapacity: CourseCapacity(COURSE_ID) })
+            const result = await reconstitute(eventStore, {
+                courseCapacity: CourseCapacity(COURSE_ID)
+            })
             courseCapacity = result.states.courseCapacity
             appendCondition = result.appendCondition
         })
@@ -108,12 +123,14 @@ describe("reconstitute", () => {
         test("should have the 4 correct eventTypes in appendCondition", async () => {
             const { eventTypes } = appendCondition.query.criteria[0]
             expect(eventTypes.length).toBe(4)
-            expect([
-                "courseWasCreated",
-                "courseCapacityWasChanged",
-                "studentWasUnsubscribed",
-                "studentWasSubscribed"
-            ].sort()).toEqual(expect.arrayContaining(eventTypes.sort()));            
+            expect(
+                [
+                    "courseWasCreated",
+                    "courseCapacityWasChanged",
+                    "studentWasUnsubscribed",
+                    "studentWasSubscribed"
+                ].sort()
+            ).toEqual(expect.arrayContaining(eventTypes.sort()))
         })
 
         test("should include 'courseId' as a tag in appendCondition", async () => {
@@ -128,11 +145,17 @@ describe("reconstitute", () => {
         let courseExists: boolean
         beforeEach(async () => {
             await eventStore.append(
-                new CourseWasCreatedEvent({ courseId: COURSE_ID, capacity: 10 }),
+                new CourseWasCreatedEvent({
+                    courseId: COURSE_ID,
+                    capacity: 10
+                }),
                 AppendConditions.Any
             )
             await eventStore.append(
-                new CourseCapacityWasChangedEvent({ courseId: COURSE_ID, newCapacity: 15 }),
+                new CourseCapacityWasChangedEvent({
+                    courseId: COURSE_ID,
+                    newCapacity: 15
+                }),
                 AppendConditions.Any
             )
             const result = await reconstitute(eventStore, {
@@ -155,13 +178,14 @@ describe("reconstitute", () => {
         test("should have the 4 correct eventTypes in appendCondition", async () => {
             const { eventTypes } = appendCondition.query.criteria[0]
             expect(eventTypes.length).toBe(4)
-            expect([
-                "courseWasCreated",
-                "courseCapacityWasChanged",
-                "studentWasUnsubscribed",
-                "studentWasSubscribed"
-            ].sort()).toEqual(expect.arrayContaining(eventTypes.sort()));
-            
+            expect(
+                [
+                    "courseWasCreated",
+                    "courseCapacityWasChanged",
+                    "studentWasUnsubscribed",
+                    "studentWasSubscribed"
+                ].sort()
+            ).toEqual(expect.arrayContaining(eventTypes.sort()))
         })
 
         test("should include 'courseId' as a tag in appendCondition", async () => {
