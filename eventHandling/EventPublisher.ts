@@ -18,24 +18,23 @@ export class EventPublisher {
         for (const projection of this.projectionRegistry ?? []) {
             const handlerEventTypes = R.keys(projection.handler.when)
             const eventTypes = ensureIsArray(events).map(events => events.type)
-            if (R.intersection(handlerEventTypes, eventTypes).length > 0) {
-                projectionsToCatchup.push(projection)
-            }
+            if (R.intersection(handlerEventTypes, eventTypes).length > 0) projectionsToCatchup.push(projection)
         }
 
-        const handlerCatchupper = new HandlerCatchupper(this.eventStore, projectionsToCatchup)
-        await handlerCatchupper.catchup(lastSequenceNumber)
+        const handlerCatchup = new HandlerCatchup(this.eventStore, projectionsToCatchup)
+        await handlerCatchup.catchup(lastSequenceNumber)
     }
 }
 
-export class HandlerCatchupper {
+export class HandlerCatchup {
     constructor(
         private eventStore: EventStore,
         private projectionRegistry: ProjectionRegistry
     ) {}
 
     async catchup(toSequenceNumber: SequenceNumber) {
-        const catchupHandler = async (handler: EventHandler, lockManager: EventHandlerLockManager) => {
+        const catchupOne = async (opts: { handler: EventHandler; lockManager: EventHandlerLockManager }) => {
+            const { handler, lockManager } = opts
             try {
                 await lockManager.obtainLock()
                 const lastSequenceNumberSeen = await lockManager.getLastSequenceNumberSeen()
@@ -60,9 +59,7 @@ export class HandlerCatchupper {
             }
         }
 
-        const pendingHandlerCatchups = this.projectionRegistry.map(({ handler, lockManager }) =>
-            catchupHandler(handler, lockManager)
-        )
+        const pendingHandlerCatchups = this.projectionRegistry.map(catchupOne)
 
         const results = await Promise.allSettled(pendingHandlerCatchups)
         const failedCatchups = results.filter(result => result.status === "rejected")
