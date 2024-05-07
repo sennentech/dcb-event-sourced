@@ -1,8 +1,10 @@
 import { AppendConditions, EsEvent, EsEventEnvelope, EventStore, Tags } from "../eventStore/EventStore"
 import { MemoryEventStore } from "../eventStore/memoryEventStore/MemoryEventStore"
+import { getPgMemDb } from "../eventStore/utils/getPgMemDb"
 import { streamAllEventsToArray } from "../eventStore/utils/streamAllEventsToArray"
 import { EventHandler, ProjectionRegistry } from "./EventHandler"
 import { EventPublisher } from "./EventPublisher"
+import { EventHandlerLockManager, PostgresLockManager } from "./LockManager"
 
 class TestEvent implements EsEvent {
     type: "testEvent" = "testEvent"
@@ -13,12 +15,22 @@ class TestEvent implements EsEvent {
 }
 
 describe(`EventPublisher`, () => {
+    let lockManager: PostgresLockManager
     let eventStore: EventStore
-    let eventPublisher: EventPublisher
+
+    beforeAll(async () => {
+        const pool = new (await getPgMemDb().adapters.createPg().Pool)()
+        lockManager = new PostgresLockManager(pool, "test-handler")
+        await lockManager.install()
+    })
+    beforeEach(async () => {
+        eventStore = new MemoryEventStore()
+    })
 
     describe(`with no projection registry`, () => {
+        let eventPublisher: EventPublisher
+
         beforeEach(async () => {
-            eventStore = new MemoryEventStore()
             eventPublisher = new EventPublisher(eventStore)
         })
 
@@ -43,6 +55,7 @@ describe(`EventPublisher`, () => {
     })
 
     describe(`with projection registry`, () => {
+        let eventPublisher: EventPublisher
         const eventsSeenByProjection: EsEventEnvelope[] = []
         beforeAll(async () => {
             const projection: EventHandler<{
@@ -57,7 +70,7 @@ describe(`EventPublisher`, () => {
             const registry: ProjectionRegistry = [
                 {
                     handler: projection,
-                    lockManager: null
+                    lockManager
                 }
             ]
 
@@ -68,7 +81,7 @@ describe(`EventPublisher`, () => {
             eventsSeenByProjection.length = 0
         })
 
-        test.skip("Projection sees published event", async () => {
+        test("Projection sees published event", async () => {
             await eventPublisher.publish(new TestEvent({ test: "test1" }, {}), AppendConditions.Any)
             expect(eventsSeenByProjection).toHaveLength(1)
             expect(eventsSeenByProjection[0].event.type).toBe("testEvent")
