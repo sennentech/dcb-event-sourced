@@ -1,4 +1,4 @@
-import { Course, Student } from "./readModel/readModels"
+import { Course, Student } from "./ReadModels"
 
 export interface Api {
     findCourseById(courseId: string): Promise<Course | undefined>

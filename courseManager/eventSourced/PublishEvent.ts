@@ -1,6 +1,6 @@
-import { EventHandler } from "../../eventHandling/src/EventHandler"
-import { EventHandlerWithState } from "../../eventHandling/src/EventHandlerWithState"
-import { AppendCondition, EsEvent, EventStore } from "../../eventStore/src/EventStore"
+import { EventHandler } from "../../eventHandling/EventHandler"
+import { EventHandlerWithState } from "../../eventHandling/EventHandlerWithState"
+import { AppendCondition, EsEvent, EventStore } from "../../eventStore/EventStore"
 
 export const PublishEvent =
     (eventStore: EventStore, projectionRegistry: Record<string, EventHandler>) =>

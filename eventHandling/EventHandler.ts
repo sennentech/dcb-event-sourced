@@ -1,4 +1,4 @@
-import { EsEvent, EsEventEnvelope } from "../../eventStore/src/EventStore"
+import { EsEvent, EsEventEnvelope } from "../eventStore/EventStore"
 
 interface EsEventHandlerDef {
     eventHandlers: EsEvent

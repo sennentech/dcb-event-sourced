@@ -1,6 +1,6 @@
 import * as R from "ramda"
-import { AppendCondition, EsEventEnvelope, EsQuery, EventStore } from "../../eventStore/src/EventStore"
-import { SequenceNumber } from "../../eventStore/src/SequenceNumber"
+import { AppendCondition, EsEventEnvelope, EsQuery, EventStore } from "../eventStore/EventStore"
+import { SequenceNumber } from "../eventStore/SequenceNumber"
 import { EventHandlerWithState } from "./EventHandlerWithState"
 import { matchTags } from "./matchTags"
 

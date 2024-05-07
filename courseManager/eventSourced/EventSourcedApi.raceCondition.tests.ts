@@ -3,7 +3,7 @@ import { Pool } from "pg"
 import { PostgresCourseSubscriptionRepository } from "../repository/PostgresCourseSubscriptionRespository"
 import { Api } from "../Api"
 import { EventSourcedApi } from "./EventSourcedApi"
-import { MemoryEventStore } from "../../eventStore/src/memoryEventStore/MemoryEventStore"
+import { MemoryEventStore } from "../../eventStore/memoryEventStore/MemoryEventStore"
 
 const COURSE_1 = {
     id: "course-1",
@@ -50,6 +50,5 @@ describe("Api stress tests", () => {
         const results = await Promise.allSettled(studentSubscriptionPromises)
         const succeeded = results.filter(result => result.status === "fulfilled").length
         expect(succeeded).toBeLessThanOrEqual(COURSE_1.capacity)
-
     })
 })

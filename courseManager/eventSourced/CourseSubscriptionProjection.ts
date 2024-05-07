@@ -1,4 +1,4 @@
-import { EventHandler } from "../../eventHandling/src/EventHandler"
+import { EventHandler } from "../../eventHandling/EventHandler"
 import { CourseSubscriptionRepository } from "../repository/Repositories"
 import {
     CourseCapacityWasChangedEvent,

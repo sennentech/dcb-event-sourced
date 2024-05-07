@@ -1,5 +1,5 @@
 import { CourseSubscriptionRepository } from "../repository/Repositories"
-import { STUDENT_SUBSCRIPTION_LIMIT } from "../readModel/readModels"
+import { STUDENT_SUBSCRIPTION_LIMIT } from "../ReadModels"
 import { Api } from "../Api"
 
 export const ConventionalApi = (repository: CourseSubscriptionRepository): Api => {

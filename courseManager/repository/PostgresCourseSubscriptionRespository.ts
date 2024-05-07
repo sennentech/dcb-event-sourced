@@ -1,5 +1,5 @@
 import { Pool } from "pg"
-import { Course, Student } from "../readModel/readModels"
+import { Course, Student } from "../ReadModels"
 
 export class PostgresCourseSubscriptionRepository {
     constructor(private pool: Pool) {}
