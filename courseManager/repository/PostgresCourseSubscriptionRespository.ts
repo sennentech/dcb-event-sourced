@@ -1,11 +1,13 @@
-import { Pool } from "pg"
+import { Pool, PoolClient, Client } from "pg"
 import { Course, Student } from "../ReadModels"
 
 export class PostgresCourseSubscriptionsRepository {
-    constructor(private pool: Pool) {}
+    constructor(private client: Pool | PoolClient | Client) {
+        if (!client) throw new Error(`Postgres client is not initialised`)
+    }
 
     async install(): Promise<void> {
-        await this.pool.query(`
+        await this.client.query(`
                 CREATE TABLE IF NOT EXISTS courses (
                     id TEXT,
                     capacity INTEGER NOT NULL
@@ -25,7 +27,7 @@ export class PostgresCourseSubscriptionsRepository {
 
     async findCourseById(courseId: string): Promise<Course> {
         // Query to fetch course with all subscribed students as a JSON array
-        const courseResult = await this.pool.query(
+        const courseResult = await this.client.query(
             `
                 SELECT c.id, c.capacity
                 FROM courses c
@@ -40,7 +42,7 @@ export class PostgresCourseSubscriptionsRepository {
 
         const courseData = courseResult.rows[0]
 
-        const studentsResult = await this.pool.query(
+        const studentsResult = await this.client.query(
             `
                 SELECT s.id, s.name
                 FROM students s
@@ -61,7 +63,7 @@ export class PostgresCourseSubscriptionsRepository {
 
     async findStudentById(studentId: string): Promise<Student> {
         // Query to fetch student
-        const studentResult = await this.pool.query(
+        const studentResult = await this.client.query(
             `
                 SELECT s.id, s.name
                 FROM students s
@@ -77,7 +79,7 @@ export class PostgresCourseSubscriptionsRepository {
         const studentData = studentResult.rows[0]
 
         // Query to fetch courses that the student is subscribed to
-        const coursesResult = await this.pool.query(
+        const coursesResult = await this.client.query(
             `
                 SELECT c.id, c.capacity
                 FROM courses c
@@ -100,26 +102,26 @@ export class PostgresCourseSubscriptionsRepository {
     }
 
     async registerCourse(courseId: string, capacity: number): Promise<void> {
-        await this.pool.query("INSERT INTO courses (id, capacity) VALUES ($1, $2)", [courseId, capacity])
+        await this.client.query("INSERT INTO courses (id, capacity) VALUES ($1, $2)", [courseId, capacity])
     }
 
     async registerStudent(studentId: string, name: string): Promise<void> {
-        await this.pool.query("INSERT INTO students (id, name) VALUES ($1, $2)", [studentId, name])
+        await this.client.query("INSERT INTO students (id, name) VALUES ($1, $2)", [studentId, name])
     }
 
     async updateCourseCapacity(courseId: string, newCapacity: number): Promise<void> {
-        await this.pool.query("UPDATE courses SET capacity = $1 WHERE id = $2", [newCapacity, courseId])
+        await this.client.query("UPDATE courses SET capacity = $1 WHERE id = $2", [newCapacity, courseId])
     }
 
     async subscribeStudentToCourse(courseId: string, studentId: string): Promise<void> {
-        await this.pool.query("INSERT INTO subscriptions (course_id, student_id) VALUES ($1, $2)", [
+        await this.client.query("INSERT INTO subscriptions (course_id, student_id) VALUES ($1, $2)", [
             courseId,
             studentId
         ])
     }
 
     async unsubscribeStudentFromCourse(courseId: string, studentId: string): Promise<void> {
-        await this.pool.query("DELETE FROM subscriptions WHERE course_id = $1 AND student_id = $2", [
+        await this.client.query("DELETE FROM subscriptions WHERE course_id = $1 AND student_id = $2", [
             courseId,
             studentId
         ])

@@ -6,6 +6,8 @@ import { EventSourcedApi } from "./EventSourcedApi"
 import { MemoryEventStore } from "../../eventStore/memoryEventStore/MemoryEventStore"
 import { CourseSubscriptionsProjection } from "./CourseSubscriptionsProjection"
 import { ProjectionRegistry } from "../../eventHandling/EventHandler"
+import { PostgresLockManager } from "../../eventHandling/LockManager"
+import { getPgMemDb } from "../../eventStore/utils/getPgMemDb"
 
 const COURSE_1 = {
     id: "course-1",
@@ -18,13 +20,17 @@ describe("EventSourcedApi", () => {
     let api: Api
 
     beforeEach(async () => {
-        pool = new (newDb().adapters.createPg().Pool)()
+        pool = new (getPgMemDb().adapters.createPg().Pool)()
         repository = new PostgresCourseSubscriptionsRepository(pool)
         await repository.install()
 
-        const projectionRegistry = {
-            courseSubscriptionProjection: CourseSubscriptionsProjection(repository)
-        }
+        const lockManager = new PostgresLockManager(pool, "course-subscriptions")
+        const projectionRegistry: ProjectionRegistry = [
+            // {
+            //     handler: CourseSubscriptionsProjection(lockManager),
+            //     lockManager
+            // }
+        ]
 
         api = EventSourcedApi(new MemoryEventStore(), repository, projectionRegistry)
         api.registerCourse(COURSE_1.id, COURSE_1.capacity)

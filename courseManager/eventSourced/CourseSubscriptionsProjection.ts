@@ -1,3 +1,4 @@
+import { Client, Pool, PoolClient } from "pg"
 import { EventHandler } from "../../eventHandling/EventHandler"
 import { CourseSubscriptionRepository } from "../repository/Repositories"
 import {
@@ -7,9 +8,12 @@ import {
     StudentWasSubscribedEvent,
     StudentWasUnsubscribedEvent
 } from "./Events"
+import { PostgresCourseSubscriptionsRepository } from "../repository/PostgresCourseSubscriptionRespository"
+import { SequenceNumber } from "../../eventStore/SequenceNumber"
+import { PostgresLockManager } from "../../eventHandling/LockManager"
 
 export const CourseSubscriptionsProjection = (
-    repository: CourseSubscriptionRepository
+    lockManager: PostgresLockManager
 ): EventHandler<{
     eventHandlers:
         | CourseWasRegisteredEvent
@@ -19,19 +23,25 @@ export const CourseSubscriptionsProjection = (
         | StudentWasUnsubscribedEvent
 }> => ({
     when: {
-        courseWasRegistered: async ({ event: { tags, data } }) =>
-            await repository.registerCourse(tags.courseId, data.capacity),
-
-        courseCapacityWasChanged: async ({ event: { tags, data } }) =>
-            await repository.updateCourseCapacity(tags.courseId, data.newCapacity),
-
-        studentWasRegistered: async ({ event: { tags, data } }) =>
-            await repository.registerStudent(tags.studentId, data.name),
-
-        studentWasSubscribed: async ({ event: { tags } }) =>
-            await repository.subscribeStudentToCourse(tags.studentId, tags.courseId),
-
-        studentWasUnsubscribed: async ({ event: { tags } }) =>
+        courseWasRegistered: async ({ event: { tags, data } }) => {
+            const repository = new PostgresCourseSubscriptionsRepository(lockManager.postgresClient)
+            await repository.registerCourse(tags.courseId, data.capacity)
+        },
+        courseCapacityWasChanged: async ({ event: { tags, data } }) => {
+            const repository = new PostgresCourseSubscriptionsRepository(lockManager.postgresClient)
+            await repository.updateCourseCapacity(tags.courseId, data.newCapacity)
+        },
+        studentWasRegistered: async ({ event: { tags, data } }) => {
+            const repository = new PostgresCourseSubscriptionsRepository(lockManager.postgresClient)
+            await repository.registerStudent(tags.studentId, data.name)
+        },
+        studentWasSubscribed: async ({ event: { tags } }) => {
+            const repository = new PostgresCourseSubscriptionsRepository(lockManager.postgresClient)
+            await repository.subscribeStudentToCourse(tags.studentId, tags.courseId)
+        },
+        studentWasUnsubscribed: async ({ event: { tags } }) => {
+            const repository = new PostgresCourseSubscriptionsRepository(lockManager.postgresClient)
             await repository.unsubscribeStudentFromCourse(tags.studentId, tags.courseId)
+        }
     }
 })

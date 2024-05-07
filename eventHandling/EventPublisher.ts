@@ -1,5 +1,8 @@
-import { AnyCondition, AppendCondition, EsEvent, EventStore } from "../eventStore/EventStore"
+import { AnyCondition, AppendCondition, EsEvent, EsQueryCriterion, EventStore } from "../eventStore/EventStore"
+import { SequenceNumber } from "../eventStore/SequenceNumber"
+import { ensureIsArray } from "../eventStore/memoryEventStore/MemoryEventStore"
 import { ProjectionRegistry } from "./EventHandler"
+import * as R from "ramda"
 
 export class EventPublisher {
     constructor(
@@ -8,8 +11,52 @@ export class EventPublisher {
     ) {}
 
     async publish(events: EsEvent | EsEvent[], appendCondition: AppendCondition | AnyCondition): Promise<void> {
-        await this.eventStore.append(events, appendCondition)
+        const { lastSequenceNumber } = await this.eventStore.append(events, appendCondition)
 
-        //Check all projections that are interested in this event and call catchup
+        const projectionsToCatchup: ProjectionRegistry = []
+        for (const projection of this.projectionRegistry ?? []) {
+            const handlerEventTypes = R.keys(projection.handler.when)
+            const eventTypes = ensureIsArray(events).map(events => events.type)
+            if (R.intersection(handlerEventTypes, eventTypes).length > 0) {
+                projectionsToCatchup.push(projection)
+            }
+        }
+
+        const handlerCatchupper = new HandlerCatchupper(this.eventStore, projectionsToCatchup)
+        await handlerCatchupper.catchup(lastSequenceNumber)
+    }
+}
+
+export class HandlerCatchupper {
+    constructor(
+        private eventStore: EventStore,
+        private projectionRegistry: ProjectionRegistry
+    ) {}
+
+    async catchup(toSequenceNumber: SequenceNumber) {
+        for (const { handler, lockManager } of this.projectionRegistry) {
+            try {
+                await lockManager.obtainLock()
+                const lastSequenceNumberSeen = await lockManager.getLastSequenceNumberSeen()
+
+                const criteria: EsQueryCriterion[] = [{ eventTypes: R.keys(handler.when) as string[], tags: {} }]
+
+                let currentSeqNumber = lastSequenceNumberSeen
+                for await (const event of this.eventStore.read(
+                    { criteria },
+                    { fromSequenceNumber: lastSequenceNumberSeen }
+                )) {
+                    if (event.sequenceNumber.value > toSequenceNumber.value) {
+                        break
+                    }
+                    await handler.when[event.event.type](event)
+                    currentSeqNumber = event.sequenceNumber
+                }
+                await lockManager.commitAndRelease(currentSeqNumber)
+            } catch (err) {
+                await lockManager.rollbackAndRelease()
+                throw err
+            }
+        }
     }
 }
