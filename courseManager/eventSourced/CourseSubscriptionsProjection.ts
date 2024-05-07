@@ -8,7 +8,7 @@ import {
     StudentWasUnsubscribedEvent
 } from "./Events"
 
-export const CourseSubscriptionRepositoryProjection = (
+export const CourseSubscriptionsProjection = (
     repository: CourseSubscriptionRepository
 ): EventHandler<{
     eventHandlers:

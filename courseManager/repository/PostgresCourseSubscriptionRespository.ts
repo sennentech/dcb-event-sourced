@@ -1,7 +1,7 @@
 import { Pool } from "pg"
 import { Course, Student } from "../ReadModels"
 
-export class PostgresCourseSubscriptionRepository {
+export class PostgresCourseSubscriptionsRepository {
     constructor(private pool: Pool) {}
 
     async install(): Promise<void> {

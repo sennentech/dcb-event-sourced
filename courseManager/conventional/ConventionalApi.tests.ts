@@ -1,6 +1,6 @@
 import { newDb } from "pg-mem"
 import { Pool } from "pg"
-import { PostgresCourseSubscriptionRepository } from "../repository/PostgresCourseSubscriptionRespository"
+import { PostgresCourseSubscriptionsRepository } from "../repository/PostgresCourseSubscriptionRespository"
 import { ConventionalApi } from "./ConventionalApi"
 import { Api } from "../Api"
 
@@ -9,14 +9,14 @@ const COURSE_1 = {
     capacity: 5
 }
 
-describe("Api stress tests", () => {
+describe("ConventionalApi", () => {
     let pool: Pool
-    let repository: PostgresCourseSubscriptionRepository
+    let repository: PostgresCourseSubscriptionsRepository
     let api: Api
 
     beforeEach(async () => {
         pool = new (newDb().adapters.createPg().Pool)()
-        repository = new PostgresCourseSubscriptionRepository(pool)
+        repository = new PostgresCourseSubscriptionsRepository(pool)
         await repository.install()
 
         api = await ConventionalApi(repository)

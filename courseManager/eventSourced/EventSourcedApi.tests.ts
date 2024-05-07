@@ -1,26 +1,32 @@
 import { newDb } from "pg-mem"
 import { Pool } from "pg"
-import { PostgresCourseSubscriptionRepository } from "../repository/PostgresCourseSubscriptionRespository"
+import { PostgresCourseSubscriptionsRepository } from "../repository/PostgresCourseSubscriptionRespository"
 import { Api } from "../Api"
 import { EventSourcedApi } from "./EventSourcedApi"
 import { MemoryEventStore } from "../../eventStore/memoryEventStore/MemoryEventStore"
+import { CourseSubscriptionsProjection } from "./CourseSubscriptionsProjection"
+import { ProjectionRegistry } from "../../eventHandling/EventHandler"
 
 const COURSE_1 = {
     id: "course-1",
     capacity: 5
 }
 
-describe("Api stress tests", () => {
+describe("EventSourcedApi", () => {
     let pool: Pool
-    let repository: PostgresCourseSubscriptionRepository
+    let repository: PostgresCourseSubscriptionsRepository
     let api: Api
 
     beforeEach(async () => {
         pool = new (newDb().adapters.createPg().Pool)()
-        repository = new PostgresCourseSubscriptionRepository(pool)
+        repository = new PostgresCourseSubscriptionsRepository(pool)
         await repository.install()
 
-        api = EventSourcedApi(new MemoryEventStore(), repository)
+        const projectionRegistry = {
+            courseSubscriptionProjection: CourseSubscriptionsProjection(repository)
+        }
+
+        api = EventSourcedApi(new MemoryEventStore(), repository, projectionRegistry)
         api.registerCourse(COURSE_1.id, COURSE_1.capacity)
 
         const studentRegistraionPromises = []
@@ -50,5 +56,11 @@ describe("Api stress tests", () => {
         const results = await Promise.allSettled(studentSubscriptionPromises)
         const succeeded = results.filter(result => result.status === "fulfilled").length
         expect(succeeded).toBeLessThanOrEqual(COURSE_1.capacity)
+    })
+
+    test("should handle subscribe and unsubscribe, managing capacity correctly", async () => {
+        for (let i = 0; i < 5; i++) {
+            await api.subscribeStudentToCourse(COURSE_1.id, `student-${i}`)
+        }
     })
 })

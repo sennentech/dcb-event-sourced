@@ -4,7 +4,7 @@ import { Api } from "../Api"
 import { STUDENT_SUBSCRIPTION_LIMIT } from "../ReadModels"
 import { CourseSubscriptionRepository } from "../repository/Repositories"
 import { CourseWasRegisteredEvent, StudentWasRegistered, StudentWasSubscribedEvent } from "./Events"
-import { PublishEvent } from "./PublishEvent"
+import { EventPublisher } from "../../eventHandling/EventPublisher"
 import {
     CourseCapacity,
     CourseExists,
@@ -12,9 +12,14 @@ import {
     StudentAlreadySubscribed,
     StudentSubscriptions
 } from "./WriteModels"
+import { ProjectionRegistry } from "../../eventHandling/EventHandler"
 
-export const EventSourcedApi = (eventStore: EventStore, repository: CourseSubscriptionRepository): Api => {
-    const publishEvent = PublishEvent(eventStore, {})
+export const EventSourcedApi = (
+    eventStore: EventStore,
+    repository: CourseSubscriptionRepository,
+    projectionRegistry: ProjectionRegistry
+): Api => {
+    const eventPublisher = new EventPublisher(eventStore, projectionRegistry)
     return {
         findCourseById: async (courseId: string) => repository.findCourseById(courseId),
         findStudentById: async (studentId: string) => repository.findStudentById(studentId),
@@ -27,7 +32,7 @@ export const EventSourcedApi = (eventStore: EventStore, repository: CourseSubscr
             })
 
             if (courseExists) throw new Error(`Course with id ${id} already exists`)
-            await publishEvent(new CourseWasRegisteredEvent({ courseId: id, capacity }), appendCondition)
+            await eventPublisher.publish(new CourseWasRegisteredEvent({ courseId: id, capacity }), appendCondition)
         },
         registerStudent: async (id: string, name: string) => {
             const {
@@ -38,7 +43,7 @@ export const EventSourcedApi = (eventStore: EventStore, repository: CourseSubscr
             })
 
             if (studentAlreadyRegistered) throw new Error(`Student with id ${id} already registered.`)
-            publishEvent(new StudentWasRegistered({ studentId: id, name: name }), appendCondition)
+            await eventPublisher.publish(new StudentWasRegistered({ studentId: id, name: name }), appendCondition)
         },
         subscribeStudentToCourse: async (courseId: string, studentId: string) => {
             const {
@@ -65,7 +70,7 @@ export const EventSourcedApi = (eventStore: EventStore, repository: CourseSubscr
             if (studentSubscriptions.subscriptionCount >= STUDENT_SUBSCRIPTION_LIMIT)
                 throw new Error(`Student ${studentId} is already subscribed to the maximum number of courses`)
 
-            await publishEvent(new StudentWasSubscribedEvent({ courseId, studentId }), appendCondition)
+            await eventPublisher.publish(new StudentWasSubscribedEvent({ courseId, studentId }), appendCondition)
         },
         unsubscribeStudentFromCourse: async (courseId: string, studentId: string) => {
             const {
@@ -83,7 +88,7 @@ export const EventSourcedApi = (eventStore: EventStore, repository: CourseSubscr
             if (!studentAlreadySubscribed)
                 throw new Error(`Student ${studentId} is not subscribed to course ${courseId}.`)
 
-            await publishEvent(new StudentWasSubscribedEvent({ courseId, studentId }), appendCondition)
+            await eventPublisher.publish(new StudentWasSubscribedEvent({ courseId, studentId }), appendCondition)
         }
     }
 }

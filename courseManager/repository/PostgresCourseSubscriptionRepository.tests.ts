@@ -1,6 +1,6 @@
 import { Pool } from "pg"
 import { IBackup, newDb } from "pg-mem"
-import { PostgresCourseSubscriptionRepository } from "./PostgresCourseSubscriptionRespository"
+import { PostgresCourseSubscriptionsRepository } from "./PostgresCourseSubscriptionRespository"
 import { subscribe } from "diagnostics_channel"
 
 const COURSE_1 = {
@@ -15,7 +15,7 @@ const STUDENT_1 = {
 describe("PostgresCourseSubscriptionRepository", () => {
     const db = newDb()
     const pool: Pool = new (db.adapters.createPg().Pool)()
-    const repository = new PostgresCourseSubscriptionRepository(pool)
+    const repository = new PostgresCourseSubscriptionsRepository(pool)
     let backup: IBackup
 
     beforeAll(async () => {

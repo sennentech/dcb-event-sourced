@@ -1,5 +1,7 @@
 import { EsEvent, EsEventEnvelope } from "../eventStore/EventStore"
 
+export type ProjectionRegistry = Record<string, EventHandler>
+
 interface EsEventHandlerDef {
     eventHandlers: EsEvent
 }
