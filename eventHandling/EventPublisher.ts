@@ -1,8 +1,9 @@
 import { AnyCondition, AppendCondition, EsEvent, EsQueryCriterion, EventStore } from "../eventStore/EventStore"
 import { SequenceNumber } from "../eventStore/SequenceNumber"
 import { ensureIsArray } from "../eventStore/memoryEventStore/MemoryEventStore"
-import { ProjectionRegistry } from "./EventHandler"
+import { EventHandler, ProjectionRegistry } from "./EventHandler"
 import * as R from "ramda"
+import { EventHandlerLockManager } from "./LockManager"
 
 export class EventPublisher {
     constructor(
@@ -34,7 +35,7 @@ export class HandlerCatchupper {
     ) {}
 
     async catchup(toSequenceNumber: SequenceNumber) {
-        for (const { handler, lockManager } of this.projectionRegistry) {
+        const catchupHandler = async (handler: EventHandler, lockManager: EventHandlerLockManager) => {
             try {
                 await lockManager.obtainLock()
                 const lastSequenceNumberSeen = await lockManager.getLastSequenceNumberSeen()
@@ -57,6 +58,16 @@ export class HandlerCatchupper {
                 await lockManager.rollbackAndRelease()
                 throw err
             }
+        }
+
+        const pendingHandlerCatchups = this.projectionRegistry.map(({ handler, lockManager }) =>
+            catchupHandler(handler, lockManager)
+        )
+
+        const results = await Promise.allSettled(pendingHandlerCatchups)
+        const failedCatchups = results.filter(result => result.status === "rejected")
+        if (failedCatchups.length > 0) {
+            throw new Error(`Failed to catchup ${failedCatchups.length} handlers`)
         }
     }
 }
