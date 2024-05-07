@@ -3,7 +3,7 @@ import { MemoryEventStore } from "../eventStore/memoryEventStore/MemoryEventStor
 import * as R from "ramda"
 import { reconstitute } from "./reconstitute"
 import { CourseCapacity, CourseExists } from "./reconsititue.tests.handlers"
-import { CourseCapacityWasChangedEvent, CourseWasCreatedEvent } from "./reconstitute.tests.events"
+import { CourseCapacityWasChangedEvent, CourseWasRegisteredEvent } from "./reconstitute.tests.events"
 
 const COURSE_ID = "course-1"
 
@@ -35,10 +35,10 @@ describe("reconstitute", () => {
                 expect(appendCondition?.maxSequenceNumber.value).toBe(0)
             })
 
-            test("should have a single eventType of 'courseWasCreated' in appendCondition", async () => {
+            test("should have a single eventType of 'courseWasRegistered' in appendCondition", async () => {
                 const { eventTypes } = appendCondition.query.criteria[0]
                 expect(eventTypes.length).toBe(1)
-                expect(eventTypes[0]).toBe("courseWasCreated")
+                expect(eventTypes[0]).toBe("courseWasRegistered")
             })
 
             test("should include 'courseId' as a tag in appendCondition", async () => {
@@ -53,7 +53,7 @@ describe("reconstitute", () => {
         let courseExists: boolean
         beforeEach(async () => {
             await eventStore.append(
-                new CourseWasCreatedEvent({
+                new CourseWasRegisteredEvent({
                     courseId: COURSE_ID,
                     capacity: 10
                 }),
@@ -75,10 +75,10 @@ describe("reconstitute", () => {
             expect(appendCondition?.maxSequenceNumber.value).toBe(1)
         })
 
-        test("should have a single eventType of 'courseWasCreated' in appendCondition", async () => {
+        test("should have a single eventType of 'courseWasRegistered' in appendCondition", async () => {
             const { eventTypes } = appendCondition.query.criteria[0]
             expect(eventTypes.length).toBe(1)
-            expect(eventTypes[0]).toBe("courseWasCreated")
+            expect(eventTypes[0]).toBe("courseWasRegistered")
         })
 
         test("should include 'courseId' as a tag in appendCondition", async () => {
@@ -92,7 +92,7 @@ describe("reconstitute", () => {
         let courseCapacity: ReturnType<typeof CourseCapacity>["init"]
         beforeEach(async () => {
             await eventStore.append(
-                new CourseWasCreatedEvent({
+                new CourseWasRegisteredEvent({
                     courseId: COURSE_ID,
                     capacity: 10
                 }),
@@ -125,7 +125,7 @@ describe("reconstitute", () => {
             expect(eventTypes.length).toBe(4)
             expect(
                 [
-                    "courseWasCreated",
+                    "courseWasRegistered",
                     "courseCapacityWasChanged",
                     "studentWasUnsubscribed",
                     "studentWasSubscribed"
@@ -145,7 +145,7 @@ describe("reconstitute", () => {
         let courseExists: boolean
         beforeEach(async () => {
             await eventStore.append(
-                new CourseWasCreatedEvent({
+                new CourseWasRegisteredEvent({
                     courseId: COURSE_ID,
                     capacity: 10
                 }),
@@ -180,7 +180,7 @@ describe("reconstitute", () => {
             expect(eventTypes.length).toBe(4)
             expect(
                 [
-                    "courseWasCreated",
+                    "courseWasRegistered",
                     "courseCapacityWasChanged",
                     "studentWasUnsubscribed",
                     "studentWasSubscribed"

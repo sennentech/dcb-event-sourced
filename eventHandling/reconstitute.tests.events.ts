@@ -1,7 +1,7 @@
 import { EsEvent } from "../eventStore/EventStore"
 
-export class CourseWasCreatedEvent implements EsEvent {
-    public type: "courseWasCreated" = "courseWasCreated"
+export class CourseWasRegisteredEvent implements EsEvent {
+    public type: "courseWasRegistered" = "courseWasRegistered"
     public tags: { courseId: string }
     public data: { capacity: number }
 

@@ -3,7 +3,7 @@ import { EventStore } from "../../eventStore/EventStore"
 import { Api } from "../Api"
 import { STUDENT_SUBSCRIPTION_LIMIT } from "../ReadModels"
 import { CourseSubscriptionRepository } from "../repository/Repositories"
-import { CourseWasCreatedEvent, StudentWasRegistered, StudentWasSubscribedEvent } from "./Events"
+import { CourseWasRegisteredEvent, StudentWasRegistered, StudentWasSubscribedEvent } from "./Events"
 import { PublishEvent } from "./PublishEvent"
 import {
     CourseCapacity,
@@ -27,7 +27,7 @@ export const EventSourcedApi = (eventStore: EventStore, repository: CourseSubscr
             })
 
             if (courseExists) throw new Error(`Course with id ${id} already exists`)
-            await publishEvent(new CourseWasCreatedEvent({ courseId: id, capacity }), appendCondition)
+            await publishEvent(new CourseWasRegisteredEvent({ courseId: id, capacity }), appendCondition)
         },
         registerStudent: async (id: string, name: string) => {
             const {

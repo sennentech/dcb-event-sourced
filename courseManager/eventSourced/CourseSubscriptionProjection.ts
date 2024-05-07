@@ -2,7 +2,7 @@ import { EventHandler } from "../../eventHandling/EventHandler"
 import { CourseSubscriptionRepository } from "../repository/Repositories"
 import {
     CourseCapacityWasChangedEvent,
-    CourseWasCreatedEvent,
+    CourseWasRegisteredEvent,
     StudentWasRegistered,
     StudentWasSubscribedEvent,
     StudentWasUnsubscribedEvent
@@ -12,14 +12,14 @@ export const CourseSubscriptionRepositoryProjection = (
     repository: CourseSubscriptionRepository
 ): EventHandler<{
     eventHandlers:
-        | CourseWasCreatedEvent
+        | CourseWasRegisteredEvent
         | CourseCapacityWasChangedEvent
         | StudentWasRegistered
         | StudentWasSubscribedEvent
         | StudentWasUnsubscribedEvent
 }> => ({
     when: {
-        courseWasCreated: async ({ event: { tags, data } }) =>
+        courseWasRegistered: async ({ event: { tags, data } }) =>
             await repository.registerCourse(tags.courseId, data.capacity),
 
         courseCapacityWasChanged: async ({ event: { tags, data } }) =>
