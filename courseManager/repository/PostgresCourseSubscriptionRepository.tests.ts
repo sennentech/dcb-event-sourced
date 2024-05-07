@@ -33,13 +33,6 @@ describe("PostgresCourseSubscriptionRepository", () => {
             const course = await repository.findCourseById(COURSE_1.id)
             expect(course).toEqual({ id: COURSE_1.id, capacity: COURSE_1.capacity, subscribedStudents: [] })
         })
-
-        test("should throw an error if registering a course with a duplicate ID", async () => {
-            await repository.registerCourse(COURSE_1.id, COURSE_1.capacity)
-            await expect(repository.registerCourse(COURSE_1.id, COURSE_1.capacity)).rejects.toThrow(
-                `Course with id ${COURSE_1.id} already exists`
-            )
-        })
     })
 
     describe("findCourseById", () => {
@@ -56,14 +49,13 @@ describe("PostgresCourseSubscriptionRepository", () => {
     })
 
     describe("registerStudent", () => {
-        const studentId = "student-1"
-        const name = "John Doe"
-
-        test("should throw an error if registering a student with a duplicate ID", async () => {
-            await repository.registerStudent(studentId, name)
-            await expect(repository.registerStudent(studentId, name)).rejects.toThrow(
-                `Student with id ${studentId} already exists`
-            )
+        test("should register student successfully", async () => {
+            await repository.registerStudent(STUDENT_1.id, STUDENT_1.name)
+            expect(await repository.findStudentById(STUDENT_1.id)).toEqual({
+                id: STUDENT_1.id,
+                name: STUDENT_1.name,
+                subscribedCourses: []
+            })
         })
     })
 
@@ -81,12 +73,6 @@ describe("PostgresCourseSubscriptionRepository", () => {
                 const course = await repository.findCourseById(COURSE_1.id)
                 expect(course.capacity).toBe(newCapacity)
             })
-
-            test("should throw an error if the course does not exist", async () => {
-                await expect(repository.updateCourseCapacity("non-existent-course", newCapacity)).rejects.toThrow(
-                    `Course with id non-existent-course does not exist.`
-                )
-            })
         })
 
         describe("subscribeStudentToCourse", () => {
@@ -94,12 +80,6 @@ describe("PostgresCourseSubscriptionRepository", () => {
                 await repository.subscribeStudentToCourse(COURSE_1.id, STUDENT_1.id)
                 const course = await repository.findCourseById(COURSE_1.id)
                 expect(course.subscribedStudents).toEqual([{ id: STUDENT_1.id, name: STUDENT_1.name }])
-            })
-
-            test("should throw an error if either the course or student does not exist", async () => {
-                await expect(
-                    repository.subscribeStudentToCourse("non-existent-course", "non-existent-student")
-                ).rejects.toThrow()
             })
         })
 
@@ -109,12 +89,6 @@ describe("PostgresCourseSubscriptionRepository", () => {
                 await repository.unsubscribeStudentFromCourse(COURSE_1.id, STUDENT_1.id)
                 const course = await repository.findCourseById(COURSE_1.id)
                 expect(course.subscribedStudents).toEqual([])
-            })
-
-            test("should throw an error if student already unsubscribed", async () => {
-                await expect(repository.unsubscribeStudentFromCourse(COURSE_1.id, STUDENT_1.id)).rejects.toThrow(
-                    `Student ${STUDENT_1.id} is not subscribed to course ${COURSE_1.id}.`
-                )
             })
         })
     })

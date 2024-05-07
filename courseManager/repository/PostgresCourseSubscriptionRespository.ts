@@ -5,30 +5,22 @@ export class PostgresCourseSubscriptionRepository {
     constructor(private pool: Pool) {}
 
     async install(): Promise<void> {
-        const client = await this.pool.connect()
-        try {
-            await client.query(`
+        await this.pool.query(`
                 CREATE TABLE IF NOT EXISTS courses (
-                    id TEXT PRIMARY KEY,
+                    id TEXT,
                     capacity INTEGER NOT NULL
                 );
 
                 CREATE TABLE IF NOT EXISTS students (
-                    id TEXT PRIMARY KEY,
+                    id TEXT,
                     name TEXT NOT NULL
                 );
 
                 CREATE TABLE IF NOT EXISTS subscriptions (
                     course_id TEXT,
-                    student_id TEXT,
-                    PRIMARY KEY (course_id, student_id),
-                    FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
-                    FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE
+                    student_id TEXT
                 );
             `)
-        } finally {
-            client.release()
-        }
     }
 
     async findCourseById(courseId: string): Promise<Course> {
@@ -108,51 +100,28 @@ export class PostgresCourseSubscriptionRepository {
     }
 
     async registerCourse(courseId: string, capacity: number): Promise<void> {
-        try {
-            await this.pool.query("INSERT INTO courses (id, capacity) VALUES ($1, $2)", [courseId, capacity])
-        } catch (e) {
-            if (e.code === "23505") {
-                throw new Error(`Course with id ${courseId} already exists.`)
-            }
-            throw e
-        }
+        await this.pool.query("INSERT INTO courses (id, capacity) VALUES ($1, $2)", [courseId, capacity])
     }
 
     async registerStudent(studentId: string, name: string): Promise<void> {
-        try {
-            await this.pool.query("INSERT INTO students (id, name) VALUES ($1, $2)", [studentId, name])
-        } catch (e) {
-            if (e.code === "23505") {
-                throw new Error(`Student with id ${studentId} already exists.`)
-            }
-            throw e
-        }
+        await this.pool.query("INSERT INTO students (id, name) VALUES ($1, $2)", [studentId, name])
     }
 
     async updateCourseCapacity(courseId: string, newCapacity: number): Promise<void> {
-        const result = await this.pool.query("UPDATE courses SET capacity = $1 WHERE id = $2", [newCapacity, courseId])
-        if (result.rowCount === 0) throw new Error(`Course with id ${courseId} does not exist.`)
+        await this.pool.query("UPDATE courses SET capacity = $1 WHERE id = $2", [newCapacity, courseId])
     }
 
     async subscribeStudentToCourse(courseId: string, studentId: string): Promise<void> {
-        try {
-            await this.pool.query("INSERT INTO subscriptions (course_id, student_id) VALUES ($1, $2)", [
-                courseId,
-                studentId
-            ])
-        } catch (e) {
-            if (e.code === "23505") {
-                throw new Error(`Student ${studentId} is already subscribed to course ${courseId}.`)
-            }
-            throw e
-        }
-    }
-
-    async unsubscribeStudentFromCourse(courseId: string, studentId: string): Promise<void> {
-        const result = await this.pool.query("DELETE FROM subscriptions WHERE course_id = $1 AND student_id = $2", [
+        await this.pool.query("INSERT INTO subscriptions (course_id, student_id) VALUES ($1, $2)", [
             courseId,
             studentId
         ])
-        if (result.rowCount === 0) throw new Error(`Student ${studentId} is not subscribed to course ${courseId}.`)
+    }
+
+    async unsubscribeStudentFromCourse(courseId: string, studentId: string): Promise<void> {
+        await this.pool.query("DELETE FROM subscriptions WHERE course_id = $1 AND student_id = $2", [
+            courseId,
+            studentId
+        ])
     }
 }
