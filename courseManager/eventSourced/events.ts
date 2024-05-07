@@ -14,11 +14,11 @@ export class CourseWasCreatedEvent implements EsEvent {
 export class StudentWasRegistered implements EsEvent {
     public type: "studentWasRegistered" = "studentWasRegistered"
     public tags: { studentId: string }
-    public data: {}
+    public data: { name: string }
 
-    constructor({ studentId }: { studentId: string }) {
+    constructor({ studentId, name }: { studentId: string; name: string }) {
         this.tags = { studentId }
-        this.data = {}
+        this.data = { name }
     }
 }
 

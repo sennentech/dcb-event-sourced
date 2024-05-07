@@ -1,4 +1,4 @@
-import { EventHandler } from "./EventHandler"
+import { EventHandlerWithState } from "./EventHandlerWithState"
 import {
     CourseWasCreatedEvent,
     CourseCapacityWasChangedEvent,
@@ -8,7 +8,7 @@ import {
 
 export const CourseExists = (
     courseId: string
-): EventHandler<{
+): EventHandlerWithState<{
     state: boolean
     tagFilter: { courseId: string }
     eventHandlers: CourseWasCreatedEvent
@@ -22,7 +22,7 @@ export const CourseExists = (
 
 export const CourseCapacity = (
     courseId: string
-): EventHandler<{
+): EventHandlerWithState<{
     state: { isFull: boolean; subscriberCount: number; capacity: number }
     eventHandlers:
         | CourseWasCreatedEvent

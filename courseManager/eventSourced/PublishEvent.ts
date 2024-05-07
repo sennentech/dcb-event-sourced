@@ -1,4 +1,5 @@
 import { EventHandler } from "../../eventHandling/src/EventHandler"
+import { EventHandlerWithState } from "../../eventHandling/src/EventHandlerWithState"
 import { AppendCondition, EsEvent, EventStore } from "../../eventStore/src/EventStore"
 
 export const PublishEvent =
