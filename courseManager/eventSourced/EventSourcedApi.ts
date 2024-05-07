@@ -66,6 +66,24 @@ export const EventSourcedApi = (eventStore: EventStore, repository: CourseSubscr
                 throw new Error(`Student ${studentId} is already subscribed to the maximum number of courses`)
 
             await publishEvent(new StudentWasSubscribedEvent({ courseId, studentId }), appendCondition)
+        },
+        unsubscribeStudentFromCourse: async (courseId: string, studentId: string) => {
+            const {
+                states: { studentAlreadySubscribed, courseExists },
+                appendCondition
+            } = await reconstitute(eventStore, {
+                studentAlreadySubscribed: StudentAlreadySubscribed({
+                    courseId: courseId,
+                    studentId: studentId
+                }),
+                courseExists: CourseExists(courseId)
+            })
+
+            if (!courseExists) throw new Error(`Course ${courseId} doesn't exist.`)
+            if (!studentAlreadySubscribed)
+                throw new Error(`Student ${studentId} is not subscribed to course ${courseId}.`)
+
+            await publishEvent(new StudentWasSubscribedEvent({ courseId, studentId }), appendCondition)
         }
     }
 }

@@ -35,7 +35,22 @@ export const ConventionalApi = (repository: CourseSubscriptionRepository): Api =
             if (student.subscribedCourses.length >= STUDENT_SUBSCRIPTION_LIMIT)
                 throw new Error(`Student with id ${studentId} has reached the subscription limit.`)
 
+            if (student.subscribedCourses.some(course => course.id === courseId))
+                throw new Error(`Student with id ${studentId} is already subscribed to course with id ${courseId}.`)
+
             await repository.subscribeStudentToCourse(courseId, studentId)
+        },
+        unsubscribeStudentFromCourse: async (courseId: string, studentId: string) => {
+            const course = await repository.findCourseById(courseId)
+            if (!course) throw new Error(`Course with id ${courseId} does not exist.`)
+
+            const student = await repository.findStudentById(studentId)
+            if (!student) throw new Error(`Student with id ${studentId} does not exist.`)
+
+            if (!student.subscribedCourses.some(course => course.id === courseId))
+                throw new Error(`Student with id ${studentId} is not subscribed to course with id ${courseId}.`)
+
+            await repository.unsubscribeStudentFromCourse(courseId, studentId)
         }
     }
 }

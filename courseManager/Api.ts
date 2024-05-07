@@ -6,4 +6,5 @@ export interface Api {
     registerCourse(id: string, capacity: number): Promise<void>
     registerStudent(id: string, name: string): Promise<void>
     subscribeStudentToCourse(courseId: string, studentId: string): Promise<void>
+    unsubscribeStudentFromCourse(courseId: string, studentId: string): Promise<void>
 }
