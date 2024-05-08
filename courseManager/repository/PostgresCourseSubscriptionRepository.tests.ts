@@ -29,7 +29,7 @@ describe("PostgresCourseSubscriptionRepository", () => {
 
     describe("registerCourse", () => {
         test("should register a course successfully", async () => {
-            await repository.registerCourse(COURSE_1.id, COURSE_1.capacity)
+            await repository.registerCourse({ courseId: COURSE_1.id, capacity: COURSE_1.capacity })
             const course = await repository.findCourseById(COURSE_1.id)
             expect(course).toEqual({ id: COURSE_1.id, capacity: COURSE_1.capacity, subscribedStudents: [] })
         })
@@ -37,7 +37,7 @@ describe("PostgresCourseSubscriptionRepository", () => {
 
     describe("findCourseById", () => {
         test("should return a course by ID with correct capacity and empty subscriptions", async () => {
-            await repository.registerCourse(COURSE_1.id, COURSE_1.capacity)
+            await repository.registerCourse({ courseId: COURSE_1.id, capacity: COURSE_1.capacity })
             const course = await repository.findCourseById(COURSE_1.id)
 
             expect(course).toEqual({ id: COURSE_1.id, capacity: COURSE_1.capacity, subscribedStudents: [] })
@@ -50,7 +50,7 @@ describe("PostgresCourseSubscriptionRepository", () => {
 
     describe("registerStudent", () => {
         test("should register student successfully", async () => {
-            await repository.registerStudent(STUDENT_1.id, STUDENT_1.name)
+            await repository.registerStudent({ studentId: STUDENT_1.id, name: STUDENT_1.name })
             expect(await repository.findStudentById(STUDENT_1.id)).toEqual({
                 id: STUDENT_1.id,
                 name: STUDENT_1.name,
@@ -61,15 +61,15 @@ describe("PostgresCourseSubscriptionRepository", () => {
 
     describe("with one existing course and one registered student", () => {
         beforeEach(async () => {
-            await repository.registerCourse(COURSE_1.id, COURSE_1.capacity)
-            await repository.registerStudent(STUDENT_1.id, STUDENT_1.name)
+            await repository.registerCourse({ courseId: COURSE_1.id, capacity: COURSE_1.capacity })
+            await repository.registerStudent({ studentId: STUDENT_1.id, name: STUDENT_1.name })
         })
 
         describe("updateCourseCapacity", () => {
             const newCapacity = 40
 
             test("should update a course's capacity successfully", async () => {
-                await repository.updateCourseCapacity(COURSE_1.id, newCapacity)
+                await repository.updateCourseCapacity({ courseId: COURSE_1.id, newCapacity })
                 const course = await repository.findCourseById(COURSE_1.id)
                 expect(course.capacity).toBe(newCapacity)
             })
@@ -77,25 +77,31 @@ describe("PostgresCourseSubscriptionRepository", () => {
 
         describe("subscribeStudentToCourse", () => {
             test("should subscribe a student to a course successfully", async () => {
-                await repository.subscribeStudentToCourse(COURSE_1.id, STUDENT_1.id)
+                await repository.subscribeStudentToCourse({ courseId: COURSE_1.id, studentId: STUDENT_1.id })
                 const course = await repository.findCourseById(COURSE_1.id)
+                const student = await repository.findStudentById(STUDENT_1.id)
+
                 expect(course.subscribedStudents).toEqual([{ id: STUDENT_1.id, name: STUDENT_1.name }])
+                expect(student.subscribedCourses).toEqual([{ id: COURSE_1.id, capacity: COURSE_1.capacity }])
             })
         })
 
         describe("unsubscribeStudentFromCourse", () => {
             test("should unsubscribe a student from a course successfully", async () => {
-                await repository.subscribeStudentToCourse(COURSE_1.id, STUDENT_1.id)
-                await repository.unsubscribeStudentFromCourse(COURSE_1.id, STUDENT_1.id)
+                await repository.subscribeStudentToCourse({ courseId: COURSE_1.id, studentId: STUDENT_1.id })
+                await repository.unsubscribeStudentFromCourse({ courseId: COURSE_1.id, studentId: STUDENT_1.id })
                 const course = await repository.findCourseById(COURSE_1.id)
+                const student = await repository.findStudentById(STUDENT_1.id)
+
                 expect(course.subscribedStudents).toEqual([])
+                expect(student.subscribedCourses).toEqual([])
             })
         })
     })
 
     describe("findStudentById", () => {
         test("should return a student by ID with correct name and no subscribed courses", async () => {
-            await repository.registerStudent(STUDENT_1.id, STUDENT_1.name)
+            await repository.registerStudent({ studentId: STUDENT_1.id, name: STUDENT_1.name })
             const student = await repository.findStudentById(STUDENT_1.id)
 
             expect(student).toEqual({
@@ -106,9 +112,9 @@ describe("PostgresCourseSubscriptionRepository", () => {
         })
 
         test("should return a student by ID with subscribed courses", async () => {
-            await repository.registerStudent(STUDENT_1.id, STUDENT_1.name)
-            await repository.registerCourse(COURSE_1.id, COURSE_1.capacity)
-            await repository.subscribeStudentToCourse(COURSE_1.id, STUDENT_1.id)
+            await repository.registerStudent({ studentId: STUDENT_1.id, name: STUDENT_1.name })
+            await repository.registerCourse({ courseId: COURSE_1.id, capacity: COURSE_1.capacity })
+            await repository.subscribeStudentToCourse({ courseId: COURSE_1.id, studentId: STUDENT_1.id })
 
             const student = await repository.findStudentById(STUDENT_1.id)
 

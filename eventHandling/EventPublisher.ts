@@ -61,10 +61,10 @@ export class HandlerCatchup {
 
         const pendingHandlerCatchups = this.projectionRegistry.map(catchupOne)
 
-        const results = await Promise.allSettled(pendingHandlerCatchups)
-        const failedCatchups = results.filter(result => result.status === "rejected")
-        if (failedCatchups.length > 0) {
-            throw new Error(`Failed to catchup ${failedCatchups.length} handlers`)
-        }
+        const results = await Promise.all(pendingHandlerCatchups)
+        // const failedCatchups = results.filter(result => result.status === "rejected")
+        // if (failedCatchups.length > 0) {
+        //     throw new Error(`Failed to catchup ${failedCatchups.length} handlers`)
+        // }
     }
 }

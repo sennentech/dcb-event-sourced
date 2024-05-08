@@ -5,9 +5,9 @@ export interface CourseSubscriptionRepository {
     findCourseById(courseId: string): Promise<Course>
     findStudentById(studentId: string): Promise<Student>
 
-    registerCourse(courseId: string, capacity: number): Promise<void>
-    registerStudent(studentId: string, name: string): Promise<void>
-    updateCourseCapacity(courseId: string, newCapacity: number): Promise<void>
-    subscribeStudentToCourse(courseId: string, studentId: string): Promise<void>
-    unsubscribeStudentFromCourse(courseId: string, studentId: string): Promise<void>
+    registerCourse(req: { courseId: string; capacity: number }): Promise<void>
+    registerStudent(req: { studentId: string; name: string }): Promise<void>
+    updateCourseCapacity(req: { courseId: string; newCapacity: number }): Promise<void>
+    subscribeStudentToCourse(req: { courseId: string; studentId: string }): Promise<void>
+    unsubscribeStudentFromCourse(req: { courseId: string; studentId: string }): Promise<void>
 }

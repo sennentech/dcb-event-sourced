@@ -23,7 +23,7 @@ export const EventSourcedApi = (
     return {
         findCourseById: async (courseId: string) => repository.findCourseById(courseId),
         findStudentById: async (studentId: string) => repository.findStudentById(studentId),
-        registerCourse: async (id: string, capacity: number) => {
+        registerCourse: async ({ id, capacity }) => {
             const {
                 states: { courseExists },
                 appendCondition
@@ -34,7 +34,7 @@ export const EventSourcedApi = (
             if (courseExists) throw new Error(`Course with id ${id} already exists`)
             await eventPublisher.publish(new CourseWasRegisteredEvent({ courseId: id, capacity }), appendCondition)
         },
-        registerStudent: async (id: string, name: string) => {
+        registerStudent: async ({ id, name }) => {
             const {
                 states: { studentAlreadyRegistered },
                 appendCondition
@@ -45,7 +45,7 @@ export const EventSourcedApi = (
             if (studentAlreadyRegistered) throw new Error(`Student with id ${id} already registered.`)
             await eventPublisher.publish(new StudentWasRegistered({ studentId: id, name: name }), appendCondition)
         },
-        subscribeStudentToCourse: async (courseId: string, studentId: string) => {
+        subscribeStudentToCourse: async ({ courseId, studentId }) => {
             const {
                 states: { courseExists, courseCapacity, studentAlreadySubscribed, studentSubscriptions },
                 appendCondition
@@ -72,7 +72,7 @@ export const EventSourcedApi = (
 
             await eventPublisher.publish(new StudentWasSubscribedEvent({ courseId, studentId }), appendCondition)
         },
-        unsubscribeStudentFromCourse: async (courseId: string, studentId: string) => {
+        unsubscribeStudentFromCourse: async ({ courseId, studentId }) => {
             const {
                 states: { studentAlreadySubscribed, courseExists },
                 appendCondition

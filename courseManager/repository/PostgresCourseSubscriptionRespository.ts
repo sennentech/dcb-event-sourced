@@ -1,7 +1,8 @@
 import { Pool, PoolClient, Client } from "pg"
 import { Course, Student } from "../ReadModels"
+import { CourseSubscriptionRepository } from "./Repositories"
 
-export class PostgresCourseSubscriptionsRepository {
+export class PostgresCourseSubscriptionsRepository implements CourseSubscriptionRepository {
     constructor(private client: Pool | PoolClient | Client) {
         if (!client) throw new Error(`Postgres client is not initialised`)
     }
@@ -101,29 +102,29 @@ export class PostgresCourseSubscriptionsRepository {
         return student
     }
 
-    async registerCourse(courseId: string, capacity: number): Promise<void> {
-        await this.client.query("INSERT INTO courses (id, capacity) VALUES ($1, $2)", [courseId, capacity])
+    async registerCourse(req: { courseId: string; capacity: number }): Promise<void> {
+        await this.client.query("INSERT INTO courses (id, capacity) VALUES ($1, $2)", [req.courseId, req.capacity])
     }
 
-    async registerStudent(studentId: string, name: string): Promise<void> {
-        await this.client.query("INSERT INTO students (id, name) VALUES ($1, $2)", [studentId, name])
+    async registerStudent(req: { studentId: string; name: string }): Promise<void> {
+        await this.client.query("INSERT INTO students (id, name) VALUES ($1, $2)", [req.studentId, req.name])
     }
 
-    async updateCourseCapacity(courseId: string, newCapacity: number): Promise<void> {
-        await this.client.query("UPDATE courses SET capacity = $1 WHERE id = $2", [newCapacity, courseId])
+    async updateCourseCapacity(req: { courseId: string; newCapacity: number }): Promise<void> {
+        await this.client.query("UPDATE courses SET capacity = $1 WHERE id = $2", [req.newCapacity, req.courseId])
     }
 
-    async subscribeStudentToCourse(courseId: string, studentId: string): Promise<void> {
+    async subscribeStudentToCourse(req: { courseId: string; studentId: string }): Promise<void> {
         await this.client.query("INSERT INTO subscriptions (course_id, student_id) VALUES ($1, $2)", [
-            courseId,
-            studentId
+            req.courseId,
+            req.studentId
         ])
     }
 
-    async unsubscribeStudentFromCourse(courseId: string, studentId: string): Promise<void> {
+    async unsubscribeStudentFromCourse(req: { courseId: string; studentId: string }): Promise<void> {
         await this.client.query("DELETE FROM subscriptions WHERE course_id = $1 AND student_id = $2", [
-            courseId,
-            studentId
+            req.courseId,
+            req.studentId
         ])
     }
 }

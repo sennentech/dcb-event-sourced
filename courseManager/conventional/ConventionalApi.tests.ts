@@ -20,21 +20,21 @@ describe("ConventionalApi", () => {
         await repository.install()
 
         api = await ConventionalApi(repository)
-        api.registerCourse(COURSE_1.id, COURSE_1.capacity)
+        api.registerCourse({ id: COURSE_1.id, capacity: COURSE_1.capacity })
 
         const studentRegistraionPromises = []
         for (let i = 0; i < 100; i++) {
-            studentRegistraionPromises.push(api.registerStudent(`student-${i}`, `Student ${i}`))
+            studentRegistraionPromises.push(api.registerStudent({ id: `student-${i}`, name: `Student ${i}` }))
         }
         await Promise.all(studentRegistraionPromises)
     })
 
     test("should throw error when 6th student subscribes", async () => {
         for (let i = 1; i <= 5; i++) {
-            await api.subscribeStudentToCourse(COURSE_1.id, `student-${i}`)
+            await api.subscribeStudentToCourse({ courseId: COURSE_1.id, studentId: `student-${i}` })
         }
 
-        await expect(api.subscribeStudentToCourse(COURSE_1.id, "student-6")).rejects.toThrow(
+        await expect(api.subscribeStudentToCourse({ courseId: COURSE_1.id, studentId: "student-6" })).rejects.toThrow(
             `Course with id ${COURSE_1.id} is full.`
         )
     })
@@ -44,7 +44,7 @@ describe("ConventionalApi", () => {
         const studentSubscriptionPromises = []
 
         for (let i = 0; i < 10; i++) {
-            studentSubscriptionPromises.push(api.subscribeStudentToCourse(courseId, `student-${i}`))
+            studentSubscriptionPromises.push(api.subscribeStudentToCourse({ courseId, studentId: `student-${i}` }))
         }
 
         const results = await Promise.allSettled(studentSubscriptionPromises)

@@ -19,7 +19,7 @@ export class PostgresLockManager implements EventHandlerLockManager {
 
     async install() {
         await this.pool.query(
-            `CREATE TABLE IF NOT EXISTS "${POSTGRES_TABLE_NAME}"(handler_id text PRIMARY KEY, last_sequence_number text) `
+            `CREATE TABLE IF NOT EXISTS "${POSTGRES_TABLE_NAME}"(handler_id text PRIMARY KEY, last_sequence_number int) `
         )
     }
 

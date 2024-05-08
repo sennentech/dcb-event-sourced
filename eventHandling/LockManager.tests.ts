@@ -42,7 +42,7 @@ describe("LockManager", () => {
 
         const result = await pool.query(`SELECT * FROM _event_handler_bookmarks`)
         expect(result.rows).toHaveLength(1)
-        expect(result.rows[0].last_sequence_number).toBe("1")
+        expect(result.rows[0].last_sequence_number).toBe(1)
     })
 
     test.skip("should rollback and release lock", async () => {

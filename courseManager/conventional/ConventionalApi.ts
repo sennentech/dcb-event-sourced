@@ -10,19 +10,19 @@ export const ConventionalApi = (repository: CourseSubscriptionRepository): Api =
         findStudentById: async (studentId: string) => {
             return repository.findStudentById(studentId)
         },
-        registerCourse: async (id: string, capacity: number) => {
+        registerCourse: async ({ id, capacity }) => {
             const course = await repository.findCourseById(id)
             if (course) throw new Error(`Course with id ${id} already exists`)
 
-            return repository.registerCourse(id, capacity)
+            return repository.registerCourse({ courseId: id, capacity })
         },
-        registerStudent: async (id: string, name: string) => {
+        registerStudent: async ({ id, name }) => {
             const student = await repository.findStudentById(id)
             if (student) throw new Error(`Student with id ${id} already exists`)
 
-            return repository.registerStudent(id, name)
+            return repository.registerStudent({ studentId: id, name })
         },
-        subscribeStudentToCourse: async (courseId: string, studentId: string) => {
+        subscribeStudentToCourse: async ({ courseId, studentId }) => {
             const course = await repository.findCourseById(courseId)
             if (!course) throw new Error(`Course with id ${courseId} does not exist.`)
 
@@ -38,9 +38,9 @@ export const ConventionalApi = (repository: CourseSubscriptionRepository): Api =
             if (student.subscribedCourses.some(course => course.id === courseId))
                 throw new Error(`Student with id ${studentId} is already subscribed to course with id ${courseId}.`)
 
-            await repository.subscribeStudentToCourse(courseId, studentId)
+            await repository.subscribeStudentToCourse({ courseId, studentId })
         },
-        unsubscribeStudentFromCourse: async (courseId: string, studentId: string) => {
+        unsubscribeStudentFromCourse: async ({ courseId, studentId }) => {
             const course = await repository.findCourseById(courseId)
             if (!course) throw new Error(`Course with id ${courseId} does not exist.`)
 
@@ -50,7 +50,7 @@ export const ConventionalApi = (repository: CourseSubscriptionRepository): Api =
             if (!student.subscribedCourses.some(course => course.id === courseId))
                 throw new Error(`Student with id ${studentId} is not subscribed to course with id ${courseId}.`)
 
-            await repository.unsubscribeStudentFromCourse(courseId, studentId)
+            await repository.unsubscribeStudentFromCourse({ courseId, studentId })
         }
     }
 }
