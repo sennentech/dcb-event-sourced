@@ -24,7 +24,7 @@ describe("EventSourcedApi", () => {
     let repository: PostgresCourseSubscriptionsRepository
     let api: Api
 
-    beforeAll(async () => {
+    beforeEach(async () => {
         pool = new (getPgMemDb().adapters.createPg().Pool)()
         repository = new PostgresCourseSubscriptionsRepository(pool)
         await repository.install()
@@ -69,11 +69,9 @@ describe("EventSourcedApi", () => {
 
     describe("with a course projection", () => {
         let lockManager: PostgresLockManager
-        beforeAll(async () => {
+        beforeEach(async () => {
             lockManager = new PostgresLockManager(pool, "course-subscriptions")
             await lockManager.install()
-        })
-        beforeEach(async () => {
             const projectionRegistry: ProjectionRegistry = [
                 {
                     handler: CourseSubscriptionsProjection(lockManager),

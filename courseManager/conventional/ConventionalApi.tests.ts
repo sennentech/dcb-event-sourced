@@ -19,7 +19,7 @@ describe("ConventionalApi", () => {
         repository = new PostgresCourseSubscriptionsRepository(pool)
         await repository.install()
 
-        api = await ConventionalApi(repository)
+        api = ConventionalApi(repository)
         api.registerCourse({ id: COURSE_1.id, capacity: COURSE_1.capacity })
 
         const studentRegistraionPromises = []

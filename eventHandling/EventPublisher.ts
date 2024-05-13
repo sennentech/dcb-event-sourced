@@ -41,10 +41,10 @@ export class HandlerCatchup {
 
                 const criteria: EsQueryCriterion[] = [{ eventTypes: R.keys(handler.when) as string[], tags: {} }]
 
-                let currentSeqNumber = lastSequenceNumberSeen
+                let currentSeqNumber = lastSequenceNumberSeen.inc()
                 for await (const event of this.eventStore.read(
                     { criteria },
-                    { fromSequenceNumber: lastSequenceNumberSeen }
+                    { fromSequenceNumber: currentSeqNumber }
                 )) {
                     if (event.sequenceNumber.value > toSequenceNumber.value) {
                         break
