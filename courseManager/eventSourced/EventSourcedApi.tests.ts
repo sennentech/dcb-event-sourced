@@ -6,8 +6,8 @@ import { EventSourcedApi } from "./EventSourcedApi"
 import { MemoryEventStore } from "../../eventStore/memoryEventStore/MemoryEventStore"
 import { CourseSubscriptionsProjection } from "./CourseSubscriptionsProjection"
 import { ProjectionRegistry } from "../../eventHandling/EventHandler"
-import { PostgresLockManager } from "../../eventHandling/LockManager"
 import { getPgMemDb } from "../../eventStore/utils/getPgMemDb"
+import { PostgresLockManager } from "../../eventHandling/lockManager/PostgresLockManager"
 
 const COURSE_1 = {
     id: "course-1",
@@ -70,7 +70,7 @@ describe("EventSourcedApi", () => {
     describe("with a course projection", () => {
         let lockManager: PostgresLockManager
         beforeEach(async () => {
-            lockManager = new PostgresLockManager(pool, "course-subscriptions")
+            lockManager = new PostgresLockManager(pool, "course-subscriptions", { disableRowLock: true })
             await lockManager.install()
             const projectionRegistry: ProjectionRegistry = [
                 {

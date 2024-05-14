@@ -3,7 +3,7 @@ import { SequenceNumber } from "../eventStore/SequenceNumber"
 import { ensureIsArray } from "../eventStore/memoryEventStore/MemoryEventStore"
 import { EventHandler, ProjectionRegistry } from "./EventHandler"
 import * as R from "ramda"
-import { EventHandlerLockManager } from "./LockManager"
+import { EventHandlerLockManager } from "./lockManager/LockManager"
 
 export class EventPublisher {
     constructor(
@@ -36,9 +36,7 @@ export class HandlerCatchup {
         const catchupOne = async (opts: { handler: EventHandler; lockManager: EventHandlerLockManager }) => {
             const { handler, lockManager } = opts
             try {
-                await lockManager.obtainLock()
-                const lastSequenceNumberSeen = await lockManager.getLastSequenceNumberSeen()
-
+                const lastSequenceNumberSeen = await lockManager.obtainLock()
                 const criteria: EsQueryCriterion[] = [{ eventTypes: R.keys(handler.when) as string[], tags: {} }]
 
                 let currentSeqNumber = lastSequenceNumberSeen.inc()

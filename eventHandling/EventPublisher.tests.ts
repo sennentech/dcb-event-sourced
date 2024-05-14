@@ -4,7 +4,7 @@ import { getPgMemDb } from "../eventStore/utils/getPgMemDb"
 import { streamAllEventsToArray } from "../eventStore/utils/streamAllEventsToArray"
 import { EventHandler, ProjectionRegistry } from "./EventHandler"
 import { EventPublisher } from "./EventPublisher"
-import { EventHandlerLockManager, PostgresLockManager } from "./LockManager"
+import { PostgresLockManager } from "./lockManager/PostgresLockManager"
 
 class TestEvent implements EsEvent {
     type: "testEvent" = "testEvent"
@@ -20,7 +20,7 @@ describe(`EventPublisher`, () => {
 
     beforeAll(async () => {
         const pool = new (await getPgMemDb().adapters.createPg().Pool)()
-        lockManager = new PostgresLockManager(pool, "test-handler")
+        lockManager = new PostgresLockManager(pool, "test-handler", { disableRowLock: true })
         await lockManager.install()
     })
     beforeEach(async () => {

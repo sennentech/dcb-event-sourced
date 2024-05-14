@@ -1,8 +1,8 @@
-import { DataType, IBackup, IMemoryDb, newDb } from "pg-mem"
-import { EventHandlerLockManager, PostgresLockManager } from "./LockManager"
+import { IBackup } from "pg-mem"
 import { Pool } from "pg"
-import { SequenceNumber } from "../eventStore/SequenceNumber"
-import { getPgMemDb } from "../eventStore/utils/getPgMemDb"
+import { SequenceNumber } from "../../eventStore/SequenceNumber"
+import { getPgMemDb } from "../../eventStore/utils/getPgMemDb"
+import { PostgresLockManager } from "./PostgresLockManager"
 
 describe("LockManager", () => {
     let db = getPgMemDb()
@@ -12,7 +12,7 @@ describe("LockManager", () => {
     let backup: IBackup
 
     beforeAll(async () => {
-        lockManager = new PostgresLockManager(pool, "test-handler")
+        lockManager = new PostgresLockManager(pool, "test-handler", { disableRowLock: true })
         await (lockManager as PostgresLockManager).install()
         backup = db.backup()
     })
@@ -31,8 +31,7 @@ describe("LockManager", () => {
     })
 
     test("should obtain lock and get default sequence number", async () => {
-        await lockManager.obtainLock()
-        const sequenceNumber = await lockManager.getLastSequenceNumberSeen()
+        const sequenceNumber = await lockManager.obtainLock()
         expect(sequenceNumber.value).toBe(0)
     })
 

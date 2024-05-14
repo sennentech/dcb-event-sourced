@@ -1,5 +1,5 @@
 import { EsEvent, EsEventEnvelope, Tags } from "../eventStore/EventStore"
-import { EventHandlerLockManager } from "./LockManager"
+import { EventHandlerLockManager } from "./lockManager/LockManager"
 
 export type ProjectionRegistry = {
     handler: EventHandler<EsEventHandlerDef>

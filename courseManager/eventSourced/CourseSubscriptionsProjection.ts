@@ -10,7 +10,7 @@ import {
 } from "./Events"
 import { PostgresCourseSubscriptionsRepository } from "../repository/PostgresCourseSubscriptionRespository"
 import { SequenceNumber } from "../../eventStore/SequenceNumber"
-import { PostgresLockManager } from "../../eventHandling/LockManager"
+import { PostgresLockManager } from "../../eventHandling/lockManager/PostgresLockManager"
 
 export const CourseSubscriptionsProjection = (
     lockManager: PostgresLockManager
