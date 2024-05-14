@@ -19,7 +19,7 @@
     },
     "dependencies": {
         "@types/luxon": "^3.4.2",
-        "inquirer": "^9.2.20",
+        "inquirer": "^8.0.0",
         "interactive-cli": "^1.1.6",
         "luxon": "^3.4.4",
         "pg": "^8.11.5",

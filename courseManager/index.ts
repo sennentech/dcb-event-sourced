@@ -1,45 +1,129 @@
-// import { Pool } from "pg"
-// import { cli, command } from "interactive-cli"
+import { Pool } from "pg"
+import { PostgresCourseSubscriptionsRepository } from "./repository/PostgresCourseSubscriptionRespository"
+import { MemoryEventStore } from "../eventStore/memoryEventStore/MemoryEventStore"
+import { EventSourcedApi } from "./eventSourced/EventSourcedApi"
+import { ProjectionRegistry } from "../eventHandling/EventHandler"
+import { CourseSubscriptionsProjection } from "./eventSourced/CourseSubscriptionsProjection"
+import { PostgresLockManager } from "../eventHandling/lockManager/PostgresLockManager"
+import inquirer from "inquirer"
+;(async () => {
+    const pool = new Pool({
+        host: "localhost",
+        port: 5432,
+        user: "postgres",
+        password: "postgres",
+        database: "dcb_test_1"
+    })
 
-// import {
-//     PostgresSubscriptionRepository,
-//     installPostgresSubscriptionRepository
-// } from "./repository/PostgresSubscriptionRepository"
-// import { newDb } from "pg-mem"
-// import { installPostgresCourseRepository, PostgresCourseRepository } from "./repository/PostgresCourseRepository"
-// import { installPostgresStudentRepository, PostgresStudentRepository } from "./repository/PostgresStudentRepository"
-// ;(async () => {
-//     // Initialize in-memory database
-//     const db = newDb()
-//     const pool = new (db.adapters.createPg().Pool)()
+    const repository = new PostgresCourseSubscriptionsRepository(pool)
+    await repository.install()
 
-//     // Install repositories
-//     await installPostgresCourseRepository(pool)
-//     await installPostgresStudentRepository(pool)
-//     await installPostgresSubscriptionRepository(pool)
+    const lockManager = new PostgresLockManager(pool, "course-subscription-projection")
+    await lockManager.install()
 
-//     // Create repository instances
-//     const courseRepository = new PostgresCourseRepository(pool)
-//     const studentRepository = new PostgresStudentRepository(pool)
-//     const subscriptionRepository = new PostgresSubscriptionRepository(pool)
+    const projectionRegistry: ProjectionRegistry = [
+        {
+            handler: CourseSubscriptionsProjection(lockManager),
+            lockManager
+        }
+    ]
+    const eventStore = new MemoryEventStore()
+    const api = EventSourcedApi(eventStore, repository, projectionRegistry)
 
-//     command("add-course", "Add a new course", async () => {
-//         const id = await cli.ask("Enter course ID:")
-//         const capacity = await cli.ask("Enter course capacity:", {
-//             validate: value => {
-//                 const parsed = parseInt(value, 10)
-//                 return isNaN(parsed) || parsed <= 0 ? "Please enter a valid number greater than zero." : true
-//             }
-//         })
+    let exit = false
+    while (!exit) {
+        const choices = await inquirer.prompt({
+            type: "list",
+            name: "action",
+            message: "What do you want to do?",
+            choices: [
+                "Register course",
+                "Register student",
+                "Subscribe student to course",
+                "Unsubscribe student from course",
+                "Find course",
+                "Find student",
+                "Exit"
+            ]
+        })
 
-//         try {
-//             await courseRepository.insert({
-//                 id: id,
-//                 capacity: parseInt(capacity, 10)
-//             })
-//             console.log("Course added successfully")
-//         } catch (error) {
-//             console.error("Failed to add course:", error.message)
-//         }
-//     })
-// })()
+        switch (choices.action) {
+            case "Register course": {
+                const course = await inquirer.prompt([
+                    { name: "id", message: "Course ID:", type: "input" },
+                    { name: "capacity", message: "Course capacity:", type: "number" }
+                ])
+                await api.registerCourse(course)
+                console.log(`Course with id ${course.id} and capacity ${course.capacity} registered`)
+                break
+            }
+
+            case "Update course capacity": {
+                const { courseId, newCapacity } = await inquirer.prompt([
+                    { name: "courseId", message: "Course ID:", type: "input" },
+                    { name: "newCapacity", message: "Course capacity:", type: "number" }
+                ])
+                // await api.updateCourseCapacity({ courseId, newCapacity })
+                console.log(`method not implemented`)
+                break
+            }
+
+            case "Register student": {
+                const student = await inquirer.prompt([
+                    { name: "id", message: "Student ID:", type: "input" },
+                    { name: "name", message: "Student name:", type: "input" }
+                ])
+                await api.registerStudent(student)
+                console.log(`Student with id ${student.id} and name ${student.name} registered`)
+                break
+            }
+
+            case "Subscribe student to course": {
+                const { courseId, studentId } = await inquirer.prompt([
+                    { name: "studentId", message: "Student ID:", type: "input" },
+                    { name: "courseId", message: "Course ID:", type: "input" }
+                ])
+                await api.subscribeStudentToCourse({ courseId, studentId })
+                console.log(`Student ${studentId} subscribed to course ${courseId}`)
+                break
+            }
+
+            case "Unsubscribe student to course": {
+                const { courseId, studentId } = await inquirer.prompt([
+                    { name: "studentId", message: "Student ID:", type: "input" },
+                    { name: "courseId", message: "Course ID:", type: "input" }
+                ])
+                await api.unsubscribeStudentFromCourse({ courseId, studentId })
+                console.log(`Student ${studentId} unsubscribed from course ${courseId}`)
+                break
+            }
+
+            case "Find course": {
+                const { courseId } = await inquirer.prompt([{ name: "courseId", message: "Course ID:", type: "input" }])
+                const course = await api.findCourseById(courseId)
+                console.log(`Found course:`)
+                console.log(course)
+                break
+            }
+
+            case "Find student": {
+                const { studentId } = await inquirer.prompt([
+                    { name: "studentId", message: "Student ID:", type: "input" }
+                ])
+                const course = await api.findStudentById(studentId)
+                console.log(`Found student:`)
+                console.log(course)
+                break
+            }
+
+            case "Exit":
+                exit = true
+                console.log("Exiting...")
+                break
+
+            default:
+                console.log("No valid action selected.")
+                break
+        }
+    }
+})()

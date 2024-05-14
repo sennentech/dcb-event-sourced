@@ -23,6 +23,7 @@ export class PostgresLockManager implements EventHandlerLockManager {
         await this.pool.query(
             `CREATE TABLE IF NOT EXISTS "${POSTGRES_TABLE_NAME}"(handler_id text PRIMARY KEY, last_sequence_number int) `
         )
+        await this.pool.query(`TRUNCATE TABLE "${POSTGRES_TABLE_NAME}"`)
     }
 
     async obtainLock(): Promise<SequenceNumber> {
