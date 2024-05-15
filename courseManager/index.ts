@@ -33,6 +33,7 @@ import "source-map-support/register"
         truncate table _event_handler_bookmarks; 
         truncate table courses; 
         truncate table students;
+        truncate table events;
         `
     )
 
@@ -144,7 +145,6 @@ import "source-map-support/register"
                     break
             }
         } catch (err) {
-            throw err
             console.log(`***** ERROR: ${err.message} *****`)
         }
     }

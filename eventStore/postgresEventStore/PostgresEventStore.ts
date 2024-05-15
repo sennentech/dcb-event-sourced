@@ -22,7 +22,7 @@ export class PostgresEventStore implements EventStore {
     ): Promise<{
         lastSequenceNumber: SequenceNumber
     }> {
-        if (!Array.isArray(events)) events = [events]
+        events = Array.isArray(events) ? events : [events]
 
         let conditionTypes = []
         let conditionTags = {}
@@ -34,12 +34,18 @@ export class PostgresEventStore implements EventStore {
             maxSeqNo = appendCondition.maxSequenceNumber.value
         }
 
+        const eventsData = events.map(event => ({
+            type: event.type,
+            data: event.data,
+            tags: event.tags
+        }))
+
         const result = await this.client.query(
             `SELECT append_events_jsonb($1::jsonb, $2::text[], $3::jsonb, $4::bigint) AS last_seq_no;`,
-            [JSON.stringify(events), conditionTypes, JSON.stringify(conditionTags), maxSeqNo]
+            [JSON.stringify(eventsData), conditionTypes, JSON.stringify(conditionTags), maxSeqNo]
         )
 
-        return { lastSequenceNumber: SequenceNumber.create(parseInt(result.rows[0].last_seq_no)) }
+        return { lastSequenceNumber: SequenceNumber.create(parseInt(result.rows[0].last_seq_no, 10)) }
     }
 
     async *readAll(options?: EsReadOptions): AsyncGenerator<EsEventEnvelope> {
