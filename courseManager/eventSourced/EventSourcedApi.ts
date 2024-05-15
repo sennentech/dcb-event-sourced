@@ -3,7 +3,12 @@ import { EventStore } from "../../eventStore/EventStore"
 import { Api } from "../Api"
 import { STUDENT_SUBSCRIPTION_LIMIT } from "../ReadModels"
 import { CourseSubscriptionRepository } from "../repository/Repositories"
-import { CourseWasRegisteredEvent, StudentWasRegistered, StudentWasSubscribedEvent } from "./Events"
+import {
+    CourseWasRegisteredEvent,
+    StudentWasRegistered,
+    StudentWasSubscribedEvent,
+    StudentWasUnsubscribedEvent
+} from "./Events"
 import { EventPublisher } from "../../eventHandling/EventPublisher"
 import {
     CourseCapacity,
@@ -88,7 +93,7 @@ export const EventSourcedApi = (
             if (!studentAlreadySubscribed)
                 throw new Error(`Student ${studentId} is not subscribed to course ${courseId}.`)
 
-            await eventPublisher.publish(new StudentWasSubscribedEvent({ courseId, studentId }), appendCondition)
+            await eventPublisher.publish(new StudentWasUnsubscribedEvent({ courseId, studentId }), appendCondition)
         }
     }
 }
