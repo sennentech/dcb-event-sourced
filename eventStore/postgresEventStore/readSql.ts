@@ -1,43 +1,52 @@
 import { EsQueryCriterion, EsReadOptions } from "../EventStore"
 import { ParamManager, tagConverter } from "./utils"
 
+export const readSql = (criteria: EsQueryCriterion[], options?: EsReadOptions) => {
+    const pm = new ParamManager()
+    const sql = `
+        DECLARE event_cursor CURSOR FOR
+        SELECT 
+            e.sequence_number,
+            type,
+            data,
+            tags,
+            "timestamp"
+            ${criteria?.length ? `,hashes` : ""}
+        FROM events e
+        ${criteria?.length ? readCriteriaJoin(criteria, pm, options) : ""}
+        ORDER BY e.sequence_number;`
+    return { sql, params: pm.params }
+}
+
+const notEmpty = (s: string) => s && s !== ""
+
 const hasTags = (c: EsQueryCriterion) => c.tags && Object.keys(c.tags).length > 0
-const tagFilterSnip = (p: ParamManager, c: EsQueryCriterion) =>
-    hasTags(c) ? `tags @> ${p.add(JSON.stringify(tagConverter.toDb(c.tags)))}::jsonb` : ""
 
-const fromSeqNoFilter = (p: ParamManager, options?: EsReadOptions) =>
-    options?.fromSequenceNumber ? `sequence_number >= ${p.add(options?.fromSequenceNumber?.value)}` : ""
+const tagFilterSnip = (pm: ParamManager, c: EsQueryCriterion) =>
+    hasTags(c) ? `tags @> ${pm.add(JSON.stringify(tagConverter.toDb(c.tags)))}::jsonb` : ""
 
-const typesFilter = (c: EsQueryCriterion, p: ParamManager) =>
-    c.eventTypes?.length ? `type IN (${c.eventTypes.map(t => p.add(t)).join(", ")})` : ""
+const fromSeqNoFilter = (pm: ParamManager, options?: EsReadOptions) =>
+    options?.fromSequenceNumber ? `sequence_number >= ${pm.add(options?.fromSequenceNumber?.value)}` : ""
 
-export const readSql = (criteria: EsQueryCriterion[], p: ParamManager, options?: EsReadOptions) => `
-    DECLARE event_cursor CURSOR FOR
-    SELECT 
-        e.sequence_number,
-        ,type
-        ,data
-        ,tags
-        ,"timestamp"
-        ${criteria.length ? `,hashes` : ""}
-    FROM events e
-    ${criteria?.length ? readCriteriaJoin(criteria, p, options) : ""}
-    ORDER BY e.sequence_number;
-`
+const typesFilter = (c: EsQueryCriterion, pm: ParamManager) =>
+    c.eventTypes?.length ? `type IN (${c.eventTypes.map(t => pm.add(t)).join(", ")})` : ""
 
-export const readCriteriaJoin = (criteria: EsQueryCriterion[], p: ParamManager, options?: EsReadOptions): string => `
+const getFilterString = (c: EsQueryCriterion, pm: ParamManager, options?: EsReadOptions) => {
+    const filters = [typesFilter(c, pm), tagFilterSnip(pm, c), fromSeqNoFilter(pm, options)].filter(notEmpty)
+    return filters.length ? `WHERE ${filters.join(" AND ")}` : ""
+}
+
+export const readCriteriaJoin = (criteria: EsQueryCriterion[], pm: ParamManager, options?: EsReadOptions): string => `
     INNER JOIN (
         SELECT sequence_number, ARRAY_AGG(hash) hashes FROM (
-            ${criteria.map((c, i) => {
-                const filters = [typesFilter(c, p), tagFilterSnip(p, c), fromSeqNoFilter(p, options)].filter(
-                    f => f !== ""
-                )
-                const filterString = filters.length ? `WHERE ${filters.join(" AND ")}` : ""
-                return `
-                    SELECT sequence_number, ${p.add(i)} hash FROM events 
-                    ${filterString}
-                `
-            }).join(`
+            ${criteria.map(
+                (c, i) => `
+                    SELECT 
+                        sequence_number, 
+                        ${pm.add(i.toString())} hash 
+                    FROM events 
+                    ${getFilterString(c, pm, options)}`
+            ).join(`
                 UNION ALL
             `)}
         ) h

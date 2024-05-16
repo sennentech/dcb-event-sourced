@@ -67,9 +67,6 @@ import "source-map-support/register"
         try {
             switch (choices.action) {
                 case "Register course": {
-                    for await (const event of eventStore.readAll()) {
-                        console.log(event)
-                    }
                     const course = await inquirer.prompt([
                         { name: "id", message: "Course ID:", type: "input" },
                         { name: "capacity", message: "Course capacity:", type: "number" }
@@ -149,7 +146,7 @@ import "source-map-support/register"
                     break
             }
         } catch (err) {
-            throw err
+            if (process.env.DEBUG) throw err
             console.log(`***** ERROR: ${err.message} *****`)
         }
     }

@@ -6,15 +6,15 @@ import {
     EsEventEnvelope,
     EsQuery,
     EsReadOptions,
-    EventStore,
-    Tags
+    EventStore
 } from "../EventStore"
 import { SequenceNumber } from "../SequenceNumber"
 import { createEventsTableSql } from "./createEventsTableSql"
-import { ParamManager, dbEventConverter, tagConverter } from "./utils"
-import { readSql } from "./readSql"
+import { tagConverter } from "./utils"
+import { readSql as readQuery } from "./readSql"
+import { appendSql as appendCommand } from "./appendCommand"
 
-const BATCH_SIZE = 2
+const BATCH_SIZE = 100
 
 export class PostgresEventStore implements EventStore {
     constructor(private pool: Pool) {}
@@ -26,44 +26,15 @@ export class PostgresEventStore implements EventStore {
         lastSequenceNumber: SequenceNumber
     }> {
         events = Array.isArray(events) ? events : [events]
-        const formattedEvents = events.map(dbEventConverter.toDb)
 
-        const maxSeqNumber = appendCondition === "Any" ? null : appendCondition.maxSequenceNumber.value
-        const p = new ParamManager()
-
+        const maxSeqNumber = appendCondition === "Any" ? null : appendCondition.maxSequenceNumber
         const criteria = appendCondition !== "Any" ? appendCondition.query.criteria ?? [] : []
-        const maxSeqNumberParam = p.add(maxSeqNumber)
-
-        const sql = `
-            WITH new_events (type, data, tags) AS ( 
-                VALUES ${formattedEvents.map(e => `(${p.add(e.type)}, ${p.add(e.data)}::JSONB, ${p.add(e.tags)}::JSONB)`).join(", ")}
-            ),
-            inserted AS (
-                INSERT INTO events (type, data, tags)
-                SELECT type, data, tags
-                FROM new_events
-                WHERE NOT EXISTS (
-                    ${criteria.map(
-                        c => ` 
-                        SELECT 1 FROM events WHERE type IN (${c.eventTypes.map(t => p.add(t)).join(", ")})
-                        AND tags @> ${p.add(JSON.stringify(tagConverter.toDb(c.tags)))}::jsonb
-                        AND sequence_number > ${maxSeqNumberParam}
-                        `
-                    ).join(`
-                        UNION ALL
-                    `)}
-                )
-                RETURNING sequence_number
-            ) 
-            SELECT max(sequence_number) as last_sequence_number FROM inserted;
-            ;
-        `
+        const { query, params } = appendCommand(events, criteria, maxSeqNumber)
 
         const client = await this.pool.connect()
-
         try {
             await client.query(`BEGIN ISOLATION LEVEL SERIALIZABLE;`)
-            const result = await client.query(sql, p.params)
+            const result = await client.query(query, params)
             await client.query("COMMIT")
             const lastSequenceNumber = parseInt(result.rows[0].last_sequence_number, 10)
             return { lastSequenceNumber: SequenceNumber.create(lastSequenceNumber) }
@@ -87,10 +58,8 @@ export class PostgresEventStore implements EventStore {
         const client = await this.pool.connect()
         try {
             await client.query("BEGIN")
-            const p = new ParamManager()
-            const sql = readSql(query?.criteria, p, options)
-            console.log(sql, p.params)
-            await client.query(sql, p.params)
+            const { sql, params } = readQuery(query?.criteria, options)
+            await client.query(sql, params)
             while (true) {
                 const result = await client.query(`FETCH ${BATCH_SIZE} FROM event_cursor`)
                 if (!result.rows.length) {
@@ -110,7 +79,6 @@ export class PostgresEventStore implements EventStore {
             }
             await client.query("COMMIT")
         } catch (err) {
-            console.error("Error during streaming read:", err)
             await client.query("ROLLBACK")
             throw err
         } finally {
