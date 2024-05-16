@@ -1,36 +1,30 @@
 export const createReadEventsFnSql = `
-CREATE OR REPLACE FUNCTION read_events(criteria JSONB, from_seq_no BIGINT DEFAULT 0, read_backwards BOOLEAN DEFAULT false)
-RETURNS SETOF events AS $$
+CREATE OR REPLACE FUNCTION read_events(event_types jsonb, tags jsonb, from_seq_no bigint, read_backwards boolean)
+RETURNS TABLE(type text, data jsonb, tags jsonb, "timestamp" timestamp, sequence_number bigint) AS $$
 DECLARE
-    query TEXT;
-    event_types TEXT[];
+    query text := '';
+    type text;
 BEGIN
-    -- Extract eventTypes from JSONB criteria and convert to TEXT[]
-    IF criteria->'eventTypes' IS NOT NULL THEN
-        SELECT array_agg(value::text) INTO event_types
-        FROM jsonb_array_elements_text(criteria->'eventTypes');
+    -- Dynamically build the SQL query for each event type and tags
+    FOR type IN SELECT * FROM jsonb_array_elements_text(event_types) LOOP
+        IF query <> '' THEN
+            query := query || ' UNION ALL ';
+        END IF;
+        query := query || format(
+            'SELECT type, e.data, e.tags, e."timestamp", e.sequence_number FROM events e WHERE type = %L AND sequence_number > %s AND tags @> %L',
+            type, from_seq_no, tags::text
+        );
+    END LOOP;
+
+    IF read_backwards THEN
+        query := query || ' ORDER BY sequence_number DESC';
+    ELSE
+        query := query || ' ORDER BY sequence_number ASC';
     END IF;
 
-    -- Construct the query dynamically based on the input JSONB criteria
-    query := 'SELECT * FROM events WHERE sequence_number ' || 
-             (CASE WHEN read_backwards THEN '<=' ELSE '>=' END) || ' $1 ';
-
-    -- Add event type conditions if specified
-    IF event_types IS NOT NULL THEN
-        query := query || 'AND type = ANY($2) ';
-    END IF;
-    
-    -- Add tag conditions if specified
-    IF criteria->'tags' IS NOT NULL THEN
-        query := query || 'AND tags @> $3 ';
-    END IF;
-
-    -- Add ordering
-    query := query || (CASE WHEN read_backwards THEN 'ORDER BY sequence_number DESC' ELSE 'ORDER BY sequence_number ASC' END);
-
-    -- Execute the query
-    RETURN QUERY EXECUTE query USING from_seq_no, event_types, criteria->'tags';
+    RETURN QUERY EXECUTE query;
 END;
 $$ LANGUAGE plpgsql;
+
 
 `

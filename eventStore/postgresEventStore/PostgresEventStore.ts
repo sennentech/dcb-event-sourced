@@ -6,15 +6,71 @@ import {
     EsEventEnvelope,
     EsQuery,
     EsReadOptions,
-    EventStore
+    EventStore,
+    Tags
 } from "../EventStore"
 import { SequenceNumber } from "../SequenceNumber"
 import { createEventsTableSql } from "./createEventsTableSql"
 import { createReadEventsFnSql } from "./createReadEventsFnSql"
 import { createAppendEventsFnSql } from "./createAppendEventsFnSql"
+import { last } from "ramda"
+
+type DbTags = {
+    key: string
+    value: string
+}[]
+
+type DbEvent = {
+    type: string
+    data: string
+    tags: string
+}
+
+const tagConverter = {
+    fromDb: (dbTags: DbTags): Tags =>
+        dbTags.reduce<Tags>((acc, { key, value }) => {
+            if (acc[key]) {
+                const currentValue = acc[key]
+                if (Array.isArray(currentValue)) {
+                    return { ...acc, [key]: [...currentValue, value] } // Append to existing array
+                } else {
+                    return { ...acc, [key]: [currentValue, value] } // Convert existing string to array and append
+                }
+            } else {
+                return { ...acc, [key]: value } // Set as string if first occurrence
+            }
+        }, {}),
+
+    toDb: (tags: Tags): DbTags =>
+        Object.entries(tags).reduce<DbTags>((acc, [key, value]) => {
+            if (Array.isArray(value)) {
+                return acc.concat(value.map(v => ({ key, value: v })))
+            } else {
+                return acc.concat([{ key, value }])
+            }
+        }, [])
+}
+
+const dbEventConverter = {
+    toDb: (esEvent: EsEvent): DbEvent => ({
+        type: esEvent.type,
+        data: JSON.stringify(esEvent.data),
+        tags: JSON.stringify(tagConverter.toDb(esEvent.tags))
+    })
+}
+const paramManager = () => {
+    const params: string[] = []
+    return {
+        add: (paramValue): string => {
+            params.push(paramValue)
+            return `$${params.length}`
+        },
+        params
+    }
+}
 
 export class PostgresEventStore implements EventStore {
-    constructor(private client: Pool) {}
+    constructor(private pool: Pool) {}
 
     async append(
         events: EsEvent | EsEvent[],
@@ -23,29 +79,53 @@ export class PostgresEventStore implements EventStore {
         lastSequenceNumber: SequenceNumber
     }> {
         events = Array.isArray(events) ? events : [events]
+        const formattedEvents = events.map(dbEventConverter.toDb)
 
-        let conditionTypes = []
-        let conditionTags = {}
-        let maxSeqNo = 0
+        const maxSeqNumber = appendCondition === "Any" ? null : appendCondition.maxSequenceNumber.value
+        const p = paramManager()
 
-        if (appendCondition !== "Any") {
-            conditionTypes = appendCondition.query.criteria.flatMap(c => c.eventTypes)
-            conditionTags = appendCondition.query.criteria.reduce((acc, c) => ({ ...acc, ...c.tags }), {})
-            maxSeqNo = appendCondition.maxSequenceNumber.value
+        const criteria = appendCondition !== "Any" ? appendCondition.query.criteria ?? [] : []
+        const maxSeqNumberParam = p.add(maxSeqNumber)
+
+        const sql = `
+            WITH new_events (type, data, tags) AS ( 
+                VALUES ${formattedEvents.map(e => `(${p.add(e.type)}, ${p.add(e.data)}::JSONB, ${p.add(e.tags)}::JSONB)`).join(", ")}
+            ),
+            inserted AS (
+                INSERT INTO events (type, data, tags)
+                SELECT type, data, tags
+                FROM new_events
+                WHERE NOT EXISTS (
+                    ${criteria.map(
+                        c => ` 
+                        SELECT 1 FROM events WHERE type IN (${p.add(c.eventTypes)}) 
+                        AND tags @> ${p.add(JSON.stringify(tagConverter.toDb(c.tags)))}::jsonb
+                        AND sequence_number > ${maxSeqNumberParam}
+                        `
+                    ).join(`
+                        UNION ALL
+                    `)}
+                )
+                RETURNING sequence_number
+            ) 
+            SELECT max(sequence_number) as last_sequence_number FROM inserted;
+            ;
+        `
+
+        const client = await this.pool.connect()
+
+        try {
+            await client.query(`BEGIN ISOLATION LEVEL SERIALIZABLE;`)
+            const result = await client.query(sql, p.params)
+            await client.query("COMMIT")
+            const lastSequenceNumber = parseInt(result.rows[0].last_sequence_number, 10)
+            return { lastSequenceNumber: SequenceNumber.create(lastSequenceNumber) }
+        } catch (err) {
+            await client.query("ROLLBACK")
+            throw err
+        } finally {
+            client.release()
         }
-
-        const eventsData = events.map(event => ({
-            type: event.type,
-            data: event.data,
-            tags: event.tags
-        }))
-
-        const result = await this.client.query(
-            `SELECT append_events_jsonb($1::jsonb, $2::text[], $3::jsonb, $4::bigint) AS last_seq_no;`,
-            [JSON.stringify(eventsData), conditionTypes, JSON.stringify(conditionTags), maxSeqNo]
-        )
-
-        return { lastSequenceNumber: SequenceNumber.create(parseInt(result.rows[0].last_seq_no, 10)) }
     }
 
     async *readAll(options?: EsReadOptions): AsyncGenerator<EsEventEnvelope> {
@@ -57,41 +137,51 @@ export class PostgresEventStore implements EventStore {
     }
 
     async *#read({ query, options }: { query?: EsQuery; options?: EsReadOptions }): AsyncGenerator<EsEventEnvelope> {
-        const fromSeqNo = options?.fromSequenceNumber ? options.fromSequenceNumber.value : 0
-        const readBackwards = options?.backwards || false
+        const p = paramManager()
+        const sql = `
+            SELECT 
+                e.sequence_number,
+                type,
+                data,
+                tags,
+                "timestamp",
+                hashes
+            FROM events e
+            INNER JOIN (
+                SELECT sequence_number, ARRAY_AGG(hash) hashes FROM (
+                    ${query.criteria.map(
+                        (c, i) => ` 
+                        SELECT sequence_number, ${p.add(i)} hash FROM events 
+                        WHERE type IN (${c.eventTypes.map(t => p.add(t)).join(", ")})
+                        ${c.tags ? `AND tags @> ${p.add(JSON.stringify(tagConverter.toDb(c.tags)))}::jsonb` : ""}
+                        ${options?.fromSequenceNumber ? `AND sequence_number > ${p.add(options?.fromSequenceNumber.value)}` : ""}
+                        `
+                    ).join(`
+                        UNION ALL
+                    `)}
+                ) h
+                GROUP BY h.sequence_number
+            ) eh
+            ON eh.sequence_number = e.sequence_number
+            ORDER BY e.sequence_number;
+        `
 
-        // Convert EsQuery into a JSONB object expected by the PostgreSQL function
-        const criteria = {
-            eventTypes: query.criteria.map(c => c.eventTypes).flat(),
-            tags: query.criteria.map(c => c.tags).reduce((acc, tags) => ({ ...acc, ...tags }), {})
-        }
-
-        const res = await this.client.query("SELECT * FROM read_events($1, $2, $3)", [
-            JSON.stringify(criteria),
-            fromSeqNo,
-            readBackwards
-        ])
-
-        for (const row of res.rows) {
+        const { rows } = await this.pool.query(sql, p.params)
+        if (!rows.length) console.log("NO ROWS!!")
+        for (const ev of rows) {
             yield {
+                sequenceNumber: ev.sequence_number,
+                timestamp: ev.timestamp,
                 event: {
-                    type: row.type,
-                    tags: row.tags,
-                    data: row.data
-                },
-                timestamp: row.timestamp,
-                sequenceNumber: SequenceNumber.create(parseInt(row.sequence_number))
+                    type: ev.type,
+                    data: ev.data,
+                    tags: tagConverter.fromDb(ev.tags)
+                }
             }
         }
     }
 
     async install() {
-        await this.client.query(`
-            
-            ${createEventsTableSql}
-            ${createAppendEventsFnSql}
-            ${createReadEventsFnSql}
-
-        `)
+        await this.pool.query(createEventsTableSql)
     }
 }
