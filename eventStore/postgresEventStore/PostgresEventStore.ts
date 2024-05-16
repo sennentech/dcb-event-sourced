@@ -11,62 +11,10 @@ import {
 } from "../EventStore"
 import { SequenceNumber } from "../SequenceNumber"
 import { createEventsTableSql } from "./createEventsTableSql"
+import { ParamManager, dbEventConverter, tagConverter } from "./utils"
+import { readSql } from "./readSql"
 
 const BATCH_SIZE = 2
-
-type DbTags = {
-    key: string
-    value: string
-}[]
-
-type DbEvent = {
-    type: string
-    data: string
-    tags: string
-}
-
-const tagConverter = {
-    fromDb: (dbTags: DbTags): Tags =>
-        dbTags.reduce<Tags>((acc, { key, value }) => {
-            if (acc[key]) {
-                const currentValue = acc[key]
-                if (Array.isArray(currentValue)) {
-                    return { ...acc, [key]: [...currentValue, value] } // Append to existing array
-                } else {
-                    return { ...acc, [key]: [currentValue, value] } // Convert existing string to array and append
-                }
-            } else {
-                return { ...acc, [key]: value } // Set as string if first occurrence
-            }
-        }, {}),
-
-    toDb: (tags: Tags): DbTags =>
-        Object.entries(tags).reduce<DbTags>((acc, [key, value]) => {
-            if (Array.isArray(value)) {
-                return acc.concat(value.map(v => ({ key, value: v })))
-            } else {
-                return acc.concat([{ key, value }])
-            }
-        }, [])
-}
-
-const dbEventConverter = {
-    toDb: (esEvent: EsEvent): DbEvent => ({
-        type: esEvent.type,
-        data: JSON.stringify(esEvent.data),
-        tags: JSON.stringify(tagConverter.toDb(esEvent.tags))
-    })
-}
-const paramManager = () => {
-    const params: string[] = []
-    return {
-        add: (paramValue): string => {
-            params.push(paramValue)
-            return `$${params.length}`
-        },
-        params
-    }
-}
 
 export class PostgresEventStore implements EventStore {
     constructor(private pool: Pool) {}
@@ -81,7 +29,7 @@ export class PostgresEventStore implements EventStore {
         const formattedEvents = events.map(dbEventConverter.toDb)
 
         const maxSeqNumber = appendCondition === "Any" ? null : appendCondition.maxSequenceNumber.value
-        const p = paramManager()
+        const p = new ParamManager()
 
         const criteria = appendCondition !== "Any" ? appendCondition.query.criteria ?? [] : []
         const maxSeqNumberParam = p.add(maxSeqNumber)
@@ -97,7 +45,7 @@ export class PostgresEventStore implements EventStore {
                 WHERE NOT EXISTS (
                     ${criteria.map(
                         c => ` 
-                        SELECT 1 FROM events WHERE type IN (${p.add(c.eventTypes)}) 
+                        SELECT 1 FROM events WHERE type IN (${c.eventTypes.map(t => p.add(t)).join(", ")})
                         AND tags @> ${p.add(JSON.stringify(tagConverter.toDb(c.tags)))}::jsonb
                         AND sequence_number > ${maxSeqNumberParam}
                         `
@@ -139,46 +87,10 @@ export class PostgresEventStore implements EventStore {
         const client = await this.pool.connect()
         try {
             await client.query("BEGIN")
-            const p = paramManager()
-
-            const sql = `
-            DECLARE event_cursor CURSOR FOR
-            SELECT 
-                e.sequence_number,
-                type,
-                data,
-                tags,
-                "timestamp",
-                hashes
-            FROM events e
-            
-            ${
-                query?.criteria?.length
-                    ? `
-            INNER JOIN (
-                SELECT sequence_number, ARRAY_AGG(hash) hashes FROM (
-                    ${query.criteria.map(
-                        (c, i) => `
-                        SELECT sequence_number, ${p.add(i)} hash FROM events 
-                        WHERE type IN (${c.eventTypes.map(t => p.add(t)).join(", ")})
-                        ${c.tags && Object.keys(c.tags).length > 0 ? `AND tags @> ${p.add(JSON.stringify(tagConverter.toDb(c.tags)))}::jsonb` : ""}
-                        ${options?.fromSequenceNumber ? `AND sequence_number > ${p.add(options?.fromSequenceNumber.value)}` : ""}
-                        `
-                    ).join(`
-                        UNION ALL
-                    `)}
-                ) h
-                GROUP BY h.sequence_number
-            ) eh
-            ON eh.sequence_number = e.sequence_number
-            `
-                    : `CROSS JOIN ( SELECT null as hashes) d`
-            }
-            ORDER BY e.sequence_number;
-        `
-
-            await client.query(sql, p.params)
+            const p = new ParamManager()
+            const sql = readSql(query?.criteria, p, options)
             console.log(sql, p.params)
+            await client.query(sql, p.params)
             while (true) {
                 const result = await client.query(`FETCH ${BATCH_SIZE} FROM event_cursor`)
                 if (!result.rows.length) {
