@@ -10,7 +10,7 @@ export const readSql = (criteria: EsQueryCriterion[], options?: EsReadOptions) =
             type,
             data,
             tags,
-            "timestamp"
+            to_char("timestamp" AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') "timestamp"
             ${criteria?.length ? `,hashes` : ""}
         FROM events e
         ${criteria?.length ? readCriteriaJoin(criteria, pm, options) : ""}

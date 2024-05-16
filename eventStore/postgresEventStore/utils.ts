@@ -1,14 +1,24 @@
-import { Tags, EsEvent } from "../EventStore"
+import { Tags, EsEvent, EsEventEnvelope } from "../EventStore"
+import { SequenceNumber } from "../SequenceNumber"
+import { Timestamp } from "../TimeStamp"
 
 export type DbTags = {
     key: string
     value: string
 }[]
 
-export type DbEvent = {
+export type DbWriteEvent = {
     type: string
     data: string
     tags: string
+}
+
+export type DbReadEvent = {
+    type: string
+    data: any
+    tags: DbTags
+    timestamp: string
+    sequence_number: string
 }
 
 export const tagConverter = {
@@ -17,12 +27,12 @@ export const tagConverter = {
             if (acc[key]) {
                 const currentValue = acc[key]
                 if (Array.isArray(currentValue)) {
-                    return { ...acc, [key]: [...currentValue, value] } // Append to existing array
+                    return { ...acc, [key]: [...currentValue, value] }
                 } else {
-                    return { ...acc, [key]: [currentValue, value] } // Convert existing string to array and append
+                    return { ...acc, [key]: [currentValue, value] }
                 }
             } else {
-                return { ...acc, [key]: value } // Set as string if first occurrence
+                return { ...acc, [key]: value }
             }
         }, {}),
 
@@ -37,10 +47,19 @@ export const tagConverter = {
 }
 
 export const dbEventConverter = {
-    toDb: (esEvent: EsEvent): DbEvent => ({
+    toDb: (esEvent: EsEvent): DbWriteEvent => ({
         type: esEvent.type,
         data: JSON.stringify(esEvent.data),
         tags: JSON.stringify(tagConverter.toDb(esEvent.tags))
+    }),
+    fromDb: (dbEvent: DbReadEvent): EsEventEnvelope => ({
+        sequenceNumber: SequenceNumber.create(parseInt(dbEvent.sequence_number)),
+        timestamp: Timestamp.create(dbEvent.timestamp),
+        event: {
+            type: dbEvent.type,
+            data: dbEvent.data,
+            tags: tagConverter.fromDb(dbEvent.tags)
+        }
     })
 }
 

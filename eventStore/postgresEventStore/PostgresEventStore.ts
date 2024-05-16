@@ -10,7 +10,7 @@ import {
 } from "../EventStore"
 import { SequenceNumber } from "../SequenceNumber"
 import { createEventsTableSql } from "./createEventsTableSql"
-import { tagConverter } from "./utils"
+import { dbEventConverter } from "./utils"
 import { readSql as readQuery } from "./readSql"
 import { appendSql as appendCommand } from "./appendCommand"
 
@@ -66,15 +66,8 @@ export class PostgresEventStore implements EventStore {
                     break
                 }
                 for (const ev of result.rows) {
-                    yield {
-                        sequenceNumber: SequenceNumber.create(parseInt(ev.sequence_number)),
-                        timestamp: ev.timestamp,
-                        event: {
-                            type: ev.type,
-                            data: ev.data,
-                            tags: tagConverter.fromDb(ev.tags)
-                        }
-                    }
+                    const esEventEnvelope = dbEventConverter.fromDb(ev)
+                    yield esEventEnvelope
                 }
             }
             await client.query("COMMIT")
