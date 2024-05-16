@@ -5,6 +5,7 @@
     "version": "0.0.1",
     "scripts": {
         "test": "jest",
+        "debug": "node --inspect-brk ./dist/courseManager/index.js",
         "test:watch": "jest --watch",
         "test:coverage": "jest --collect-coverage",
         "build": "./node_modules/.bin/tsc",

@@ -17,25 +17,27 @@ import "source-map-support/register"
         database: "dcb_test_1"
     })
 
+    //RESET:
+    await pool.query(
+        `
+        drop table if exists subscriptions; 
+        drop table if exists courses; 
+        drop table if exists students;
+
+        drop table if exists _event_handler_bookmarks; 
+        drop table if exists events cascade;
+        `
+    )
+
     const eventStore = new PostgresEventStore(pool)
-    await eventStore.install()
+    await eventStore.install
+    ()
 
     const repository = new PostgresCourseSubscriptionsRepository(pool)
     await repository.install()
 
     const lockManager = new PostgresLockManager(pool, "course-subscription-projection")
     await lockManager.install()
-
-    //RESET:
-    await pool.query(
-        `
-        truncate table subscriptions; 
-        truncate table _event_handler_bookmarks; 
-        truncate table courses; 
-        truncate table students;
-        truncate table events;
-        `
-    )
 
     const projectionRegistry: ProjectionRegistry = [
         {
@@ -66,6 +68,9 @@ import "source-map-support/register"
         try {
             switch (choices.action) {
                 case "Register course": {
+                    for await (const event of eventStore.readAll()) {
+                        console.log(event)
+                    }
                     const course = await inquirer.prompt([
                         { name: "id", message: "Course ID:", type: "input" },
                         { name: "capacity", message: "Course capacity:", type: "number" }
@@ -145,6 +150,7 @@ import "source-map-support/register"
                     break
             }
         } catch (err) {
+            throw err
             console.log(`***** ERROR: ${err.message} *****`)
         }
     }

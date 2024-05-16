@@ -11,9 +11,8 @@ import {
 } from "../EventStore"
 import { SequenceNumber } from "../SequenceNumber"
 import { createEventsTableSql } from "./createEventsTableSql"
-import { createReadEventsFnSql } from "./createReadEventsFnSql"
-import { createAppendEventsFnSql } from "./createAppendEventsFnSql"
-import { last } from "ramda"
+
+const BATCH_SIZE = 2
 
 type DbTags = {
     key: string
@@ -137,8 +136,13 @@ export class PostgresEventStore implements EventStore {
     }
 
     async *#read({ query, options }: { query?: EsQuery; options?: EsReadOptions }): AsyncGenerator<EsEventEnvelope> {
-        const p = paramManager()
-        const sql = `
+        const client = await this.pool.connect()
+        try {
+            await client.query("BEGIN")
+            const p = paramManager()
+
+            const sql = `
+            DECLARE event_cursor CURSOR FOR
             SELECT 
                 e.sequence_number,
                 type,
@@ -147,13 +151,17 @@ export class PostgresEventStore implements EventStore {
                 "timestamp",
                 hashes
             FROM events e
+            
+            ${
+                query?.criteria?.length
+                    ? `
             INNER JOIN (
                 SELECT sequence_number, ARRAY_AGG(hash) hashes FROM (
                     ${query.criteria.map(
-                        (c, i) => ` 
+                        (c, i) => `
                         SELECT sequence_number, ${p.add(i)} hash FROM events 
                         WHERE type IN (${c.eventTypes.map(t => p.add(t)).join(", ")})
-                        ${c.tags ? `AND tags @> ${p.add(JSON.stringify(tagConverter.toDb(c.tags)))}::jsonb` : ""}
+                        ${c.tags && Object.keys(c.tags).length > 0 ? `AND tags @> ${p.add(JSON.stringify(tagConverter.toDb(c.tags)))}::jsonb` : ""}
                         ${options?.fromSequenceNumber ? `AND sequence_number > ${p.add(options?.fromSequenceNumber.value)}` : ""}
                         `
                     ).join(`
@@ -163,21 +171,38 @@ export class PostgresEventStore implements EventStore {
                 GROUP BY h.sequence_number
             ) eh
             ON eh.sequence_number = e.sequence_number
+            `
+                    : `CROSS JOIN ( SELECT null as hashes) d`
+            }
             ORDER BY e.sequence_number;
         `
 
-        const { rows } = await this.pool.query(sql, p.params)
-        if (!rows.length) console.log("NO ROWS!!")
-        for (const ev of rows) {
-            yield {
-                sequenceNumber: ev.sequence_number,
-                timestamp: ev.timestamp,
-                event: {
-                    type: ev.type,
-                    data: ev.data,
-                    tags: tagConverter.fromDb(ev.tags)
+            await client.query(sql, p.params)
+            console.log(sql, p.params)
+            while (true) {
+                const result = await client.query(`FETCH ${BATCH_SIZE} FROM event_cursor`)
+                if (!result.rows.length) {
+                    break
+                }
+                for (const ev of result.rows) {
+                    yield {
+                        sequenceNumber: SequenceNumber.create(parseInt(ev.sequence_number)),
+                        timestamp: ev.timestamp,
+                        event: {
+                            type: ev.type,
+                            data: ev.data,
+                            tags: tagConverter.fromDb(ev.tags)
+                        }
+                    }
                 }
             }
+            await client.query("COMMIT")
+        } catch (err) {
+            console.error("Error during streaming read:", err)
+            await client.query("ROLLBACK")
+            throw err
+        } finally {
+            client.release()
         }
     }
 
