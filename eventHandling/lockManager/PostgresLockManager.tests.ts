@@ -1,50 +1,63 @@
-import { IBackup } from "pg-mem"
 import { Pool } from "pg"
 import { SequenceNumber } from "../../eventStore/SequenceNumber"
-import { getPgMemDb } from "../../eventStore/utils/getPgMemDb"
 import { PostgresLockManager } from "./PostgresLockManager"
+import { StartedPostgreSqlContainer, PostgreSqlContainer } from "@testcontainers/postgresql"
+import { v4 as uuid } from "uuid"
 
 describe("LockManager", () => {
-    let db = getPgMemDb()
-
-    let lockManager: PostgresLockManager
-    const pool: Pool = new (db.adapters.createPg().Pool)()
-    let backup: IBackup
+    let pgContainer: StartedPostgreSqlContainer
+    let pool: Pool
 
     beforeAll(async () => {
-        lockManager = new PostgresLockManager(pool, "test-handler", { disableRowLock: true })
-        await (lockManager as PostgresLockManager).install()
-        backup = db.backup()
+        pgContainer = await new PostgreSqlContainer()
+            .withDatabase("int_tests")
+            .withUsername("test")
+            .withPassword("test")
+            .start()
+
+        pool = new Pool({
+            connectionString: pgContainer.getConnectionUri()
+        })
+        const lockManager = new PostgresLockManager(pool, uuid().toString())
+        await lockManager.install()
     })
 
-    beforeEach(async () => {
-        backup.restore()
+    afterAll(async () => {
+        await pool.end()
+        await pgContainer.stop()
     })
 
-    test("install works ok", async () => {
+    test("install worked ok", async () => {
         const result = await pool.query(`SELECT * FROM _event_handler_bookmarks`)
         expect(result.rows).toHaveLength(0)
     })
 
     test("should obtain lock when first called without throwing error", async () => {
-        await lockManager.obtainLock()
+        const lockManager = new PostgresLockManager(pool, uuid().toString())
+        const seqNo = await lockManager.obtainLock()
+        await lockManager.commitAndRelease(seqNo)
     })
 
     test("should obtain lock and get default sequence number", async () => {
+        const lockManager = new PostgresLockManager(pool, uuid().toString())
         const sequenceNumber = await lockManager.obtainLock()
         expect(sequenceNumber.value).toBe(0)
+        await lockManager.commitAndRelease(sequenceNumber)
     })
 
     test("should update sequence number and release lock", async () => {
+        const id = uuid().toString()
+        const lockManager = new PostgresLockManager(pool, id)
         await lockManager.obtainLock()
         await lockManager.commitAndRelease(SequenceNumber.create(1))
 
-        const result = await pool.query(`SELECT * FROM _event_handler_bookmarks`)
+        const result = await pool.query(`SELECT * FROM _event_handler_bookmarks where handler_id = $1`, [id])
         expect(result.rows).toHaveLength(1)
         expect(result.rows[0].last_sequence_number).toBe(1)
     })
 
-    test.skip("should rollback and release lock", async () => {
+    test("should rollback and release lock", async () => {
+        const lockManager = new PostgresLockManager(pool, uuid().toString())
         await lockManager.obtainLock()
 
         await lockManager.postgresClient.query(`CREATE TABLE test_table (id TEXT)`)
@@ -52,7 +65,9 @@ describe("LockManager", () => {
         await lockManager.postgresClient.query(
             `INSERT INTO _event_handler_bookmarks (handler_id, last_sequence_number) VALUES ('test-handler-2', '1')`
         )
-        const results = await lockManager.postgresClient.query(`SELECT * FROM _event_handler_bookmarks`)
+        const results = await lockManager.postgresClient.query(
+            `SELECT * FROM _event_handler_bookmarks where handler_id = 'test-handler-2'`
+        )
         expect(results.rows).toHaveLength(1)
 
         const tableExists = await lockManager.postgresClient.query(
@@ -62,7 +77,9 @@ describe("LockManager", () => {
 
         await lockManager.rollbackAndRelease()
 
-        const resultsGone = await pool.query(`SELECT * FROM _event_handler_bookmarks`)
+        const resultsGone = await pool.query(
+            `SELECT * FROM _event_handler_bookmarks where handler_id = 'test-handler-2'`
+        )
         expect(resultsGone.rows).toHaveLength(0)
     })
 })

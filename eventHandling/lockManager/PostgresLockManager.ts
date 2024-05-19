@@ -41,7 +41,7 @@ export class PostgresLockManager implements EventHandlerLockManager {
     }
 
     async commitAndRelease(sequenceNumber: SequenceNumber) {
-        if (!sequenceNumber?.value) throw new Error(`Sequence number is required to commit`)
+        if (!sequenceNumber) throw new Error(`Sequence number is required to commit`)
         try {
             await this.#client.query(
                 `INSERT INTO _event_handler_bookmarks(handler_id, last_sequence_number) 

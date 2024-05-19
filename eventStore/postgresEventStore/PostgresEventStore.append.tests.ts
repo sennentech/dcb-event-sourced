@@ -1,8 +1,6 @@
 import { Pool } from "pg"
-import { IBackup } from "pg-mem"
 import { AppendCondition, AppendConditions, EsEvent } from "../EventStore"
 import { SequenceNumber } from "../SequenceNumber"
-import { getPgMemDb } from "../utils/getPgMemDb"
 import { streamAllEventsToArray } from "../utils/streamAllEventsToArray"
 import { PostgresEventStore } from "./PostgresEventStore"
 import { PostgreSqlContainer, StartedPostgreSqlContainer } from "@testcontainers/postgresql"
@@ -21,6 +19,7 @@ class EventType1 implements EsEvent {
 describe("postgresEventStore.append", () => {
     let pgContainer: StartedPostgreSqlContainer
     let pool: Pool
+    let eventStore: PostgresEventStore
 
     beforeAll(async () => {
         pgContainer = await new PostgreSqlContainer()
@@ -46,7 +45,6 @@ describe("postgresEventStore.append", () => {
         await pool.end()
         await pgContainer.stop()
     })
-    let eventStore: PostgresEventStore
 
     describe("when event store empty", () => {
         test("should return an empty array when no events are stored", async () => {
