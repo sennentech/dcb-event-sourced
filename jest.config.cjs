@@ -5,8 +5,8 @@ module.exports = {
         '^.+\\.(ts)$': ['ts-jest', { tsconfig: 'tsconfig.json' }]
     },
     testMatch: [
-        "**/eventStore/**/*.tests.ts",
-        "**/eventHandling/**/*.tests.ts",
-        "**/courseManager/**/*.tests.ts"
-    ]
+        "**/**/*.tests.ts",
+        "**/**/*.tests.int.ts",
+    ],
+    testTimeout: 10000
 };
