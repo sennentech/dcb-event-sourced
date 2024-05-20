@@ -1,4 +1,3 @@
-import { newDb } from "pg-mem"
 import { Pool } from "pg"
 import { PostgresCourseSubscriptionsRepository } from "../repository/PostgresCourseSubscriptionRespository"
 import { Api } from "../Api"
@@ -6,8 +5,8 @@ import { EventSourcedApi } from "./EventSourcedApi"
 import { MemoryEventStore } from "../../eventStore/memoryEventStore/MemoryEventStore"
 import { CourseSubscriptionsProjection } from "./CourseSubscriptionsProjection"
 import { ProjectionRegistry } from "../../eventHandling/EventHandler"
-import { getPgMemDb } from "../../eventStore/utils/getPgMemDb"
 import { PostgresLockManager } from "../../eventHandling/lockManager/PostgresLockManager"
+import { PostgreSqlContainer, StartedPostgreSqlContainer } from "@testcontainers/postgresql"
 
 const COURSE_1 = {
     id: "course-1",
@@ -20,18 +19,34 @@ const STUDENT_1 = {
 }
 
 describe("EventSourcedApi", () => {
+    let pgContainer: StartedPostgreSqlContainer
     let pool: Pool
     let repository: PostgresCourseSubscriptionsRepository
     let api: Api
 
-    beforeEach(async () => {
-        pool = new (getPgMemDb().adapters.createPg().Pool)()
+    beforeAll(async () => {
+        pgContainer = await new PostgreSqlContainer().start()
+        pool = new Pool({
+            connectionString: pgContainer.getConnectionUri()
+        })
+
         repository = new PostgresCourseSubscriptionsRepository(pool)
         await repository.install()
     })
 
+    afterEach(async () => {
+        await pool.query("TRUNCATE table courses")
+        await pool.query("TRUNCATE table students")
+        await pool.query("TRUNCATE table subscriptions")
+    })
+
+    afterAll(async () => {
+        await pool.end()
+        await pgContainer.stop()
+    })
+
     describe("with one course and 100 students in database", () => {
-        beforeAll(async () => {
+        beforeEach(async () => {
             api = EventSourcedApi(new MemoryEventStore(), repository, [])
             api.registerCourse({ id: COURSE_1.id, capacity: COURSE_1.capacity })
 
@@ -79,6 +94,9 @@ describe("EventSourcedApi", () => {
                 }
             ]
             api = EventSourcedApi(new MemoryEventStore(), repository, projectionRegistry)
+        })
+        afterEach(async () => {
+            await pool.query("TRUNCATE table _event_handler_bookmarks")
         })
         test("single course registered shows in repository", async () => {
             await api.registerCourse({ id: COURSE_1.id, capacity: COURSE_1.capacity })

@@ -1,7 +1,7 @@
 import { Pool } from "pg"
-import { IBackup, newDb } from "pg-mem"
 import { PostgresCourseSubscriptionsRepository } from "./PostgresCourseSubscriptionRespository"
 import { subscribe } from "diagnostics_channel"
+import { PostgreSqlContainer, StartedPostgreSqlContainer } from "@testcontainers/postgresql"
 
 const COURSE_1 = {
     id: "course-1",
@@ -13,18 +13,28 @@ const STUDENT_1 = {
 }
 
 describe("PostgresCourseSubscriptionRepository", () => {
-    const db = newDb()
-    const pool: Pool = new (db.adapters.createPg().Pool)()
-    const repository = new PostgresCourseSubscriptionsRepository(pool)
-    let backup: IBackup
+    let pgContainer: StartedPostgreSqlContainer
+    let pool: Pool
+    let repository: PostgresCourseSubscriptionsRepository
 
     beforeAll(async () => {
-        await repository.install() // Assuming install method creates tables
-        backup = db.backup()
+        pgContainer = await new PostgreSqlContainer().start()
+        pool = new Pool({
+            connectionString: pgContainer.getConnectionUri()
+        })
+        repository = new PostgresCourseSubscriptionsRepository(pool)
+        await repository.install()
     })
 
-    beforeEach(async () => {
-        backup.restore()
+    afterEach(async () => {
+        await pool.query("TRUNCATE table courses")
+        await pool.query("TRUNCATE table students")
+        await pool.query("TRUNCATE table subscriptions")
+    })
+
+    afterAll(async () => {
+        await pool.end()
+        await pgContainer.stop()
     })
 
     describe("registerCourse", () => {

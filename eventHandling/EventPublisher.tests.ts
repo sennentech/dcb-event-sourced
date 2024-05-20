@@ -1,6 +1,7 @@
+import { PostgreSqlContainer, StartedPostgreSqlContainer } from "@testcontainers/postgresql"
+import { Pool } from "pg"
 import { AppendConditions, EsEvent, EsEventEnvelope, EventStore, Tags } from "../eventStore/EventStore"
 import { MemoryEventStore } from "../eventStore/memoryEventStore/MemoryEventStore"
-import { getPgMemDb } from "../eventStore/utils/getPgMemDb"
 import { streamAllEventsToArray } from "../eventStore/utils/streamAllEventsToArray"
 import { EventHandler, ProjectionRegistry } from "./EventHandler"
 import { EventPublisher } from "./EventPublisher"
@@ -15,11 +16,16 @@ class TestEvent implements EsEvent {
 }
 
 describe(`EventPublisher`, () => {
+    let pgContainer: StartedPostgreSqlContainer
     let lockManager: PostgresLockManager
+    let pool: Pool
     let eventStore: EventStore
 
     beforeAll(async () => {
-        const pool = new (await getPgMemDb().adapters.createPg().Pool)()
+        pgContainer = await new PostgreSqlContainer().start()
+        const pool = new Pool({
+            connectionString: pgContainer.getConnectionUri()
+        })
         lockManager = new PostgresLockManager(pool, "test-handler", { disableRowLock: true })
         await lockManager.install()
     })

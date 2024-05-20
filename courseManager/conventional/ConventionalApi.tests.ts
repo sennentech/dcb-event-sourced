@@ -1,8 +1,8 @@
-import { newDb } from "pg-mem"
 import { Pool } from "pg"
 import { PostgresCourseSubscriptionsRepository } from "../repository/PostgresCourseSubscriptionRespository"
 import { ConventionalApi } from "./ConventionalApi"
 import { Api } from "../Api"
+import { PostgreSqlContainer, StartedPostgreSqlContainer } from "@testcontainers/postgresql"
 
 const COURSE_1 = {
     id: "course-1",
@@ -11,22 +11,40 @@ const COURSE_1 = {
 
 describe("ConventionalApi", () => {
     let pool: Pool
+    let pgContainer: StartedPostgreSqlContainer
     let repository: PostgresCourseSubscriptionsRepository
     let api: Api
 
-    beforeEach(async () => {
-        pool = new (newDb().adapters.createPg().Pool)()
+    beforeAll(async () => {
+        pgContainer = await new PostgreSqlContainer().start()
+        pool = new Pool({
+            connectionString: pgContainer.getConnectionUri()
+        })
         repository = new PostgresCourseSubscriptionsRepository(pool)
         await repository.install()
 
         api = ConventionalApi(repository)
-        api.registerCourse({ id: COURSE_1.id, capacity: COURSE_1.capacity })
+    })
+
+    beforeEach(async () => {
+        await api.registerCourse({ id: COURSE_1.id, capacity: COURSE_1.capacity })
 
         const studentRegistraionPromises = []
         for (let i = 0; i < 100; i++) {
             studentRegistraionPromises.push(api.registerStudent({ id: `student-${i}`, name: `Student ${i}` }))
         }
         await Promise.all(studentRegistraionPromises)
+    })
+
+    afterEach(async () => {
+        await pool.query("TRUNCATE table courses")
+        await pool.query("TRUNCATE table students")
+        await pool.query("TRUNCATE table subscriptions")
+    })
+
+    afterAll(async () => {
+        await pool.end()
+        await pgContainer.stop()
     })
 
     test("should throw error when 6th student subscribes", async () => {
