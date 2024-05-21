@@ -13,6 +13,7 @@ export interface EsEventEnvelope<T extends EsEvent = EsEvent> {
     event: T
     timestamp: Timestamp
     sequenceNumber: SequenceNumber
+    matchedCriteria?: string[]
 }
 
 export interface EsQueryCriterion {

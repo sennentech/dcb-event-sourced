@@ -10,7 +10,7 @@ import {
 import * as R from "ramda"
 import { SequenceNumber } from "../SequenceNumber"
 import { Timestamp } from "../TimeStamp"
-import { getNextMatchingEvent } from "./getNextMatchingEvent"
+import { isSeqOutOfRange, matchesCriterion, deduplicateEvents } from "./utils"
 
 export const ensureIsArray = (events: EsEvent | EsEvent[]) => (R.is(Array, events) ? events : [events])
 
@@ -34,36 +34,41 @@ export class MemoryEventStore implements EventStore {
     async *read(query: EsQuery, options?: EsReadOptions): AsyncGenerator<EsEventEnvelope> {
         yield* this.#read({ query, options })
     }
-
     async *#read({ query, options }: { query?: EsQuery; options?: EsReadOptions }): AsyncGenerator<EsEventEnvelope> {
         const step = options?.backwards ? -1 : 1
-        const backwards = options?.backwards
         const maxSequenceNumber = maxSeqNo(this.events)
-        const defaultSeqNumber = backwards ? maxSequenceNumber : SequenceNumber.zero()
-
+        const defaultSeqNumber = options?.backwards ? maxSequenceNumber : SequenceNumber.zero()
         let currentSequenceNumber = options?.fromSequenceNumber ?? defaultSeqNumber
 
-        while (currentSequenceNumber <= maxSequenceNumber) {
-            const resultEvent = getNextMatchingEvent(this.events, {
-                direction: options?.backwards ? "backwards" : "forwards",
-                query,
-                fromSequenceNumber: currentSequenceNumber
-            })
-            if (resultEvent) {
-                yield resultEvent
-                currentSequenceNumber = resultEvent.sequenceNumber.plus(step)
-            } else {
-                break
-            }
+        const allMatchedEvents = query?.criteria
+            ? query.criteria.flatMap((criterion, index) => {
+                  const matchedEvents = this.events
+                      .filter(
+                          event =>
+                              !isSeqOutOfRange(event.sequenceNumber, currentSequenceNumber, options?.backwards) &&
+                              matchesCriterion(criterion, event)
+                      )
+                      .map(event => ({ ...event, matchedCriteria: [index.toString()] }))
+                      .sort((a, b) => a.sequenceNumber.value - b.sequenceNumber.value)
+
+                  return criterion.onlyLastEvent ? matchedEvents.slice(-1) : matchedEvents
+              })
+            : this.events.filter(ev => !isSeqOutOfRange(ev.sequenceNumber, currentSequenceNumber, options?.backwards))
+
+        const uniqueEvents = deduplicateEvents(allMatchedEvents).sort(
+            (a, b) => a.sequenceNumber.value - b.sequenceNumber.value
+        )
+
+        for (const event of uniqueEvents) {
+            yield event
+            currentSequenceNumber = event.sequenceNumber.plus(step)
         }
     }
 
     async append(
         events: EsEvent | EsEvent[],
         appendCondition: AppendCondition | AnyCondition
-    ): Promise<{
-        lastSequenceNumber: SequenceNumber
-    }> {
+    ): Promise<{ lastSequenceNumber: SequenceNumber }> {
         const nextSequenceNumber = maxSeqNo(this.events).inc()
         const eventEnvelopes: Array<EsEventEnvelope> = ensureIsArray(events).map((ev, i) => ({
             event: ev,
@@ -72,14 +77,20 @@ export class MemoryEventStore implements EventStore {
         }))
 
         if (!appendCondition) throw new Error("No append condition provided. Use AppendCondition.None if not required.")
+
         if (appendCondition !== "Any") {
             const { query, maxSequenceNumber } = appendCondition
-            const newEvent = getNextMatchingEvent(this.events, {
-                direction: "forwards",
-                query,
-                fromSequenceNumber: maxSequenceNumber.plus(1)
-            })
-            if (newEvent) throw new Error("Expected Version fail: New events matching appendCondition found.")
+
+            const matchingEvents = (query?.criteria ?? []).flatMap(criterion =>
+                this.events.filter(
+                    event =>
+                        !isSeqOutOfRange(event.sequenceNumber, maxSequenceNumber.plus(1), false) &&
+                        matchesCriterion(criterion, event)
+                )
+            )
+
+            if (matchingEvents.length > 0)
+                throw new Error("Expected Version fail: New events matching appendCondition found.")
         }
 
         this.events.push(...eventEnvelopes)
