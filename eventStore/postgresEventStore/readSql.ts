@@ -47,7 +47,7 @@ export const readCriteriaJoin = (criteria: EsQueryCriterion[], pm: ParamManager,
             ${criteria.map(
                 (c, i) => `
                     SELECT 
-                        sequence_number, 
+                        ${c.onlyLastEvent ? `max(sequence_number)` : `sequence_number`} sequence_number, 
                         ${pm.add(i.toString())} hash 
                     FROM events 
                     ${getFilterString(c, pm, options)}`

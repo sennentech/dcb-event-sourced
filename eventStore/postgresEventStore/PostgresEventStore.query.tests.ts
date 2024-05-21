@@ -182,5 +182,44 @@ describe("memoryEventStore.query", () => {
             )
             expect(events.length).toBe(3)
         })
+
+        test("should respect onlyLastEvent flag on read", async () => {
+            const events = await streamAllEventsToArray(
+                eventStore.read({ criteria: [{ eventTypes: ["testEvent2"], tags: {}, onlyLastEvent: true }] })
+            )
+            expect(events.length).toBe(1)
+            expect(events[0].event.type).toBe("testEvent2")
+            expect(events[0].event.tags.testTagKey).toBe("ev-3")
+        })
+
+        test("should respect onlyLastEvent flag on read with other criteria", async () => {
+            const events = await streamAllEventsToArray(
+                eventStore.read({
+                    criteria: [
+                        { eventTypes: ["testEvent2"], tags: {}, onlyLastEvent: true },
+                        { eventTypes: ["testEvent1"], tags: {} }
+                    ]
+                })
+            )
+            expect(events.length).toBe(2)
+            expect(events[0].event.type).toBe("testEvent1")
+            expect(events[0].event.tags.testTagKey).toBe("tag-key-1")
+            expect(events[1].event.type).toBe("testEvent2")
+            expect(events[1].event.tags.testTagKey).toBe("ev-3")
+        })
+
+        test("should respect onlyLastEvent flag on read with backwards", async () => {
+            const events = await streamAllEventsToArray(
+                eventStore.read(
+                    {
+                        criteria: [{ eventTypes: ["testEvent2"], tags: {}, onlyLastEvent: true }]
+                    },
+                    { backwards: true }
+                )
+            )
+            expect(events.length).toBe(1)
+            expect(events[0].event.type).toBe("testEvent2")
+            expect(events[0].event.tags.testTagKey).toBe("ev-3")
+        })
     })
 })
