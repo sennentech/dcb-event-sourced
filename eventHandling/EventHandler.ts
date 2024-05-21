@@ -18,4 +18,5 @@ type EventHandlers<TDef extends EsEventHandlerDef> = {
 
 export interface EventHandler<TDef extends EsEventHandlerDef = EsEventHandlerDef> {
     when: EventHandlers<TDef>
+    onlyLastEvent?: boolean
 }

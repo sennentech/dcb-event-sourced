@@ -12,6 +12,7 @@ type EventHandlersWithState<TDef extends EsEventHandlerWithStateDef> = {
 
 export interface EventHandlerWithState<TDef extends EsEventHandlerWithStateDef = EsEventHandlerWithStateDef> {
     tagFilter?: Partial<Record<keyof TDef["eventHandlers"]["tags"], string | string[]>>
+    onlyLastEvent?: boolean
     init?: TDef["state"]
     when: EventHandlersWithState<TDef>
 }

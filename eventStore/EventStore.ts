@@ -18,6 +18,7 @@ export interface EsEventEnvelope<T extends EsEvent = EsEvent> {
 export interface EsQueryCriterion {
     tags: Tags
     eventTypes: string[]
+    onlyLastEvent?: boolean
 }
 
 export interface EsQuery {

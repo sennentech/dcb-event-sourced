@@ -149,5 +149,12 @@ describe("memoryEventStore.query", () => {
             )
             expect(events.length).toBe(3)
         })
+
+        test.skip("should respect onlyLastEvent flag on read", async () => {
+            const events = await streamAllEventsToArray(
+                eventStore.read({ criteria: [{ eventTypes: ["testEvent2"], tags: {}, onlyLastEvent: true }] })
+            )
+            expect(events.length).toBe(1)
+        })
     })
 })
