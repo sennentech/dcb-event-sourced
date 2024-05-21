@@ -16,7 +16,8 @@ export class PostgresCourseSubscriptionsRepository implements CourseSubscription
 
                 CREATE TABLE IF NOT EXISTS students (
                     id TEXT,
-                    name TEXT NOT NULL
+                    name TEXT NOT NULL,
+                    student_number integer NOT NULL
                 );
 
                 CREATE TABLE IF NOT EXISTS subscriptions (
@@ -45,7 +46,7 @@ export class PostgresCourseSubscriptionsRepository implements CourseSubscription
 
         const studentsResult = await this.client.query(
             `
-                SELECT s.id, s.name
+                SELECT s.id, s.name, s.student_number as "studentNumber"
                 FROM students s
                 JOIN subscriptions sub ON s.id = sub.student_id
                 WHERE sub.course_id = $1
@@ -66,7 +67,7 @@ export class PostgresCourseSubscriptionsRepository implements CourseSubscription
         // Query to fetch student
         const studentResult = await this.client.query(
             `
-                SELECT s.id, s.name
+                SELECT s.id, s.name, s.student_number as "studentNumber"
                 FROM students s
                 WHERE s.id = $1
             `,
@@ -93,6 +94,7 @@ export class PostgresCourseSubscriptionsRepository implements CourseSubscription
         const student: Student = {
             id: studentData.id,
             name: studentData.name,
+            studentNumber: studentData.studentNumber,
             subscribedCourses: coursesResult.rows.map(course => ({
                 id: course.id,
                 capacity: course.capacity
@@ -106,8 +108,12 @@ export class PostgresCourseSubscriptionsRepository implements CourseSubscription
         await this.client.query("INSERT INTO courses (id, capacity) VALUES ($1, $2)", [req.courseId, req.capacity])
     }
 
-    async registerStudent(req: { studentId: string; name: string }): Promise<void> {
-        await this.client.query("INSERT INTO students (id, name) VALUES ($1, $2)", [req.studentId, req.name])
+    async registerStudent(req: { studentId: string; name: string; studentNumber: number }): Promise<void> {
+        await this.client.query("INSERT INTO students (id, name, student_number) VALUES ($1, $2, $3)", [
+            req.studentId,
+            req.name,
+            req.studentNumber
+        ])
     }
 
     async updateCourseCapacity(req: { courseId: string; newCapacity: number }): Promise<void> {

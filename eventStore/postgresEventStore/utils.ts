@@ -37,7 +37,7 @@ export const tagConverter = {
         }, {}),
 
     toDb: (tags: Tags): DbTags =>
-        Object.entries(tags).reduce<DbTags>((acc, [key, value]) => {
+        Object.entries(tags ?? {}).reduce<DbTags>((acc, [key, value]) => {
             if (Array.isArray(value)) {
                 return acc.concat(value.map(v => ({ key, value: v })))
             } else {

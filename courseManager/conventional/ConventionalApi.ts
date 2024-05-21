@@ -19,8 +19,8 @@ export const ConventionalApi = (repository: CourseSubscriptionRepository): Api =
         registerStudent: async ({ id, name }) => {
             const student = await repository.findStudentById(id)
             if (student) throw new Error(`Student with id ${id} already exists`)
-
-            return repository.registerStudent({ studentId: id, name })
+            
+            return repository.registerStudent({ studentId: id, name, studentNumber: 0})
         },
         subscribeStudentToCourse: async ({ courseId, studentId }) => {
             const course = await repository.findCourseById(courseId)

@@ -33,7 +33,11 @@ export const CourseSubscriptionsProjection = (
         },
         studentWasRegistered: async ({ event: { tags, data } }) => {
             const repository = new PostgresCourseSubscriptionsRepository(lockManager.postgresClient)
-            await repository.registerStudent({ studentId: tags.studentId, name: data.name })
+            await repository.registerStudent({
+                studentId: tags.studentId,
+                name: data.name,
+                studentNumber: data.studentNumber
+            })
         },
         studentWasSubscribed: async ({ event: { tags } }) => {
             const repository = new PostgresCourseSubscriptionsRepository(lockManager.postgresClient)

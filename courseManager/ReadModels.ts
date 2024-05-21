@@ -9,5 +9,6 @@ export class Course {
 export class Student {
     id: string
     name: string
+    studentNumber: number
     subscribedCourses: Omit<Course, "subscribedStudents">[]
 }

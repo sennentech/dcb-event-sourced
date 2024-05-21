@@ -15,7 +15,8 @@ const COURSE_1 = {
 
 const STUDENT_1 = {
     id: "student-1",
-    name: "Student 1"
+    name: "Student 1",
+    studentNumber: 1
 }
 
 describe("EventSourcedApi", () => {
@@ -108,7 +109,12 @@ describe("EventSourcedApi", () => {
             await api.registerStudent({ id: STUDENT_1.id, name: STUDENT_1.name })
 
             const student = await repository.findStudentById(STUDENT_1.id)
-            expect(student).toEqual({ id: STUDENT_1.id, name: STUDENT_1.name, subscribedCourses: [] })
+            expect(student).toEqual({
+                id: STUDENT_1.id,
+                name: STUDENT_1.name,
+                studentNumber: STUDENT_1.studentNumber,
+                subscribedCourses: []
+            })
         })
 
         test("student subscribed to course shows in repository", async () => {
@@ -119,7 +125,9 @@ describe("EventSourcedApi", () => {
             const course = await repository.findCourseById(COURSE_1.id)
             const student = await repository.findStudentById(STUDENT_1.id)
 
-            expect(course.subscribedStudents).toEqual([{ id: STUDENT_1.id, name: STUDENT_1.name }])
+            expect(course.subscribedStudents).toEqual([
+                { id: STUDENT_1.id, name: STUDENT_1.name, studentNumber: STUDENT_1.studentNumber }
+            ])
             expect(student.subscribedCourses).toEqual([{ id: COURSE_1.id, capacity: COURSE_1.capacity }])
         })
     })
