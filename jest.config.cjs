@@ -9,5 +9,5 @@ module.exports = {
         "**/**/*.tests.int.ts",
     ],
     testTimeout: 60000,
-    slowTestThreshold: 10,
+    slowTestThreshold: 20,
 };
