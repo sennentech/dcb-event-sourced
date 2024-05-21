@@ -4,13 +4,11 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Launch via NPM",
+            "name": "Launch CLI",
             "runtimeExecutable": "npm",
             "runtimeArgs": ["run", "debug"],
-            "port": 9229,
             "skipFiles": ["<node_internals>/**"],
             "console": "integratedTerminal",
-            "protocol": "inspector",
             "restart": false,
             "stopOnEntry": false
         }
