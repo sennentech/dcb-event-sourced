@@ -73,6 +73,16 @@ export const StudentAlreadySubscribed = ({
     }
 })
 
+export const NextStudentNumber = (): EventHandlerWithState<{
+    state: number
+    eventHandlers: StudentWasRegistered
+}> => ({
+    init: 1,
+    when: {
+        studentWasRegistered: async (event, state) => state + 1
+    }
+})
+
 export const StudentAlreadyRegistered = (
     studentId: string
 ): EventHandlerWithState<{

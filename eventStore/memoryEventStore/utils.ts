@@ -26,7 +26,7 @@ const makeArray = (str: string | string[]) => (Array.isArray(str) ? str : [str])
 export const matchesCriterion = ({ eventTypes, tags }: EsQueryCriterion, { event }: EsEventEnvelope) => {
     if (eventTypes.length > 0 && !eventTypes.includes(event.type)) return false
 
-    const tagKeys = Object.keys(tags)
+    const tagKeys = Object.keys(tags ?? {})
     if (tagKeys.length > 0 && tagKeys.some(tagKey => !(tagKey in event.tags))) return false
 
     return tagKeys.every(tagKey =>

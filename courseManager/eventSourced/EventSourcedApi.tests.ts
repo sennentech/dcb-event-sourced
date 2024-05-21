@@ -52,9 +52,8 @@ describe("EventSourcedApi", () => {
 
             const studentRegistraionPromises = []
             for (let i = 0; i < 100; i++) {
-                studentRegistraionPromises.push(api.registerStudent({ id: `student-${i}`, name: `Student ${i}` }))
+                await api.registerStudent({ id: `student-${i}`, name: `Student ${i}` })
             }
-            await Promise.all(studentRegistraionPromises)
         })
 
         test("should throw error when 6th student subscribes", async () => {

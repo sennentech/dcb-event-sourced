@@ -13,6 +13,7 @@ import { EventPublisher } from "../../eventHandling/EventPublisher"
 import {
     CourseCapacity,
     CourseExists,
+    NextStudentNumber,
     StudentAlreadyRegistered,
     StudentAlreadySubscribed,
     StudentSubscriptions
@@ -41,14 +42,18 @@ export const EventSourcedApi = (
         },
         registerStudent: async ({ id, name }) => {
             const {
-                states: { studentAlreadyRegistered },
+                states: { studentAlreadyRegistered, nextStudentNumber },
                 appendCondition
             } = await reconstitute(eventStore, {
-                studentAlreadyRegistered: StudentAlreadyRegistered(id)
+                studentAlreadyRegistered: StudentAlreadyRegistered(id),
+                nextStudentNumber: NextStudentNumber()
             })
 
             if (studentAlreadyRegistered) throw new Error(`Student with id ${id} already registered.`)
-            await eventPublisher.publish(new StudentWasRegistered({ studentId: id, name: name }), appendCondition)
+            await eventPublisher.publish(
+                new StudentWasRegistered({ studentId: id, name: name, studentNumber: nextStudentNumber }),
+                appendCondition
+            )
         },
         subscribeStudentToCourse: async ({ courseId, studentId }) => {
             const {
