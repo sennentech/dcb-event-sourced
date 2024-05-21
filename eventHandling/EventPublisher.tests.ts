@@ -23,14 +23,18 @@ describe(`EventPublisher`, () => {
 
     beforeAll(async () => {
         pgContainer = await new PostgreSqlContainer().start()
-        const pool = new Pool({
+        pool = new Pool({
             connectionString: pgContainer.getConnectionUri()
         })
-        lockManager = new PostgresLockManager(pool, "test-handler", { disableRowLock: true })
+        lockManager = new PostgresLockManager(pool, "test-handler")
         await lockManager.install()
     })
     beforeEach(async () => {
         eventStore = new MemoryEventStore()
+    })
+    afterAll(async () => {
+        await pool.end()
+        await pgContainer.stop()
     })
 
     describe(`with no projection registry`, () => {

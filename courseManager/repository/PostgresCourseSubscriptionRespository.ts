@@ -122,7 +122,6 @@ export class PostgresCourseSubscriptionsRepository implements CourseSubscription
     }
 
     async unsubscribeStudentFromCourse(req: { courseId: string; studentId: string }): Promise<void> {
-        console.log("Getting rid...", req)
         await this.client.query("DELETE FROM subscriptions WHERE course_id = $1 AND student_id = $2", [
             req.courseId,
             req.studentId

@@ -85,7 +85,7 @@ describe("EventSourcedApi", () => {
     describe("with a course projection", () => {
         let lockManager: PostgresLockManager
         beforeEach(async () => {
-            lockManager = new PostgresLockManager(pool, "course-subscriptions", { disableRowLock: true })
+            lockManager = new PostgresLockManager(pool, "course-subscriptions")
             await lockManager.install()
             const projectionRegistry: ProjectionRegistry = [
                 {

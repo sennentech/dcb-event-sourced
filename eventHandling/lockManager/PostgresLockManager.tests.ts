@@ -77,4 +77,30 @@ describe("LockManager", () => {
         )
         expect(resultsGone.rows).toHaveLength(0)
     })
+
+    test("should throw error when committing without obtaining lock", async () => {
+        const lockManager = new PostgresLockManager(pool, uuid().toString())
+        await expect(lockManager.commitAndRelease(SequenceNumber.create(1))).rejects.toThrow(
+            "No lock obtained, cannot commit"
+        )
+    })
+
+    test("should throw error when committing without sequence number", async () => {
+        const lockManager = new PostgresLockManager(pool, uuid().toString())
+        await lockManager.obtainLock()
+        await expect(lockManager.commitAndRelease(null)).rejects.toThrow("Sequence number is required to commit")
+    })
+
+    test("Should throw an error when second lock on same id is attempted", async () => {
+        const id = uuid().toString()
+        const lockManager = new PostgresLockManager(pool, id)
+        const secondLockManager = new PostgresLockManager(pool, id)
+
+        await lockManager.obtainLock()
+        await expect(secondLockManager.obtainLock()).rejects.toThrow(
+            "Could not obtain lock as it is already locked by another process"
+        )
+        await lockManager.rollbackAndRelease()
+        await secondLockManager.rollbackAndRelease()
+    })
 })

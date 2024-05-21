@@ -3,6 +3,7 @@ import { SequenceNumber } from "../../eventStore/SequenceNumber"
 import { EventHandlerLockManager } from "./LockManager"
 
 const POSTGRES_TABLE_NAME = "_event_handler_bookmarks"
+
 export class PostgresLockManager implements EventHandlerLockManager {
     #client: PoolClient
 
@@ -15,34 +16,58 @@ export class PostgresLockManager implements EventHandlerLockManager {
 
     constructor(
         private readonly pool: Pool,
-        private readonly handlerId: string,
-        private readonly opts?: { disableRowLock?: boolean }
+        private readonly handlerId: string
     ) {}
 
     async install() {
         await this.pool.query(
-            `CREATE TABLE IF NOT EXISTS "${POSTGRES_TABLE_NAME}"(handler_id text PRIMARY KEY, last_sequence_number int) `
+            `CREATE TABLE IF NOT EXISTS "${POSTGRES_TABLE_NAME}"(handler_id text PRIMARY KEY, last_sequence_number int)`
         )
     }
 
     async obtainLock(): Promise<SequenceNumber> {
-        this.#client = await this.pool.connect()
-        await this.#client.query("BEGIN")
+        try {
+            this.#client = await this.pool.connect()
+            await this.#client.query("BEGIN")
 
-        const lockRowSnippet = this.opts?.disableRowLock ? "" : "FOR UPDATE NOWAIT"
-        const { rows } = await this.#client.query(
-            `SELECT last_sequence_number FROM _event_handler_bookmarks WHERE handler_id = $1 ${lockRowSnippet};`,
-            [this.handlerId]
-        )
-        const sequenceNumber =
-            rows.length === 0 ? SequenceNumber.create(0) : SequenceNumber.create(rows[0]?.last_sequence_number)
+            const getLastSequenceNumber = async (): Promise<number | null> => {
+                const { rows } = await this.#client.query(
+                    `SELECT last_sequence_number FROM _event_handler_bookmarks WHERE handler_id = $1 FOR UPDATE NOWAIT;`,
+                    [this.handlerId]
+                )
+                return rows.length ? rows[0].last_sequence_number : null
+            }
 
-        return sequenceNumber
+            let lastSequenceNumber = await getLastSequenceNumber()
+
+            if (lastSequenceNumber === null) {
+                await this.pool.query(
+                    `INSERT INTO _event_handler_bookmarks(handler_id, last_sequence_number)
+                     VALUES ($1, 0)
+                     ON CONFLICT (handler_id) DO NOTHING;`,
+                    [this.handlerId]
+                )
+                lastSequenceNumber = await getLastSequenceNumber()
+            }
+
+            if (lastSequenceNumber === null) {
+                throw new Error("Failed to retrieve or initialize sequence number")
+            }
+
+            return SequenceNumber.create(lastSequenceNumber)
+        } catch (error) {
+            await this.rollbackAndRelease()
+            if (error.code === "55P03") {
+                throw new Error("Could not obtain lock as it is already locked by another process")
+            }
+            throw error
+        }
     }
 
     async commitAndRelease(sequenceNumber: SequenceNumber) {
-        if (!sequenceNumber) throw new Error(`Sequence number is required to commit`)
         try {
+            if (!this.#client) throw new Error("No lock obtained, cannot commit")
+            if (!sequenceNumber) throw new Error(`Sequence number is required to commit`)
             await this.#client.query(
                 `INSERT INTO _event_handler_bookmarks(handler_id, last_sequence_number) 
                  VALUES ($1, $2)
@@ -63,7 +88,7 @@ export class PostgresLockManager implements EventHandlerLockManager {
 
     async rollbackAndRelease() {
         try {
-            await this.#client.query("ROLLBACK")
+            if (this.#client) await this.#client.query("ROLLBACK")
         } catch (error) {
             console.error("Error during rollback:", error)
         } finally {

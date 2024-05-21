@@ -37,7 +37,8 @@ export class PostgresEventStore implements EventStore {
             const result = await client.query(query, params)
             await client.query("COMMIT")
             const lastSequenceNumber = parseInt(result.rows[0].last_sequence_number, 10)
-            if (!lastSequenceNumber)  throw new Error(`Expected Version fail: New events matching appendCondition found.`)
+            if (!lastSequenceNumber)
+                throw new Error(`Expected Version fail: New events matching appendCondition found.`)
             return { lastSequenceNumber: SequenceNumber.create(lastSequenceNumber) }
         } catch (err) {
             await client.query("ROLLBACK")

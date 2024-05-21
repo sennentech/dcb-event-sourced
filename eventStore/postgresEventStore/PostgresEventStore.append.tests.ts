@@ -22,11 +22,7 @@ describe("postgresEventStore.append", () => {
     let eventStore: PostgresEventStore
 
     beforeAll(async () => {
-        pgContainer = await new PostgreSqlContainer()
-            .withDatabase("int_tests")
-            .withUsername("test")
-            .withPassword("test")
-            .start()
+        pgContainer = await new PostgreSqlContainer().start()
 
         pool = new Pool({
             connectionString: pgContainer.getConnectionUri()
