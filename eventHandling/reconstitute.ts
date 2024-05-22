@@ -18,24 +18,29 @@ export async function reconstitute<T extends EventHandlers>(
 
     const query: EsQuery = {
         criteria: R.values(
-            R.map(proj => ({ tags: proj.tagFilter, eventTypes: R.keys(proj.when) as string[] }), eventHandlers)
+            R.map(
+                proj => ({
+                    tags: proj.tagFilter,
+                    eventTypes: R.keys(proj.when) as string[]
+                }),
+                eventHandlers
+            )
         )
     }
 
     let maxSequenceNumber = SequenceNumber.zero()
     for await (const eventEnvelope of eventStore.read(query)) {
-        for (const [handlerId, eventHandler] of R.toPairs(eventHandlers)) {
-            const { event, sequenceNumber } = eventEnvelope
+        const { event, sequenceNumber } = eventEnvelope
 
+        for (const [handlerId, eventHandler] of R.toPairs(eventHandlers)) {
             const handlerIsRelevant =
                 R.has(event.type, eventHandler.when) &&
                 matchTags({ tags: event.tags, tagFilter: eventHandler.tagFilter })
 
             const handler = handlerIsRelevant ? eventHandler.when[event.type] : defaultHandler
-
             states[handlerId] = await handler(eventEnvelope, states[handlerId])
-            if (sequenceNumber > maxSequenceNumber) maxSequenceNumber = sequenceNumber
         }
+        if (sequenceNumber > maxSequenceNumber) maxSequenceNumber = sequenceNumber
     }
 
     return { states, appendCondition: { query, maxSequenceNumber } }

@@ -97,5 +97,20 @@ describe("postgresEventStore.append", () => {
                 )
             })
         })
+
+        test("should successfully append an event without throwing under specified conditions", async () => {
+            const appendCondition: AppendCondition = {
+                query: {
+                    criteria: [{ eventTypes: ["testEvent1"], tags: {}, onlyLastEvent: true }]
+                },
+                maxSequenceNumber: SequenceNumber.create(3)
+            }
+
+            await eventStore.append(new EventType1(), AppendConditions.Any)
+            await eventStore.append(new EventType1(), AppendConditions.Any)
+
+            const { lastSequenceNumber } = await eventStore.append(new EventType1(), appendCondition)
+            expect(lastSequenceNumber.value).toBe(4)
+        })
     })
 })

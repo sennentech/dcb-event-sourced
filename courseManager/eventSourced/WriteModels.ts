@@ -7,6 +7,20 @@ import {
     StudentWasRegistered
 } from "./Events"
 
+export const CourseExists = (
+    courseId: string
+): EventHandlerWithState<{
+    state: boolean
+    tagFilter: { courseId: string }
+    eventHandlers: CourseWasRegisteredEvent
+}> => ({
+    tagFilter: { courseId },
+    init: false,
+    when: {
+        courseWasRegistered: async () => true
+    }
+})
+
 export const CourseCapacity = (
     courseId: string
 ): EventHandlerWithState<{
@@ -40,17 +54,28 @@ export const CourseCapacity = (
     }
 })
 
-export const CourseExists = (
-    courseId: string
+export const StudentAlreadyRegistered = (
+    studentId: string
 ): EventHandlerWithState<{
     state: boolean
-    tagFilter: { courseId: string }
-    eventHandlers: CourseWasRegisteredEvent
+    tagFilter: { studentId: string }
+    eventHandlers: StudentWasRegistered
 }> => ({
-    tagFilter: { courseId },
+    tagFilter: { studentId },
     init: false,
     when: {
-        courseWasRegistered: async () => true
+        studentWasRegistered: async () => true
+    }
+})
+
+export const NextStudentNumber = (): EventHandlerWithState<{
+    state: number
+    eventHandlers: StudentWasRegistered
+}> => ({
+    init: 1,
+    onlyLastEvent: true,
+    when: {
+        studentWasRegistered: async ({ event }) => event.data.studentNumber + 1
     }
 })
 
@@ -70,30 +95,6 @@ export const StudentAlreadySubscribed = ({
     when: {
         studentWasSubscribed: () => true,
         studentWasUnsubscribed: () => false
-    }
-})
-
-export const NextStudentNumber = (): EventHandlerWithState<{
-    state: number
-    eventHandlers: StudentWasRegistered
-}> => ({
-    init: 1,
-    when: {
-        studentWasRegistered: async (event, state) => state + 1
-    }
-})
-
-export const StudentAlreadyRegistered = (
-    studentId: string
-): EventHandlerWithState<{
-    state: boolean
-    tagFilter: { studentId: string }
-    eventHandlers: StudentWasRegistered
-}> => ({
-    tagFilter: { studentId },
-    init: false,
-    when: {
-        studentWasRegistered: async () => true
     }
 })
 
