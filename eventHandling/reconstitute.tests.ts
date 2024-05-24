@@ -23,7 +23,7 @@ describe("reconstitute", () => {
                 const result = await reconstitute(eventStore, {
                     courseExists: CourseExists(COURSE_ID)
                 })
-                courseExists = result.states.courseExists
+                courseExists = result.state.courseExists
                 appendCondition = result.appendCondition
             })
 
@@ -63,7 +63,7 @@ describe("reconstitute", () => {
             const result = await reconstitute(eventStore, {
                 courseExists: CourseExists(COURSE_ID)
             })
-            courseExists = result.states.courseExists
+            courseExists = result.state.courseExists
             appendCondition = result.appendCondition
         })
 
@@ -108,7 +108,7 @@ describe("reconstitute", () => {
             const result = await reconstitute(eventStore, {
                 courseCapacity: CourseCapacity(COURSE_ID)
             })
-            courseCapacity = result.states.courseCapacity
+            courseCapacity = result.state.courseCapacity
             appendCondition = result.appendCondition
         })
 
@@ -162,8 +162,8 @@ describe("reconstitute", () => {
                 courseCapacity: CourseCapacity(COURSE_ID),
                 courseExists: CourseExists(COURSE_ID)
             })
-            courseCapacity = result.states.courseCapacity
-            courseExists = result.states.courseExists
+            courseCapacity = result.state.courseCapacity
+            courseExists = result.state.courseExists
             appendCondition = result.appendCondition
         })
 

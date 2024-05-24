@@ -30,36 +30,27 @@ export const EventSourcedApi = (
         findCourseById: async (courseId: string) => repository.findCourseById(courseId),
         findStudentById: async (studentId: string) => repository.findStudentById(studentId),
         registerCourse: async ({ id, capacity }) => {
-            const {
-                states: { courseExists },
-                appendCondition
-            } = await reconstitute(eventStore, {
+            const { state, appendCondition } = await reconstitute(eventStore, {
                 courseExists: CourseExists(id)
             })
 
-            if (courseExists) throw new Error(`Course with id ${id} already exists`)
+            if (state.courseExists) throw new Error(`Course with id ${id} already exists`)
             await eventPublisher.publish(new CourseWasRegisteredEvent({ courseId: id, capacity }), appendCondition)
         },
         registerStudent: async ({ id, name }) => {
-            const {
-                states: { studentAlreadyRegistered, nextStudentNumber },
-                appendCondition
-            } = await reconstitute(eventStore, {
+            const { state, appendCondition } = await reconstitute(eventStore, {
                 studentAlreadyRegistered: StudentAlreadyRegistered(id),
                 nextStudentNumber: NextStudentNumber()
             })
 
-            if (studentAlreadyRegistered) throw new Error(`Student with id ${id} already registered.`)
+            if (state.studentAlreadyRegistered) throw new Error(`Student with id ${id} already registered.`)
             await eventPublisher.publish(
-                new StudentWasRegistered({ studentId: id, name: name, studentNumber: nextStudentNumber }),
+                new StudentWasRegistered({ studentId: id, name: name, studentNumber: state.nextStudentNumber }),
                 appendCondition
             )
         },
         subscribeStudentToCourse: async ({ courseId, studentId }) => {
-            const {
-                states: { courseExists, courseCapacity, studentAlreadySubscribed, studentSubscriptions },
-                appendCondition
-            } = await reconstitute(eventStore, {
+            const { state, appendCondition } = await reconstitute(eventStore, {
                 courseExists: CourseExists(courseId),
                 courseCapacity: CourseCapacity(courseId),
                 studentAlreadySubscribed: StudentAlreadySubscribed({
@@ -69,24 +60,21 @@ export const EventSourcedApi = (
                 studentSubscriptions: StudentSubscriptions(studentId)
             })
 
-            if (!courseExists) throw new Error(`Course ${courseId} doesn't exist.`)
+            if (!state.courseExists) throw new Error(`Course ${courseId} doesn't exist.`)
 
-            if (courseCapacity.subscriberCount >= courseCapacity.capacity)
+            if (state.courseCapacity.subscriberCount >= state.courseCapacity.capacity)
                 throw new Error(`Course ${courseId} is full.`)
 
-            if (studentAlreadySubscribed)
+            if (state.studentAlreadySubscribed)
                 throw new Error(`Student ${studentId} already subscribed to course ${courseId}.`)
 
-            if (studentSubscriptions.subscriptionCount >= STUDENT_SUBSCRIPTION_LIMIT)
+            if (state.studentSubscriptions.subscriptionCount >= STUDENT_SUBSCRIPTION_LIMIT)
                 throw new Error(`Student ${studentId} is already subscribed to the maximum number of courses`)
 
             await eventPublisher.publish(new StudentWasSubscribedEvent({ courseId, studentId }), appendCondition)
         },
         unsubscribeStudentFromCourse: async ({ courseId, studentId }) => {
-            const {
-                states: { studentAlreadySubscribed, courseExists },
-                appendCondition
-            } = await reconstitute(eventStore, {
+            const { state, appendCondition } = await reconstitute(eventStore, {
                 studentAlreadySubscribed: StudentAlreadySubscribed({
                     courseId: courseId,
                     studentId: studentId
@@ -94,8 +82,8 @@ export const EventSourcedApi = (
                 courseExists: CourseExists(courseId)
             })
 
-            if (!courseExists) throw new Error(`Course ${courseId} doesn't exist.`)
-            if (!studentAlreadySubscribed)
+            if (!state.courseExists) throw new Error(`Course ${courseId} doesn't exist.`)
+            if (!state.studentAlreadySubscribed)
                 throw new Error(`Student ${studentId} is not subscribed to course ${courseId}.`)
 
             await eventPublisher.publish(new StudentWasUnsubscribedEvent({ courseId, studentId }), appendCondition)

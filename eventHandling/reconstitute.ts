@@ -12,7 +12,7 @@ type EventHandlerStates<T extends EventHandlers> = {
 export async function reconstitute<T extends EventHandlers>(
     eventStore: EventStore,
     eventHandlers: T
-): Promise<{ states: EventHandlerStates<T>; appendCondition: AppendCondition }> {
+): Promise<{ state: EventHandlerStates<T>; appendCondition: AppendCondition }> {
     const defaultHandler = (_event: EsEventEnvelope, state: EventHandlerStates<T>) => state
     const states = R.map(R.prop("init"), eventHandlers) as EventHandlerStates<T>
 
@@ -43,5 +43,5 @@ export async function reconstitute<T extends EventHandlers>(
         if (sequenceNumber > maxSequenceNumber) maxSequenceNumber = sequenceNumber
     }
 
-    return { states, appendCondition: { query, maxSequenceNumber } }
+    return { state: states, appendCondition: { query, maxSequenceNumber } }
 }
