@@ -221,5 +221,51 @@ describe("memoryEventStore.query", () => {
             expect(events[0].event.type).toBe("testEvent2")
             expect(events[0].event.tags.testTagKey).toBe("ev-3")
         })
+
+        test("should return respect limit clause when readAll forward", async () => {
+            const events = await streamAllEventsToArray(
+                eventStore.readAll(
+                    { limit: 1 }
+                )
+            )
+            expect(events.length).toBe(1)
+            expect(events[0].event.type).toBe("testEvent1")
+            expect(events[0].event.tags.testTagKey).toBe("tag-key-1")
+        })
+
+        test("should return respect limit clause when readAll backward", async () => {
+            const events = await streamAllEventsToArray(
+                eventStore.readAll(
+                    { limit: 1, backwards: true }
+                )
+            )
+            expect(events.length).toBe(1)
+            expect(events[0].event.type).toBe("testEvent2")
+            expect(events[0].event.tags.testTagKey).toBe("ev-3")
+        })
+        
+        test("should return respect limit clause when read forward", async () => {
+            const events = await streamAllEventsToArray(
+                eventStore.read(
+                    { criteria: [{ eventTypes: ["testEvent2"], tags: {} }] },
+                    { limit: 1 }
+                )
+            )
+            expect(events.length).toBe(1)
+            expect(events[0].event.type).toBe("testEvent2")
+            expect(events[0].event.tags.testTagKey).toBe("tag-key-2")
+        })
+
+        test("should return respect limit clause when read backward", async () => {
+            const events = await streamAllEventsToArray(
+                eventStore.read(
+                    { criteria: [{ eventTypes: ["testEvent2"], tags: {} }] },
+                    { limit: 1, backwards: true }
+                )
+            )
+            expect(events.length).toBe(1)
+            expect(events[0].event.type).toBe("testEvent2")
+            expect(events[0].event.tags.testTagKey).toBe("ev-3")
+        })
     })
 })

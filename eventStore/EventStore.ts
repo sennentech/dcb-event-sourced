@@ -39,6 +39,7 @@ export type AppendCondition = {
 export interface EsReadOptions {
     backwards?: boolean
     fromSequenceNumber?: SequenceNumber
+    limit?: number
 }
 export interface EventStore {
     append: (

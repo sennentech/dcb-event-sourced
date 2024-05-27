@@ -39,7 +39,8 @@ export class MemoryEventStore implements EventStore {
         const maxSequenceNumber = maxSeqNo(this.events)
         const defaultSeqNumber = options?.backwards ? maxSequenceNumber : SequenceNumber.zero()
         let currentSequenceNumber = options?.fromSequenceNumber ?? defaultSeqNumber
-
+        let yieldedCount = 0
+        
         const allMatchedEvents = query?.criteria
             ? query.criteria.flatMap((criterion, index) => {
                   const matchedEvents = this.events
@@ -50,19 +51,24 @@ export class MemoryEventStore implements EventStore {
                       )
                       .map(event => ({ ...event, matchedCriteria: [index.toString()] }))
                       .sort((a, b) => a.sequenceNumber.value - b.sequenceNumber.value)
-
+        
                   return criterion.onlyLastEvent ? matchedEvents.slice(-1) : matchedEvents
               })
             : this.events.filter(ev => !isSeqOutOfRange(ev.sequenceNumber, currentSequenceNumber, options?.backwards))
-
+        
         const uniqueEvents = deduplicateEvents(allMatchedEvents).sort(
             (a, b) => a.sequenceNumber.value - b.sequenceNumber.value
-        )
-
+        ).sort((a,b)=> options?.backwards ? b.sequenceNumber.value - a.sequenceNumber.value : a.sequenceNumber.value - b.sequenceNumber.value)
+        
         for (const event of uniqueEvents) {
             yield event
+            yieldedCount++
+            if (options?.limit && yieldedCount >= options.limit) {
+                break
+            }
             currentSequenceNumber = event.sequenceNumber.plus(step)
         }
+        
     }
 
     async append(

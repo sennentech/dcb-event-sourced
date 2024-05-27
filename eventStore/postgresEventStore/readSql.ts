@@ -17,7 +17,8 @@ export const readSql = (criteria: EsQueryCriterion[], options?: EsReadOptions) =
         ${criteria?.length ? readCriteriaJoin(criteria, pm, options) : ""}
         ${whereClause([fromSeqNoFilter(pm, "e", options)])}
 
-        ORDER BY e.sequence_number ${options?.backwards ? "DESC" : ""};`
+        ORDER BY e.sequence_number ${options?.backwards ? "DESC" : ""}
+        ${options?.limit ? `LIMIT ${options.limit}` : ""};`
     return { sql, params: pm.params }
 }
 
