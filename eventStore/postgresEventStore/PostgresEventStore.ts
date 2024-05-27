@@ -1,4 +1,4 @@
-import { Pool } from "pg"
+import { Pool, QueryResult } from "pg"
 import {
     AnyCondition,
     AppendCondition,
@@ -63,14 +63,11 @@ export class PostgresEventStore implements EventStore {
             const { sql, params } = readQuery(query?.criteria, options)
 
             await client.query(sql, params)
-            while (true) {
-                const result = await client.query(`FETCH ${BATCH_SIZE} FROM event_cursor`)
-                if (!result.rows.length) {
-                    break
-                }
+            
+            let result: QueryResult
+            while ((result = await client.query(`FETCH ${BATCH_SIZE} FROM event_cursor`)).rows.length) {
                 for (const ev of result.rows) {
-                    const esEventEnvelope = dbEventConverter.fromDb(ev)
-                    yield esEventEnvelope
+                    yield dbEventConverter.fromDb(ev)
                 }
             }
             await client.query("COMMIT")
