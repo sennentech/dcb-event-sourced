@@ -48,7 +48,9 @@ describe("postgresEventStore.append", () => {
             expect(events.length).toBe(0)
         })
         test("should assign a sequence number of 1 on appending the first event", async () => {
-            const { lastSequenceNumber } = await eventStore.append(new EventType1(), AppendConditions.Any)
+            const lastSequenceNumber = (await eventStore.append(new EventType1(), AppendConditions.Any)).at(
+                -1
+            ).sequenceNumber
             expect(lastSequenceNumber.value).toBe(1)
         })
         describe("when append condition with eventTypes filter and maxSequenceNumber provided", () => {
@@ -59,7 +61,9 @@ describe("postgresEventStore.append", () => {
                 maxSequenceNumber: SequenceNumber.create(1)
             }
             test("should successfully append an event without throwing under specified conditions", async () => {
-                const { lastSequenceNumber } = await eventStore.append(new EventType1(), appendCondition)
+                const lastSequenceNumber = (await eventStore.append(new EventType1(), appendCondition)).at(
+                    -1
+                ).sequenceNumber
                 expect(lastSequenceNumber.value).toBe(1)
             })
         })
@@ -71,15 +75,15 @@ describe("postgresEventStore.append", () => {
         })
 
         test("should increment sequence number to 2 when a second event is appended", async () => {
-            const { lastSequenceNumber } = await eventStore.append(new EventType1(), AppendConditions.Any)
+            const lastSequenceNumber = await (await eventStore.append(new EventType1(), AppendConditions.Any)).at(-1)
+                .sequenceNumber
             expect(lastSequenceNumber.value).toBe(2)
         })
 
         test("should update the sequence number to 3 after appending two more events", async () => {
-            const { lastSequenceNumber } = await eventStore.append(
-                [new EventType1(), new EventType1()],
-                AppendConditions.Any
-            )
+            const lastSequenceNumber = (
+                await eventStore.append([new EventType1(), new EventType1()], AppendConditions.Any)
+            ).at(-1).sequenceNumber
 
             expect(lastSequenceNumber.value).toBe(3)
         })
@@ -109,7 +113,9 @@ describe("postgresEventStore.append", () => {
             await eventStore.append(new EventType1(), AppendConditions.Any)
             await eventStore.append(new EventType1(), AppendConditions.Any)
 
-            const { lastSequenceNumber } = await eventStore.append(new EventType1(), appendCondition)
+            const lastSequenceNumber = (await eventStore.append(new EventType1(), appendCondition)).at(
+                -1
+            ).sequenceNumber
             expect(lastSequenceNumber.value).toBe(4)
         })
     })

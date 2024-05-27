@@ -42,10 +42,7 @@ export interface EsReadOptions {
     limit?: number
 }
 export interface EventStore {
-    append: (
-        events: EsEvent | EsEvent[],
-        condition: AppendCondition | AnyCondition
-    ) => Promise<{ lastSequenceNumber: SequenceNumber }>
+    append: (events: EsEvent | EsEvent[], condition: AppendCondition | AnyCondition) => Promise<EsEventEnvelope[]>
 
     read: (query: EsQuery, options?: EsReadOptions) => AsyncGenerator<EsEventEnvelope>
     readAll: (options?: EsReadOptions) => AsyncGenerator<EsEventEnvelope>

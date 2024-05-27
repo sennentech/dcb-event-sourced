@@ -36,9 +36,15 @@ export const appendSql = (
                     `)}
                 )
             ` : ""}
-            RETURNING sequence_number
+            RETURNING sequence_number,type,data,tags,"timestamp"
         ) 
-        SELECT max(sequence_number) as last_sequence_number FROM inserted;
+        SELECT  
+            sequence_number,
+            type,
+            data,
+            tags,
+            to_char("timestamp" AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') "timestamp" 
+        FROM inserted;
         ;
     `
     return { query, params: params.params }

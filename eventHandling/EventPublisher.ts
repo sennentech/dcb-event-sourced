@@ -12,7 +12,11 @@ export class EventPublisher {
     ) {}
 
     async publish(events: EsEvent | EsEvent[], appendCondition: AppendCondition | AnyCondition): Promise<void> {
-        const { lastSequenceNumber } = await this.eventStore.append(events, appendCondition)
+        const lastEventInStore = (await this.eventStore.readAll({ backwards: true, limit: 1 }).next()).value
+        // const lastSequenceNumberInStore = lastEventInStore?.sequenceNumber ?? SequenceNumber.zero()
+
+        const newEventEnvelopes = await this.eventStore.append(events, appendCondition)
+        const lastSequenceNumber = newEventEnvelopes.at(-1).sequenceNumber
 
         const projectionsToCatchup: ProjectionRegistry = []
         for (const projection of this.projectionRegistry ?? []) {

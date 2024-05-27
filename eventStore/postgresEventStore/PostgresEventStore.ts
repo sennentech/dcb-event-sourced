@@ -22,9 +22,7 @@ export class PostgresEventStore implements EventStore {
     async append(
         events: EsEvent | EsEvent[],
         appendCondition: AppendCondition | AnyCondition
-    ): Promise<{
-        lastSequenceNumber: SequenceNumber
-    }> {
+    ): Promise<EsEventEnvelope[]> {
         events = Array.isArray(events) ? events : [events]
 
         const maxSeqNumber = appendCondition === "Any" ? null : appendCondition.maxSequenceNumber
@@ -36,10 +34,11 @@ export class PostgresEventStore implements EventStore {
             await client.query(`BEGIN ISOLATION LEVEL SERIALIZABLE;`)
             const result = await client.query(query, params)
             await client.query("COMMIT")
-            const lastSequenceNumber = parseInt(result.rows[0].last_sequence_number, 10)
-            if (!lastSequenceNumber)
+            const esEVentEnvelopes = result.rows.map(dbEventConverter.fromDb)
+            if (!esEVentEnvelopes.length)
                 throw new Error(`Expected Version fail: New events matching appendCondition found.`)
-            return { lastSequenceNumber: SequenceNumber.create(lastSequenceNumber) }
+
+            return esEVentEnvelopes
         } catch (err) {
             await client.query("ROLLBACK")
             throw err

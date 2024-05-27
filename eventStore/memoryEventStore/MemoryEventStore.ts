@@ -40,7 +40,7 @@ export class MemoryEventStore implements EventStore {
         const defaultSeqNumber = options?.backwards ? maxSequenceNumber : SequenceNumber.zero()
         let currentSequenceNumber = options?.fromSequenceNumber ?? defaultSeqNumber
         let yieldedCount = 0
-        
+
         const allMatchedEvents = query?.criteria
             ? query.criteria.flatMap((criterion, index) => {
                   const matchedEvents = this.events
@@ -51,15 +51,19 @@ export class MemoryEventStore implements EventStore {
                       )
                       .map(event => ({ ...event, matchedCriteria: [index.toString()] }))
                       .sort((a, b) => a.sequenceNumber.value - b.sequenceNumber.value)
-        
+
                   return criterion.onlyLastEvent ? matchedEvents.slice(-1) : matchedEvents
               })
             : this.events.filter(ev => !isSeqOutOfRange(ev.sequenceNumber, currentSequenceNumber, options?.backwards))
-        
-        const uniqueEvents = deduplicateEvents(allMatchedEvents).sort(
-            (a, b) => a.sequenceNumber.value - b.sequenceNumber.value
-        ).sort((a,b)=> options?.backwards ? b.sequenceNumber.value - a.sequenceNumber.value : a.sequenceNumber.value - b.sequenceNumber.value)
-        
+
+        const uniqueEvents = deduplicateEvents(allMatchedEvents)
+            .sort((a, b) => a.sequenceNumber.value - b.sequenceNumber.value)
+            .sort((a, b) =>
+                options?.backwards
+                    ? b.sequenceNumber.value - a.sequenceNumber.value
+                    : a.sequenceNumber.value - b.sequenceNumber.value
+            )
+
         for (const event of uniqueEvents) {
             yield event
             yieldedCount++
@@ -68,13 +72,12 @@ export class MemoryEventStore implements EventStore {
             }
             currentSequenceNumber = event.sequenceNumber.plus(step)
         }
-        
     }
 
     async append(
         events: EsEvent | EsEvent[],
         appendCondition: AppendCondition | AnyCondition
-    ): Promise<{ lastSequenceNumber: SequenceNumber }> {
+    ): Promise<EsEventEnvelope[]> {
         const nextSequenceNumber = maxSeqNo(this.events).inc()
         const eventEnvelopes: Array<EsEventEnvelope> = ensureIsArray(events).map((ev, i) => ({
             event: ev,
@@ -100,8 +103,6 @@ export class MemoryEventStore implements EventStore {
         }
 
         this.events.push(...eventEnvelopes)
-        return {
-            lastSequenceNumber: maxSeqNo(this.events)
-        }
+        return eventEnvelopes
     }
 }
