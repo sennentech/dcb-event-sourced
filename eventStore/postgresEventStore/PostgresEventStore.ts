@@ -63,9 +63,9 @@ export class PostgresEventStore implements EventStore {
             const { sql, params } = readQuery(query?.criteria, options)
 
             await client.query(sql, params)
-            
+
             let result: QueryResult
-            while ((result = await client.query(`FETCH ${BATCH_SIZE} FROM event_cursor`)).rows.length) {
+            while ((result = await client.query(`FETCH ${BATCH_SIZE} FROM event_cursor`))?.rows?.length) {
                 for (const ev of result.rows) {
                     yield dbEventConverter.fromDb(ev)
                 }
