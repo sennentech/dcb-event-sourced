@@ -1,12 +1,13 @@
 import { PoolClient, Pool } from "pg"
 import { SequenceNumber } from "../../eventStore/SequenceNumber"
 import { MultiEventHandlerLockManager, LockResult } from "./LockManager"
+import { EventHandler } from "../EventHandler"
 
 const POSTGRES_TABLE_NAME = "_event_handler_bookmarks"
 
 export class PostgresMultiLockManager implements MultiEventHandlerLockManager {
     #client: PoolClient
-
+    #handlerIds: string[]
     get postgresClient(): PoolClient {
         if (!this.#client) {
             throw new Error("Postgres client not initialized, you need to obtain a lock first")
@@ -16,8 +17,10 @@ export class PostgresMultiLockManager implements MultiEventHandlerLockManager {
 
     constructor(
         private readonly pool: Pool,
-        private readonly handlers: string[]
-    ) {}
+        public readonly handlers: Record<string, EventHandler>
+    ) {
+        this.#handlerIds = Object.keys(this.handlers)
+    }
 
     async install() {
         await this.pool.query(
@@ -26,10 +29,10 @@ export class PostgresMultiLockManager implements MultiEventHandlerLockManager {
 
         const insertQuery = `
             INSERT INTO ${POSTGRES_TABLE_NAME} (handler_id, last_sequence_number) 
-            VALUES ${this.handlers.map((_, index) => `($${index + 1}, 0)`).join(", ")} 
+            VALUES ${this.#handlerIds.map((_, index) => `($${index + 1}, 0)`).join(", ")} 
             ON CONFLICT (handler_id) DO NOTHING;`
 
-        await this.pool.query(insertQuery, this.handlers)
+        await this.pool.query(insertQuery, this.#handlerIds)
     }
 
     async obtainLock(): Promise<LockResult> {
@@ -42,7 +45,7 @@ export class PostgresMultiLockManager implements MultiEventHandlerLockManager {
                 [this.handlers]
             )
 
-            const result = this.handlers.map(handlerId => {
+            const result = this.#handlerIds.map(handlerId => {
                 const sequenceNumber = selectResult.rows.find(row => row.handler_id === handlerId)?.last_sequence_number
                 if (sequenceNumber !== undefined) {
                     return {
@@ -66,9 +69,9 @@ export class PostgresMultiLockManager implements MultiEventHandlerLockManager {
 
     async commitAndRelease(locks: LockResult): Promise<LockResult> {
         if (locks.some(lock => !lock.sequenceNumber)) throw new Error("Sequence number is required to commit")
-        try {
-            if (!this.#client) throw new Error("No lock obtained, cannot commit")
+        if (!this.#client) throw new Error("No lock obtained, cannot commit")
 
+        try {
             const updateValues = locks
                 .map((lock, index) => `($${index * 2 + 1}::text, $${index * 2 + 2}::bigint)`)
                 .join(", ")

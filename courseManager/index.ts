@@ -8,6 +8,11 @@ import { PostgresLockManager } from "../eventHandling/lockManager/PostgresLockMa
 import inquirer from "inquirer"
 import { PostgresEventStore } from "../eventStore/postgresEventStore/PostgresEventStore"
 import "source-map-support/register"
+import {
+    PoolClientManager,
+    PostgresEventHandlerRegistry
+} from "../eventHandling/lockManager/PostgresEventHandlerRegistry"
+import { Course } from "./ReadModels"
 ;(async () => {
     const pool = new Pool({
         host: "localhost",
@@ -35,15 +40,13 @@ import "source-map-support/register"
     const repository = new PostgresCourseSubscriptionsRepository(pool)
     await repository.install()
 
-    const lockManager = new PostgresLockManager(pool, "course-subscription-projection")
-    await lockManager.install()
-
-    const projectionRegistry: ProjectionRegistry = [
+    const clientManager = new PoolClientManager(pool)
+    const registry = new PostgresEventHandlerRegistry(
         {
-            handler: CourseSubscriptionsProjection(lockManager),
-            lockManager
-        }
-    ]
+            "course-subscription-projection": CourseSubscriptionsProjection(clientManager)
+        },
+        pool
+    )
 
     const api = EventSourcedApi(eventStore, repository, projectionRegistry)
 

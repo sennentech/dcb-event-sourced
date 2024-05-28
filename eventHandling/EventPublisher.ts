@@ -17,7 +17,7 @@ export class EventPublisher {
 
         const newEventEnvelopes = await this.eventStore.append(events, appendCondition)
         const lastSequenceNumber = newEventEnvelopes.at(-1).sequenceNumber
-
+        //await eventHandlers.catchup(newEventEnvelopes)
         
 
         const projectionsToCatchup: ProjectionRegistry = []
