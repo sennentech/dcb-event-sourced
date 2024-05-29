@@ -3,7 +3,6 @@ import { AppendCondition, AppendConditions, EsEvent } from "../EventStore"
 import { SequenceNumber } from "../SequenceNumber"
 import { streamAllEventsToArray } from "../utils/streamAllEventsToArray"
 import { PostgresEventStore } from "./PostgresEventStore"
-import { PostgreSqlContainer, StartedPostgreSqlContainer } from "@testcontainers/postgresql"
 
 class EventType1 implements EsEvent {
     type: "testEvent1" = "testEvent1"
@@ -17,15 +16,12 @@ class EventType1 implements EsEvent {
 }
 
 describe("postgresEventStore.append", () => {
-    let pgContainer: StartedPostgreSqlContainer
     let pool: Pool
     let eventStore: PostgresEventStore
 
     beforeAll(async () => {
-        pgContainer = await new PostgreSqlContainer().start()
-
         pool = new Pool({
-            connectionString: pgContainer.getConnectionUri()
+            connectionString: await global.__GET_TEST_PG_DATABASE_URI()
         })
 
         eventStore = new PostgresEventStore(pool)
@@ -38,8 +34,7 @@ describe("postgresEventStore.append", () => {
     })
 
     afterAll(async () => {
-        await pool.end()
-        await pgContainer.stop()
+        if (pool) await pool.end()
     })
 
     describe("when event store empty", () => {

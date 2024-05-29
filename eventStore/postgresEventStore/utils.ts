@@ -15,7 +15,7 @@ export type DbWriteEvent = {
 
 export type DbReadEvent = {
     type: string
-    data: any
+    data: unknown
     tags: DbTags
     timestamp: string
     sequence_number: string

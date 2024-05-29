@@ -6,7 +6,7 @@ export const appendSql = (
     events: EsEvent[],
     criteria: EsQueryCriterion[],
     maxSeqNumber: SequenceNumber
-): { query: string; params: any[] } => {
+): { query: string; params: unknown[] } => {
     const params = new ParamManager()
 
     const maxSeqNoParam = maxSeqNumber ? params.add(maxSeqNumber?.value) : null

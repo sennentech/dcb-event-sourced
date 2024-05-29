@@ -1,7 +1,6 @@
 import { Pool } from "pg"
 import { PostgresCourseSubscriptionsRepository } from "./PostgresCourseSubscriptionRespository"
-import { subscribe } from "diagnostics_channel"
-import { PostgreSqlContainer, StartedPostgreSqlContainer } from "@testcontainers/postgresql"
+
 import { Student } from "../ReadModels"
 
 const COURSE_1 = {
@@ -15,14 +14,12 @@ const STUDENT_1 = {
 }
 
 describe("PostgresCourseSubscriptionRepository", () => {
-    let pgContainer: StartedPostgreSqlContainer
     let pool: Pool
     let repository: PostgresCourseSubscriptionsRepository
 
     beforeAll(async () => {
-        pgContainer = await new PostgreSqlContainer().start()
         pool = new Pool({
-            connectionString: pgContainer.getConnectionUri()
+            connectionString: await global.__GET_TEST_PG_DATABASE_URI()
         })
         repository = new PostgresCourseSubscriptionsRepository(pool)
         await repository.install()
@@ -35,8 +32,7 @@ describe("PostgresCourseSubscriptionRepository", () => {
     })
 
     afterAll(async () => {
-        await pool.end()
-        await pgContainer.stop()
+        if (pool) await pool.end()
     })
 
     describe("registerCourse", () => {

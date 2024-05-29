@@ -10,4 +10,6 @@ module.exports = {
     ],
     testTimeout: 60000,
     slowTestThreshold: 20,
+    globalSetup: './jest.setup.js',
+    globalTeardown: './jest.teardown.js',
 };

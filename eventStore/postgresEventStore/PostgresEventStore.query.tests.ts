@@ -1,8 +1,6 @@
-import { StartedPostgreSqlContainer, PostgreSqlContainer } from "@testcontainers/postgresql"
 import { Pool } from "pg"
 import { AppendConditions, EsEvent } from "../EventStore"
 import { SequenceNumber } from "../SequenceNumber"
-import { MemoryEventStore } from "../memoryEventStore/MemoryEventStore"
 import { streamAllEventsToArray } from "../utils/streamAllEventsToArray"
 import { PostgresEventStore } from "./PostgresEventStore"
 
@@ -29,15 +27,12 @@ class EventType2 implements EsEvent {
 }
 
 describe("memoryEventStore.query", () => {
-    let pgContainer: StartedPostgreSqlContainer
     let pool: Pool
     let eventStore: PostgresEventStore
 
     beforeAll(async () => {
-        pgContainer = await new PostgreSqlContainer().start()
-
         pool = new Pool({
-            connectionString: pgContainer.getConnectionUri()
+            connectionString: await global.__GET_TEST_PG_DATABASE_URI()
         })
 
         eventStore = new PostgresEventStore(pool)
@@ -50,8 +45,7 @@ describe("memoryEventStore.query", () => {
     })
 
     afterAll(async () => {
-        await pool.end()
-        await pgContainer.stop()
+        if (pool) await pool.end()
     })
 
     describe("when event store is empty", () => {
@@ -223,33 +217,22 @@ describe("memoryEventStore.query", () => {
         })
 
         test("should return respect limit clause when readAll forward", async () => {
-            const events = await streamAllEventsToArray(
-                eventStore.readAll(
-                    { limit: 1 }
-                )
-            )
+            const events = await streamAllEventsToArray(eventStore.readAll({ limit: 1 }))
             expect(events.length).toBe(1)
             expect(events[0].event.type).toBe("testEvent1")
             expect(events[0].event.tags.testTagKey).toBe("tag-key-1")
         })
 
         test("should return respect limit clause when readAll backward", async () => {
-            const events = await streamAllEventsToArray(
-                eventStore.readAll(
-                    { limit: 1, backwards: true }
-                )
-            )
+            const events = await streamAllEventsToArray(eventStore.readAll({ limit: 1, backwards: true }))
             expect(events.length).toBe(1)
             expect(events[0].event.type).toBe("testEvent2")
             expect(events[0].event.tags.testTagKey).toBe("ev-3")
         })
-        
+
         test("should return respect limit clause when read forward", async () => {
             const events = await streamAllEventsToArray(
-                eventStore.read(
-                    { criteria: [{ eventTypes: ["testEvent2"], tags: {} }] },
-                    { limit: 1 }
-                )
+                eventStore.read({ criteria: [{ eventTypes: ["testEvent2"], tags: {} }] }, { limit: 1 })
             )
             expect(events.length).toBe(1)
             expect(events[0].event.type).toBe("testEvent2")
@@ -258,10 +241,7 @@ describe("memoryEventStore.query", () => {
 
         test("should return respect limit clause when read backward", async () => {
             const events = await streamAllEventsToArray(
-                eventStore.read(
-                    { criteria: [{ eventTypes: ["testEvent2"], tags: {} }] },
-                    { limit: 1, backwards: true }
-                )
+                eventStore.read({ criteria: [{ eventTypes: ["testEvent2"], tags: {} }] }, { limit: 1, backwards: true })
             )
             expect(events.length).toBe(1)
             expect(events[0].event.type).toBe("testEvent2")

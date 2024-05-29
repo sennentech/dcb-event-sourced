@@ -1,4 +1,4 @@
-import { EsEventEnvelope, EsQuery, EsQueryCriterion } from "../EventStore"
+import { EsEventEnvelope, EsQueryCriterion } from "../EventStore"
 import { SequenceNumber } from "../SequenceNumber"
 
 export const isSeqOutOfRange = (

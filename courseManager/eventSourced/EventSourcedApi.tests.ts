@@ -4,7 +4,6 @@ import { Api } from "../Api"
 import { EventSourcedApi } from "./EventSourcedApi"
 import { MemoryEventStore } from "../../eventStore/memoryEventStore/MemoryEventStore"
 import { CourseSubscriptionsProjection } from "./CourseSubscriptionsProjection"
-import { PostgreSqlContainer, StartedPostgreSqlContainer } from "@testcontainers/postgresql"
 import { PostgresTransactionManager } from "../../eventHandling/PostgresTransactionManager"
 import { PostgresEventHandlerRegistry } from "../../eventHandling/handlerRegistry/postgresRegistry/PostgresEventHandlerRegistry"
 
@@ -20,16 +19,14 @@ const STUDENT_1 = {
 }
 
 describe("EventSourcedApi", () => {
-    let pgContainer: StartedPostgreSqlContainer
     let pool: Pool
     let transactionManager: PostgresTransactionManager
     let repository: PostgresCourseSubscriptionsRepository
     let api: Api
 
     beforeAll(async () => {
-        pgContainer = await new PostgreSqlContainer().start()
         pool = new Pool({
-            connectionString: pgContainer.getConnectionUri()
+            connectionString: await global.__GET_TEST_PG_DATABASE_URI()
         })
 
         repository = new PostgresCourseSubscriptionsRepository(pool)
@@ -43,8 +40,7 @@ describe("EventSourcedApi", () => {
     })
 
     afterAll(async () => {
-        await pool.end()
-        await pgContainer.stop()
+        if (pool) await pool.end()
     })
 
     describe("with one course and 100 students in database", () => {
@@ -52,7 +48,6 @@ describe("EventSourcedApi", () => {
             api = EventSourcedApi(new MemoryEventStore(), repository, null)
             api.registerCourse({ id: COURSE_1.id, capacity: COURSE_1.capacity })
 
-            const studentRegistraionPromises = []
             for (let i = 0; i < 100; i++) {
                 await api.registerStudent({ id: `student-${i}`, name: `Student ${i}` })
             }

@@ -1,12 +1,10 @@
 import { Pool } from "pg"
 import { SequenceNumber } from "../../../eventStore/SequenceNumber"
 import { PostgresEventHandlerRegistry } from "./PostgresEventHandlerRegistry"
-import { StartedPostgreSqlContainer, PostgreSqlContainer } from "@testcontainers/postgresql"
 import { v4 as uuid } from "uuid"
 import { PostgresTransactionManager } from "../../PostgresTransactionManager"
 
 describe("PostgresEventHandlerRegistry tests", () => {
-    let pgContainer: StartedPostgreSqlContainer
     let pool: Pool
     let transactionManager: PostgresTransactionManager
     let handlerRegistry: PostgresEventHandlerRegistry
@@ -16,9 +14,8 @@ describe("PostgresEventHandlerRegistry tests", () => {
     }
 
     beforeAll(async () => {
-        pgContainer = await new PostgreSqlContainer().start()
         pool = new Pool({
-            connectionString: pgContainer.getConnectionUri()
+            connectionString: await global.__GET_TEST_PG_DATABASE_URI()
         })
         transactionManager = new PostgresTransactionManager(pool)
         handlerRegistry = new PostgresEventHandlerRegistry(transactionManager, handlers)
@@ -26,8 +23,7 @@ describe("PostgresEventHandlerRegistry tests", () => {
     })
 
     afterAll(async () => {
-        await pool.end()
-        await pgContainer.stop()
+        if (pool) await pool.end()
     })
 
     test("install worked ok", async () => {
@@ -65,7 +61,7 @@ describe("PostgresEventHandlerRegistry tests", () => {
     })
 
     test("should rollback and release lock", async () => {
-        const locks = await handlerRegistry.lockHandlers()
+        await handlerRegistry.lockHandlers()
 
         await transactionManager.client.query(`CREATE TABLE test_table (id TEXT)`)
         await transactionManager.client.query(`INSERT INTO test_table (id) VALUES ('test')`)
@@ -93,7 +89,7 @@ describe("PostgresEventHandlerRegistry tests", () => {
     })
 
     test("should throw error when committing without sequence number", async () => {
-        const locks = await handlerRegistry.lockHandlers()
+        await handlerRegistry.lockHandlers()
         await expect(handlerRegistry.commitAndRelease({ [handlers[0]]: null })).rejects.toThrow(
             "Sequence number is required to commit"
         )

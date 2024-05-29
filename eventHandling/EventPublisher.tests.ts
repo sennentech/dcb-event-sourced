@@ -1,4 +1,3 @@
-import { PostgreSqlContainer, StartedPostgreSqlContainer } from "@testcontainers/postgresql"
 import { Pool } from "pg"
 import { AppendConditions, EsEvent, EsEventEnvelope, EventStore, Tags } from "../eventStore/EventStore"
 import { MemoryEventStore } from "../eventStore/memoryEventStore/MemoryEventStore"
@@ -18,15 +17,13 @@ class TestEvent implements EsEvent {
 }
 
 describe(`EventPublisher`, () => {
-    let pgContainer: StartedPostgreSqlContainer
     let transactionManager: PostgresTransactionManager
     let pool: Pool
     let eventStore: EventStore
 
     beforeAll(async () => {
-        pgContainer = await new PostgreSqlContainer().start()
         pool = new Pool({
-            connectionString: pgContainer.getConnectionUri()
+            connectionString: await global.__GET_TEST_PG_DATABASE_URI()
         })
         transactionManager = new PostgresTransactionManager(pool)
     })
@@ -34,8 +31,7 @@ describe(`EventPublisher`, () => {
         eventStore = new MemoryEventStore()
     })
     afterAll(async () => {
-        await pool.end()
-        await pgContainer.stop()
+        if (pool) await pool.end()
     })
 
     describe(`with no projection registry`, () => {

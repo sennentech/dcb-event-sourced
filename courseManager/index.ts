@@ -89,6 +89,7 @@ const log = (message: string | object | Error) => {
                         { name: "courseId", message: "Course ID:", type: "input" },
                         { name: "newCapacity", message: "Course capacity:", type: "number" }
                     ])
+                    console.log(courseId, newCapacity)
                     // await api.updateCourseCapacity({ courseId, newCapacity })
                     log(`method not implemented`)
                     break

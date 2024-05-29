@@ -2,7 +2,6 @@ import { Pool } from "pg"
 import { PostgresCourseSubscriptionsRepository } from "../repository/PostgresCourseSubscriptionRespository"
 import { ConventionalApi } from "./ConventionalApi"
 import { Api } from "../Api"
-import { PostgreSqlContainer, StartedPostgreSqlContainer } from "@testcontainers/postgresql"
 
 const COURSE_1 = {
     id: "course-1",
@@ -11,14 +10,12 @@ const COURSE_1 = {
 
 describe("ConventionalApi", () => {
     let pool: Pool
-    let pgContainer: StartedPostgreSqlContainer
     let repository: PostgresCourseSubscriptionsRepository
     let api: Api
 
     beforeAll(async () => {
-        pgContainer = await new PostgreSqlContainer().start()
         pool = new Pool({
-            connectionString: pgContainer.getConnectionUri()
+            connectionString: await global.__GET_TEST_PG_DATABASE_URI()
         })
         repository = new PostgresCourseSubscriptionsRepository(pool)
         await repository.install()
@@ -43,8 +40,7 @@ describe("ConventionalApi", () => {
     })
 
     afterAll(async () => {
-        await pool.end()
-        await pgContainer.stop()
+        if (pool) await pool.end()
     })
 
     test("should throw error when 6th student subscribes", async () => {

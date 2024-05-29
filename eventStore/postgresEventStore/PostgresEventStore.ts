@@ -8,7 +8,6 @@ import {
     EsReadOptions,
     EventStore
 } from "../EventStore"
-import { SequenceNumber } from "../SequenceNumber"
 import { createEventsTableSql } from "./createEventsTableSql"
 import { dbEventConverter } from "./utils"
 import { readSql as readQuery } from "./readSql"
