@@ -5,12 +5,12 @@
             "type": "node",
             "request": "launch",
             "name": "Launch CLI",
-            "runtimeExecutable": "npm",
+            "runtimeExecutable": "yarn",
             "runtimeArgs": ["run", "debug"],
             "skipFiles": ["<node_internals>/**"],
             "console": "integratedTerminal",
             "restart": false,
-            "stopOnEntry": false
+            "stopOnEntry": true
         }
     ]
 }

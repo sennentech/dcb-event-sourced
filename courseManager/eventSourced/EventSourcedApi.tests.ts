@@ -4,9 +4,9 @@ import { Api } from "../Api"
 import { EventSourcedApi } from "./EventSourcedApi"
 import { MemoryEventStore } from "../../eventStore/memoryEventStore/MemoryEventStore"
 import { CourseSubscriptionsProjection } from "./CourseSubscriptionsProjection"
-import { ProjectionRegistry } from "../../eventHandling/EventHandler"
-import { PostgresLockManager } from "../../eventHandling/lockManager/PostgresLockManager"
 import { PostgreSqlContainer, StartedPostgreSqlContainer } from "@testcontainers/postgresql"
+import { PostgresTransactionManager } from "../../eventHandling/PostgresTransactionManager"
+import { PostgresEventHandlerRegistry } from "../../eventHandling/handlerRegistry/postgresRegistry/PostgresEventHandlerRegistry"
 
 const COURSE_1 = {
     id: "course-1",
@@ -22,6 +22,7 @@ const STUDENT_1 = {
 describe("EventSourcedApi", () => {
     let pgContainer: StartedPostgreSqlContainer
     let pool: Pool
+    let transactionManager: PostgresTransactionManager
     let repository: PostgresCourseSubscriptionsRepository
     let api: Api
 
@@ -48,7 +49,7 @@ describe("EventSourcedApi", () => {
 
     describe("with one course and 100 students in database", () => {
         beforeEach(async () => {
-            api = EventSourcedApi(new MemoryEventStore(), repository, [])
+            api = EventSourcedApi(new MemoryEventStore(), repository, null)
             api.registerCourse({ id: COURSE_1.id, capacity: COURSE_1.capacity })
 
             const studentRegistraionPromises = []
@@ -83,21 +84,22 @@ describe("EventSourcedApi", () => {
     })
 
     describe("with a course projection", () => {
-        let lockManager: PostgresLockManager
+        let registry: PostgresEventHandlerRegistry
+
+        beforeAll(async () => {
+            transactionManager = new PostgresTransactionManager(pool)
+            registry = new PostgresEventHandlerRegistry(transactionManager, {
+                ["course-subscriptions"]: CourseSubscriptionsProjection(transactionManager)
+            })
+        })
         beforeEach(async () => {
-            lockManager = new PostgresLockManager(pool, "course-subscriptions")
-            await lockManager.install()
-            const projectionRegistry: ProjectionRegistry = [
-                {
-                    handler: CourseSubscriptionsProjection(lockManager),
-                    lockManager
-                }
-            ]
-            api = EventSourcedApi(new MemoryEventStore(), repository, projectionRegistry)
+            await registry.install()
+            api = EventSourcedApi(new MemoryEventStore(), repository, registry)
         })
         afterEach(async () => {
             await pool.query("TRUNCATE table _event_handler_bookmarks")
         })
+
         test("single course registered shows in repository", async () => {
             await api.registerCourse({ id: COURSE_1.id, capacity: COURSE_1.capacity })
 

@@ -1,52 +1,35 @@
 import { AnyCondition, AppendCondition, EsEvent, EsQueryCriterion, EventStore } from "../eventStore/EventStore"
 import { SequenceNumber } from "../eventStore/SequenceNumber"
-import { ensureIsArray } from "../eventStore/memoryEventStore/MemoryEventStore"
-import { EventHandler, ProjectionRegistry } from "./EventHandler"
 import * as R from "ramda"
-import { EventHandlerLockManager } from "./lockManager/LockManager"
+import { EventHandlerRegistry } from "./handlerRegistry/EventHandlerRegistry"
 
 export class EventPublisher {
     constructor(
         private eventStore: EventStore,
-        private projectionRegistry?: ProjectionRegistry
+        private eventHandlerRegistry?: EventHandlerRegistry
     ) {}
 
     async publish(events: EsEvent | EsEvent[], appendCondition: AppendCondition | AnyCondition): Promise<void> {
+        if (!this.eventHandlerRegistry) {
+            await this.eventStore.append(events, appendCondition)
+            return
+        }
+
+        const { eventStore, eventHandlerRegistry: eventHandlerRegistry } = this
         const lastEventInStore = (await this.eventStore.readAll({ backwards: true, limit: 1 }).next()).value
         const lastSequenceNumberInStore = lastEventInStore?.sequenceNumber ?? SequenceNumber.zero()
 
         const newEventEnvelopes = await this.eventStore.append(events, appendCondition)
-        const lastSequenceNumber = newEventEnvelopes.at(-1).sequenceNumber
+        const toSequenceNumber = newEventEnvelopes.at(-1).sequenceNumber
 
-        
+        try {
+            const currentProgress = await eventHandlerRegistry.lockHandlers()
 
-        const projectionsToCatchup: ProjectionRegistry = []
-        for (const projection of this.projectionRegistry ?? []) {
-            const handlerEventTypes = R.keys(projection.handler.when)
-            const eventTypes = ensureIsArray(events).map(events => events.type)
-            if (R.intersection(handlerEventTypes, eventTypes).length > 0) projectionsToCatchup.push(projection)
-        }
-
-        const handlerCatchup = new HandlerCatchup(this.eventStore, projectionsToCatchup)
-        await handlerCatchup.catchup(lastSequenceNumber)
-    }
-}
-
-export class HandlerCatchup {
-    constructor(
-        private eventStore: EventStore,
-        private projectionRegistry: ProjectionRegistry
-    ) {}
-
-    async catchup(toSequenceNumber: SequenceNumber) {
-        const catchupOne = async (opts: { handler: EventHandler; lockManager: EventHandlerLockManager }) => {
-            const { handler, lockManager } = opts
-            try {
-                const lastSequenceNumberSeen = await lockManager.obtainLock()
+            for (const [handlerId, handler] of Object.entries(eventHandlerRegistry.handlers)) {
+                const lastSequenceNumberSeen = currentProgress[handlerId]
                 const criteria: EsQueryCriterion[] = [{ eventTypes: R.keys(handler.when) as string[], tags: {} }]
-
                 let currentSeqNumber = lastSequenceNumberSeen
-                for await (const event of this.eventStore.read(
+                for await (const event of eventStore.read(
                     { criteria },
                     { fromSequenceNumber: currentSeqNumber.inc() }
                 )) {
@@ -56,19 +39,12 @@ export class HandlerCatchup {
                     await handler.when[event.event.type](event)
                     currentSeqNumber = event.sequenceNumber
                 }
-                await lockManager.commitAndRelease(currentSeqNumber)
-            } catch (err) {
-                await lockManager.rollbackAndRelease()
-                throw err
+                currentProgress[handlerId] = currentSeqNumber
             }
+            await eventHandlerRegistry.commitAndRelease(currentProgress)
+        } catch (err) {
+            await eventHandlerRegistry.rollbackAndRelease()
+            throw err
         }
-
-        const pendingHandlerCatchups = this.projectionRegistry.map(catchupOne)
-
-        const results = await Promise.all(pendingHandlerCatchups)
-        // const failedCatchups = results.filter(result => result.status === "rejected")
-        // if (failedCatchups.length > 0) {
-        //     throw new Error(`Failed to catchup ${failedCatchups.length} handlers`)
-        // }
     }
 }

@@ -1,13 +1,23 @@
 import { Pool } from "pg"
 import { PostgresCourseSubscriptionsRepository } from "./repository/PostgresCourseSubscriptionRespository"
-import { MemoryEventStore } from "../eventStore/memoryEventStore/MemoryEventStore"
 import { EventSourcedApi } from "./eventSourced/EventSourcedApi"
-import { ProjectionRegistry } from "../eventHandling/EventHandler"
 import { CourseSubscriptionsProjection } from "./eventSourced/CourseSubscriptionsProjection"
-import { PostgresLockManager } from "../eventHandling/lockManager/PostgresLockManager"
 import inquirer from "inquirer"
 import { PostgresEventStore } from "../eventStore/postgresEventStore/PostgresEventStore"
 import "source-map-support/register"
+import { PostgresTransactionManager } from "../eventHandling/PostgresTransactionManager"
+import { PostgresEventHandlerRegistry } from "../eventHandling/handlerRegistry/postgresRegistry/PostgresEventHandlerRegistry"
+
+const log = (message: string | object | Error) => {
+    console.log(`______________________________________________________`)
+    if (message instanceof Error) {
+        console.log(`\n\x1b[31m${message?.message ?? message}\x1b[0m`)
+    } else {
+        console.log(`\n${typeof message === "object" ? JSON.stringify(message, null, 2) : message}`)
+    }
+    console.log(`______________________________________________________\n`)
+}
+
 ;(async () => {
     const pool = new Pool({
         host: "localhost",
@@ -18,14 +28,15 @@ import "source-map-support/register"
     })
 
     //RESET
+
     await pool.query(
-        `
+        ` 
         drop table if exists subscriptions;
         drop table if exists courses;
         drop table if exists students;
 
         drop table if exists _event_handler_bookmarks;
-        drop table if exists events cascade;
+        drop table if exists events;
         `
     )
 
@@ -35,18 +46,15 @@ import "source-map-support/register"
     const repository = new PostgresCourseSubscriptionsRepository(pool)
     await repository.install()
 
-    const lockManager = new PostgresLockManager(pool, "course-subscription-projection")
-    await lockManager.install()
+    const clientManager = new PostgresTransactionManager(pool)
+    const registry = new PostgresEventHandlerRegistry(clientManager, {
+        "course-subscription-projection": CourseSubscriptionsProjection(clientManager)
+    })
+    await registry.install()
 
-    const projectionRegistry: ProjectionRegistry = [
-        {
-            handler: CourseSubscriptionsProjection(lockManager),
-            lockManager
-        }
-    ]
+    const api = EventSourcedApi(eventStore, repository, registry)
 
-    const api = EventSourcedApi(eventStore, repository, projectionRegistry)
-
+    log("Program started succesfully")
     let exit = false
     while (!exit) {
         const choices = await inquirer.prompt({
@@ -72,7 +80,7 @@ import "source-map-support/register"
                         { name: "capacity", message: "Course capacity:", type: "number" }
                     ])
                     await api.registerCourse(course)
-                    console.log(`Course with id ${course.id} and capacity ${course.capacity} registered`)
+                    log(`Course with id ${course.id} and capacity ${course.capacity} registered`)
                     break
                 }
 
@@ -82,7 +90,7 @@ import "source-map-support/register"
                         { name: "newCapacity", message: "Course capacity:", type: "number" }
                     ])
                     // await api.updateCourseCapacity({ courseId, newCapacity })
-                    console.log(`method not implemented`)
+                    log(`method not implemented`)
                     break
                 }
 
@@ -92,7 +100,7 @@ import "source-map-support/register"
                         { name: "name", message: "Student name:", type: "input" }
                     ])
                     await api.registerStudent(student)
-                    console.log(`Student with id ${student.id} and name ${student.name} registered`)
+                    log(`Student with id ${student.id} and name ${student.name} registered`)
                     break
                 }
 
@@ -102,7 +110,7 @@ import "source-map-support/register"
                         { name: "courseId", message: "Course ID:", type: "input" }
                     ])
                     await api.subscribeStudentToCourse({ courseId, studentId })
-                    console.log(`Student ${studentId} subscribed to course ${courseId}`)
+                    log(`Student ${studentId} subscribed to course ${courseId}`)
                     break
                 }
 
@@ -112,7 +120,7 @@ import "source-map-support/register"
                         { name: "courseId", message: "Course ID:", type: "input" }
                     ])
                     await api.unsubscribeStudentFromCourse({ courseId, studentId })
-                    console.log(`Student ${studentId} unsubscribed from course ${courseId}`)
+                    log(`Student ${studentId} unsubscribed from course ${courseId}`)
                     break
                 }
 
@@ -121,8 +129,8 @@ import "source-map-support/register"
                         { name: "courseId", message: "Course ID:", type: "input" }
                     ])
                     const course = await api.findCourseById(courseId)
-                    console.log(`Found course:`)
-                    console.log(course)
+                    log(`Found course:`)
+                    log(course)
                     break
                 }
 
@@ -131,23 +139,23 @@ import "source-map-support/register"
                         { name: "studentId", message: "Student ID:", type: "input" }
                     ])
                     const course = await api.findStudentById(studentId)
-                    console.log(`Found student:`)
-                    console.log(course)
+                    log(`Found student:`)
+                    log(course)
                     break
                 }
 
                 case "Exit":
                     exit = true
-                    console.log("Exiting...")
+                    log("Exiting...")
                     break
 
                 default:
-                    console.log("No valid action selected.")
+                    log("No valid action selected.")
                     break
             }
         } catch (err) {
             if (process.env.DEBUG) throw err
-            console.log(`***** ERROR: ${err.message} *****`)
+            log(err)
         }
     }
 })()
