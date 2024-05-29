@@ -1,9 +1,8 @@
 import * as R from "ramda"
-import { AppendCondition, EsEventEnvelope, EsQuery, EventStore } from "../eventStore/EventStore"
-import { SequenceNumber } from "../eventStore/SequenceNumber"
-import { EventHandlerWithState } from "./EventHandlerWithState"
+import { EventStore, AppendCondition, EsEventEnvelope, EsQuery } from "../../eventStore/EventStore"
+import { SequenceNumber } from "../../eventStore/SequenceNumber"
+import { EventHandlerWithState } from "../EventHandlerWithState"
 import { matchTags } from "./matchTags"
-
 type EventHandlers = Record<string, EventHandlerWithState>
 type EventHandlerStates<T extends EventHandlers> = {
     [K in keyof T]: T[K]["init"]

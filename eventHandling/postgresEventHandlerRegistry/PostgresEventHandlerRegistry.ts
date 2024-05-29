@@ -1,6 +1,6 @@
-import { SequenceNumber } from "../../../eventStore/SequenceNumber"
-import { EventHandler } from "../../EventHandler"
-import { PostgresTransactionManager } from "../../PostgresTransactionManager"
+import { SequenceNumber } from "../../eventStore/SequenceNumber"
+import { EventHandler } from "../EventHandler"
+import { PostgresTransactionManager } from "./PostgresTransactionManager"
 import { EventHandlerRegistry, HandlerProgress } from "../EventHandlerRegistry"
 
 const POSTGRES_TABLE_NAME = "_event_handler_bookmarks"

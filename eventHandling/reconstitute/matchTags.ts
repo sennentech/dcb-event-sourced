@@ -1,4 +1,4 @@
-import { Tags } from "../eventStore/EventStore"
+import { Tags } from "../../eventStore/EventStore"
 import * as R from "ramda"
 
 export const ensureIsArray = (stringOrStringArray: string | string[]) =>

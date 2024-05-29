@@ -5,8 +5,8 @@ import { CourseSubscriptionsProjection } from "./eventSourced/CourseSubscription
 import inquirer from "inquirer"
 import { PostgresEventStore } from "../eventStore/postgresEventStore/PostgresEventStore"
 import "source-map-support/register"
-import { PostgresTransactionManager } from "../eventHandling/PostgresTransactionManager"
-import { PostgresEventHandlerRegistry } from "../eventHandling/handlerRegistry/postgresRegistry/PostgresEventHandlerRegistry"
+import { PostgresTransactionManager } from "../eventHandling/postgresEventHandlerRegistry/PostgresTransactionManager"
+import { PostgresEventHandlerRegistry } from "../eventHandling/postgresEventHandlerRegistry/PostgresEventHandlerRegistry"
 
 const log = (message: string | object | Error) => {
     console.log(`______________________________________________________`)

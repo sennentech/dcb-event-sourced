@@ -1,4 +1,3 @@
-import { reconstitute } from "../../eventHandling/reconstitute"
 import { EventStore } from "../../eventStore/EventStore"
 import { Api } from "../Api"
 import { STUDENT_SUBSCRIPTION_LIMIT } from "../ReadModels"
@@ -10,7 +9,7 @@ import {
     StudentWasUnsubscribedEvent
 } from "./Events"
 
-import { EventPublisher } from "../../eventHandling/EventPublisher"
+import { EventPublisher } from "../../eventHandling/eventPublishing/EventPublisher"
 import {
     CourseCapacity,
     CourseExists,
@@ -19,7 +18,8 @@ import {
     StudentAlreadySubscribed,
     StudentSubscriptions
 } from "./WriteModels"
-import { EventHandlerRegistry } from "../../eventHandling/handlerRegistry/EventHandlerRegistry"
+import { EventHandlerRegistry } from "../../eventHandling/EventHandlerRegistry"
+import { reconstitute } from "../../eventHandling/reconstitute/reconstitute"
 
 export const EventSourcedApi = (
     eventStore: EventStore,

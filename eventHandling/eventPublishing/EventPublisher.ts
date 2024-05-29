@@ -1,7 +1,7 @@
-import { AnyCondition, AppendCondition, EsEvent, EsQueryCriterion, EventStore } from "../eventStore/EventStore"
-import { SequenceNumber } from "../eventStore/SequenceNumber"
+import { AnyCondition, AppendCondition, EsEvent, EsQueryCriterion, EventStore } from "../../eventStore/EventStore"
+import { SequenceNumber } from "../../eventStore/SequenceNumber"
 import * as R from "ramda"
-import { EventHandlerRegistry } from "./handlerRegistry/EventHandlerRegistry"
+import { EventHandlerRegistry } from "../EventHandlerRegistry"
 
 export class EventPublisher {
     constructor(

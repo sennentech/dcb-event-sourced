@@ -1,8 +1,8 @@
 import { Pool } from "pg"
-import { SequenceNumber } from "../../../eventStore/SequenceNumber"
+import { SequenceNumber } from "../../eventStore/SequenceNumber"
 import { PostgresEventHandlerRegistry } from "./PostgresEventHandlerRegistry"
 import { v4 as uuid } from "uuid"
-import { PostgresTransactionManager } from "../../PostgresTransactionManager"
+import { PostgresTransactionManager } from "./PostgresTransactionManager"
 
 describe("PostgresEventHandlerRegistry tests", () => {
     let pool: Pool

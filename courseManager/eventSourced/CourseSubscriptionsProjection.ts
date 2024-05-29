@@ -1,6 +1,6 @@
 import { EventHandler } from "../../eventHandling/EventHandler"
 import { PostgresCourseSubscriptionsRepository } from "../repository/PostgresCourseSubscriptionRespository"
-import { PostgresTransactionManager } from "../../eventHandling/PostgresTransactionManager"
+import { PostgresTransactionManager } from "../../eventHandling/postgresEventHandlerRegistry/PostgresTransactionManager"
 import {
     CourseWasRegisteredEvent,
     CourseCapacityWasChangedEvent,

@@ -1,5 +1,5 @@
-import { SequenceNumber } from "../../eventStore/SequenceNumber"
-import { EventHandler } from "../EventHandler"
+import { SequenceNumber } from "../eventStore/SequenceNumber"
+import { EventHandler } from "./EventHandler"
 
 export type HandlerProgress = Record<string, SequenceNumber>
 export interface EventHandlerRegistry {

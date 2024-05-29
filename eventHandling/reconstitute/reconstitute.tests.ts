@@ -1,5 +1,5 @@
-import { AppendCondition, AppendConditions } from "../eventStore/EventStore"
-import { MemoryEventStore } from "../eventStore/memoryEventStore/MemoryEventStore"
+import { AppendCondition, AppendConditions } from "../../eventStore/EventStore"
+import { MemoryEventStore } from "../../eventStore/memoryEventStore/MemoryEventStore"
 import * as R from "ramda"
 import { reconstitute } from "./reconstitute"
 import { CourseCapacity, CourseExists } from "./reconsititue.tests.handlers"

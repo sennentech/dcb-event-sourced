@@ -1,4 +1,4 @@
-import { EventHandlerWithState } from "./EventHandlerWithState"
+import { EventHandlerWithState } from "./../EventHandlerWithState"
 import {
     CourseWasRegisteredEvent,
     CourseCapacityWasChangedEvent,

@@ -4,8 +4,8 @@ import { Api } from "../Api"
 import { EventSourcedApi } from "./EventSourcedApi"
 import { MemoryEventStore } from "../../eventStore/memoryEventStore/MemoryEventStore"
 import { CourseSubscriptionsProjection } from "./CourseSubscriptionsProjection"
-import { PostgresTransactionManager } from "../../eventHandling/PostgresTransactionManager"
-import { PostgresEventHandlerRegistry } from "../../eventHandling/handlerRegistry/postgresRegistry/PostgresEventHandlerRegistry"
+import { PostgresTransactionManager } from "../../eventHandling/postgresEventHandlerRegistry/PostgresTransactionManager"
+import { PostgresEventHandlerRegistry } from "../../eventHandling/postgresEventHandlerRegistry/PostgresEventHandlerRegistry"
 
 const COURSE_1 = {
     id: "course-1",

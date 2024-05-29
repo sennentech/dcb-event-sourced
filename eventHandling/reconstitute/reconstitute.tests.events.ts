@@ -1,4 +1,4 @@
-import { EsEvent } from "../eventStore/EventStore"
+import { EsEvent } from "../../eventStore/EventStore"
 
 export class CourseWasRegisteredEvent implements EsEvent {
     public type: "courseWasRegistered" = "courseWasRegistered"
