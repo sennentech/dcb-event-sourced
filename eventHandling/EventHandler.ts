@@ -1,10 +1,4 @@
 import { EsEvent, EsEventEnvelope, Tags } from "../eventStore/EventStore"
-import { EventHandlerLockManager } from "./lockManager/LockManager"
-
-export type ProjectionRegistry = {
-    handler: EventHandler<EsEventHandlerDef>
-    lockManager: EventHandlerLockManager
-}[]
 
 interface EsEventHandlerDef {
     tagFilter?: Tags

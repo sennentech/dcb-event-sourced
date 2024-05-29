@@ -1,21 +1,16 @@
-import { Client, Pool, PoolClient } from "pg"
 import { EventHandler } from "../../eventHandling/EventHandler"
-import { CourseSubscriptionRepository } from "../repository/Repositories"
+import { PostgresCourseSubscriptionsRepository } from "../repository/PostgresCourseSubscriptionRespository"
+import { PostgresTransactionManager } from "../../eventHandling/PostgresTransactionManager"
 import {
-    CourseCapacityWasChangedEvent,
     CourseWasRegisteredEvent,
+    CourseCapacityWasChangedEvent,
     StudentWasRegistered,
     StudentWasSubscribedEvent,
     StudentWasUnsubscribedEvent
 } from "./Events"
-import { PostgresCourseSubscriptionsRepository } from "../repository/PostgresCourseSubscriptionRespository"
-import { SequenceNumber } from "../../eventStore/SequenceNumber"
-import { PostgresLockManager } from "../../eventHandling/lockManager/PostgresLockManager"
-import { EsEventEnvelope } from "../../eventStore/EventStore"
-import { PoolClientManager } from "../../eventHandling/lockManager/PostgresEventHandlerRegistry"
 
 export const CourseSubscriptionsProjection = (
-    clientManager: PoolClientManager
+    clientManager: PostgresTransactionManager
 ): EventHandler<{
     eventHandlers:
         | CourseWasRegisteredEvent

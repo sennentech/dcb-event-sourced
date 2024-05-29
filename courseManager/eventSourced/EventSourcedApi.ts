@@ -9,6 +9,7 @@ import {
     StudentWasSubscribedEvent,
     StudentWasUnsubscribedEvent
 } from "./Events"
+
 import { EventPublisher } from "../../eventHandling/EventPublisher"
 import {
     CourseCapacity,
@@ -18,14 +19,14 @@ import {
     StudentAlreadySubscribed,
     StudentSubscriptions
 } from "./WriteModels"
-import { ProjectionRegistry } from "../../eventHandling/EventHandler"
+import { EventHandlerRegistry } from "../../eventHandling/handlerRegistry/EventHandlerRegistry"
 
 export const EventSourcedApi = (
     eventStore: EventStore,
     repository: CourseSubscriptionRepository,
-    projectionRegistry: ProjectionRegistry
+    eventHandlerRegistry: EventHandlerRegistry
 ): Api => {
-    const eventPublisher = new EventPublisher(eventStore, projectionRegistry)
+    const eventPublisher = new EventPublisher(eventStore, eventHandlerRegistry)
     return {
         findCourseById: async (courseId: string) => repository.findCourseById(courseId),
         findStudentById: async (studentId: string) => repository.findStudentById(studentId),

@@ -3,9 +3,11 @@ import { Pool } from "pg"
 import { AppendConditions, EsEvent, EsEventEnvelope, EventStore, Tags } from "../eventStore/EventStore"
 import { MemoryEventStore } from "../eventStore/memoryEventStore/MemoryEventStore"
 import { streamAllEventsToArray } from "../eventStore/utils/streamAllEventsToArray"
-import { EventHandler, ProjectionRegistry } from "./EventHandler"
+import { EventHandler } from "./EventHandler"
 import { EventPublisher } from "./EventPublisher"
-import { PostgresLockManager } from "./lockManager/PostgresLockManager"
+import { EventHandlerRegistry } from "./handlerRegistry/EventHandlerRegistry"
+import { PostgresTransactionManager } from "./PostgresTransactionManager"
+import { PostgresEventHandlerRegistry } from "./handlerRegistry/postgresRegistry/PostgresEventHandlerRegistry"
 
 class TestEvent implements EsEvent {
     type: "testEvent" = "testEvent"
@@ -17,7 +19,7 @@ class TestEvent implements EsEvent {
 
 describe(`EventPublisher`, () => {
     let pgContainer: StartedPostgreSqlContainer
-    let lockManager: PostgresLockManager
+    let transactionManager: PostgresTransactionManager
     let pool: Pool
     let eventStore: EventStore
 
@@ -26,8 +28,7 @@ describe(`EventPublisher`, () => {
         pool = new Pool({
             connectionString: pgContainer.getConnectionUri()
         })
-        lockManager = new PostgresLockManager(pool, "test-handler")
-        await lockManager.install()
+        transactionManager = new PostgresTransactionManager(pool)
     })
     beforeEach(async () => {
         eventStore = new MemoryEventStore()
@@ -65,6 +66,7 @@ describe(`EventPublisher`, () => {
     })
 
     describe(`with projection registry`, () => {
+        let registry: EventHandlerRegistry
         let eventPublisher: EventPublisher
         const eventsSeenByProjection: EsEventEnvelope[] = []
         beforeAll(async () => {
@@ -77,12 +79,10 @@ describe(`EventPublisher`, () => {
                     }
                 }
             }
-            const registry: ProjectionRegistry = [
-                {
-                    handler: projection,
-                    lockManager
-                }
-            ]
+            registry = new PostgresEventHandlerRegistry(transactionManager, {
+                "test-projection": projection
+            })
+            await registry.install()
 
             eventStore = new MemoryEventStore()
             eventPublisher = new EventPublisher(eventStore, registry)
