@@ -14,9 +14,7 @@ describe("PostgresEventHandlerRegistry tests", () => {
     }
 
     beforeAll(async () => {
-        pool = new Pool({
-            connectionString: await global.__GET_TEST_PG_DATABASE_URI()
-        })
+        pool = await global.__GET_TEST_PG_POOL()
         transactionManager = new PostgresTransactionManager(pool)
         handlerRegistry = new PostgresEventHandlerRegistry(transactionManager, handlers)
         await handlerRegistry.install()

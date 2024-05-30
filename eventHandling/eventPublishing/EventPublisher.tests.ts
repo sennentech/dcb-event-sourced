@@ -7,6 +7,7 @@ import { EventPublisher } from "./EventPublisher"
 import { EventHandlerRegistry } from "../EventHandlerRegistry"
 import { PostgresTransactionManager } from "../postgresEventHandlerRegistry/PostgresTransactionManager"
 import { PostgresEventHandlerRegistry } from "../postgresEventHandlerRegistry/PostgresEventHandlerRegistry"
+import { SequenceNumber } from "../../eventStore/SequenceNumber"
 
 class TestEvent implements EsEvent {
     type: "testEvent" = "testEvent"
@@ -19,12 +20,11 @@ class TestEvent implements EsEvent {
 describe(`EventPublisher`, () => {
     let transactionManager: PostgresTransactionManager
     let pool: Pool
-    let eventStore: EventStore
+    let eventStore: MemoryEventStore
 
     beforeAll(async () => {
-        pool = new Pool({
-            connectionString: await global.__GET_TEST_PG_DATABASE_URI()
-        })
+        pool = await global.__GET_TEST_PG_POOL()
+
         transactionManager = new PostgresTransactionManager(pool)
     })
     beforeEach(async () => {
@@ -79,12 +79,12 @@ describe(`EventPublisher`, () => {
                 "test-projection": projection
             })
             await registry.install()
-
+        })
+        beforeEach(async () => {
+            await pool.query(`update _event_handler_bookmarks set last_sequence_number = 0;`)
+            eventsSeenByProjection.length = 0
             eventStore = new MemoryEventStore()
             eventPublisher = new EventPublisher(eventStore, registry)
-        })
-        beforeEach(() => {
-            eventsSeenByProjection.length = 0
         })
 
         test("Projection sees published event", async () => {
@@ -92,6 +92,53 @@ describe(`EventPublisher`, () => {
             expect(eventsSeenByProjection).toHaveLength(1)
             expect(eventsSeenByProjection[0].event.type).toBe("testEvent")
             expect(eventsSeenByProjection[0].event.data).toHaveProperty("test", "test1")
+        })
+
+        test("Event publisher applies catchup when projection not date", async () => {
+            //pre events
+            await eventStore.append(
+                [
+                    new TestEvent({ test: "test1" }, {}),
+                    new TestEvent({ test: "test1" }, {}),
+                    new TestEvent({ test: "test1" }, {})
+                ],
+                AppendConditions.Any
+            )
+
+            let readCount = 0
+            eventStore.on("read", () => readCount++)
+
+            await eventPublisher.publish(new TestEvent({ test: "test1" }, {}), AppendConditions.Any)
+            expect(readCount).toBe(2)
+            expect(eventsSeenByProjection).toHaveLength(4)
+            expect(eventsSeenByProjection[eventsSeenByProjection.length - 1].sequenceNumber).toEqual(
+                SequenceNumber.create(4)
+            )
+        })
+
+        test("Event publisher efficiently applies last event when projection upto date", async () => {
+            //pre events
+            await eventStore.append(
+                [
+                    new TestEvent({ test: "test1" }, {}),
+                    new TestEvent({ test: "test1" }, {}),
+                    new TestEvent({ test: "test1" }, {})
+                ],
+                AppendConditions.Any
+            )
+
+            //change internals so projection has seen all 3 events
+            await pool.query(`update _event_handler_bookmarks set last_sequence_number = 3;`)
+
+            let readCount = 0
+            eventStore.on("read", () => readCount++)
+
+            await eventPublisher.publish(new TestEvent({ test: "test1" }, {}), AppendConditions.Any)
+            expect(readCount).toBe(1)
+            expect(eventsSeenByProjection).toHaveLength(1)
+            expect(eventsSeenByProjection[eventsSeenByProjection.length - 1].sequenceNumber).toEqual(
+                SequenceNumber.create(4)
+            )
         })
     })
 })

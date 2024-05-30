@@ -82,5 +82,13 @@ describe("memoryEventStore.append", () => {
                 )
             })
         })
+
+        test("test append count works", async () => {
+            let appendCount = 0
+            eventStore.on("append", () => appendCount++)
+            await eventStore.append(new EventType1(), AppendConditions.Any)
+
+            expect(appendCount).toBe(1)
+        })
     })
 })

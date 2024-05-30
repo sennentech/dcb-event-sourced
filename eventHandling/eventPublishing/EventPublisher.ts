@@ -2,6 +2,7 @@ import { AnyCondition, AppendCondition, EsEvent, EsQueryCriterion, EventStore } 
 import { SequenceNumber } from "../../eventStore/SequenceNumber"
 import * as R from "ramda"
 import { EventHandlerRegistry } from "../EventHandlerRegistry"
+import { EventHandler } from "../EventHandler"
 
 export class EventPublisher {
     constructor(
@@ -26,20 +27,17 @@ export class EventPublisher {
             const currentProgress = await eventHandlerRegistry.lockHandlers()
 
             for (const [handlerId, handler] of Object.entries(eventHandlerRegistry.handlers)) {
-                const lastSequenceNumberSeen = currentProgress[handlerId]
-                const criteria: EsQueryCriterion[] = [{ eventTypes: R.keys(handler.when) as string[], tags: {} }]
-                let currentSeqNumber = lastSequenceNumberSeen
-                for await (const event of eventStore.read(
-                    { criteria },
-                    { fromSequenceNumber: currentSeqNumber.inc() }
-                )) {
-                    if (event.sequenceNumber.value > toSequenceNumber.value) {
-                        break
-                    }
-                    await handler.when[event.event.type](event)
-                    currentSeqNumber = event.sequenceNumber
+                const requiresCatchup = currentProgress[handlerId] < lastSequenceNumberInStore
+                if (requiresCatchup) {
+                    currentProgress[handlerId] = await catchupHandler(
+                        handler,
+                        eventStore,
+                        currentProgress[handlerId],
+                        toSequenceNumber
+                    )
+                } else {
+                    currentProgress[handlerId] = await applyNewEventsDirectly(newEventEnvelopes, handler)
                 }
-                currentProgress[handlerId] = currentSeqNumber
             }
             await eventHandlerRegistry.commitAndRelease(currentProgress)
         } catch (err) {
@@ -47,4 +45,33 @@ export class EventPublisher {
             throw err
         }
     }
+}
+
+const catchupHandler = async (
+    handler: EventHandler<any>,
+    eventStore: EventStore,
+    currentSeqNumber: SequenceNumber,
+    toSequenceNumber: SequenceNumber
+) => {
+    const criteria: EsQueryCriterion[] = [{ eventTypes: R.keys(handler.when) as string[], tags: {} }]
+    for await (const event of eventStore.read({ criteria }, { fromSequenceNumber: currentSeqNumber.inc() })) {
+        if (event.sequenceNumber.value > toSequenceNumber.value) {
+            break
+        }
+        await handler.when[event.event.type](event)
+        currentSeqNumber = event.sequenceNumber
+    }
+    return currentSeqNumber
+}
+
+const applyNewEventsDirectly = async (
+    newEventEnvelopes: import("/Users/paul.grimshaw/dev/dcb-event-store/eventStore/EventStore").EsEventEnvelope<EsEvent>[],
+    handler: EventHandler<any>
+) => {
+    let currentSeqNumber: SequenceNumber
+    for (const event of newEventEnvelopes) {
+        await handler.when[event.event.type](event)
+        currentSeqNumber = event.sequenceNumber
+    }
+    return currentSeqNumber
 }

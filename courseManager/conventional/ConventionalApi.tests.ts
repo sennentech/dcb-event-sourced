@@ -14,9 +14,7 @@ describe("ConventionalApi", () => {
     let api: Api
 
     beforeAll(async () => {
-        pool = new Pool({
-            connectionString: await global.__GET_TEST_PG_DATABASE_URI()
-        })
+        pool = await global.__GET_TEST_PG_POOL()
         repository = new PostgresCourseSubscriptionsRepository(pool)
         await repository.install()
 

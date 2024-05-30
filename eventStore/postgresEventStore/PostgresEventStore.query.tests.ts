@@ -31,10 +31,7 @@ describe("memoryEventStore.query", () => {
     let eventStore: PostgresEventStore
 
     beforeAll(async () => {
-        pool = new Pool({
-            connectionString: await global.__GET_TEST_PG_DATABASE_URI()
-        })
-
+        pool = await global.__GET_TEST_PG_POOL()
         eventStore = new PostgresEventStore(pool)
         await eventStore.install()
     })

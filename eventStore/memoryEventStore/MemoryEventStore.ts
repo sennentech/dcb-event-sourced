@@ -21,12 +21,20 @@ const maxSeqNo = R.pipe<unknown[], EsEventEnvelope, SequenceNumber, SequenceNumb
 )
 
 export class MemoryEventStore implements EventStore {
+    private testListenerRegistry = {
+        read: () => null,
+        append: () => null
+    }
+
     private events: Array<EsEventEnvelope> = []
 
     constructor(initialEvents: Array<EsEventEnvelope> = []) {
         this.events = [...initialEvents]
     }
 
+    public on(ev: "read" | "append", fn: () => void) {
+        this.testListenerRegistry[ev] = fn
+    }
     async *readAll(options?: EsReadOptions): AsyncGenerator<EsEventEnvelope> {
         yield* this.#read({ query: null, options: options })
     }
@@ -35,6 +43,8 @@ export class MemoryEventStore implements EventStore {
         yield* this.#read({ query, options })
     }
     async *#read({ query, options }: { query?: EsQuery; options?: EsReadOptions }): AsyncGenerator<EsEventEnvelope> {
+        if (this.testListenerRegistry.read) this.testListenerRegistry.read()
+
         const step = options?.backwards ? -1 : 1
         const maxSequenceNumber = maxSeqNo(this.events)
         const defaultSeqNumber = options?.backwards ? maxSequenceNumber : SequenceNumber.zero()
@@ -78,6 +88,7 @@ export class MemoryEventStore implements EventStore {
         events: EsEvent | EsEvent[],
         appendCondition: AppendCondition | AnyCondition
     ): Promise<EsEventEnvelope[]> {
+        if (this.testListenerRegistry.append) this.testListenerRegistry.append()
         const nextSequenceNumber = maxSeqNo(this.events).inc()
         const eventEnvelopes: Array<EsEventEnvelope> = ensureIsArray(events).map((ev, i) => ({
             event: ev,

@@ -4,7 +4,7 @@
     "license": "MIT",
     "version": "0.0.1",
     "scripts": {
-        "test": "jest",
+        "test": "jest --runInBand",
         "debug": "node ./dist/courseManager/index.js",
         "test:watch": "jest --watch",
         "test:coverage": "jest --collect-coverage",
