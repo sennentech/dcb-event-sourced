@@ -7,7 +7,7 @@ import { PostgresEventStore } from "../eventStore/postgresEventStore/PostgresEve
 import "source-map-support/register"
 import { PostgresTransactionManager } from "../eventHandling/postgresEventHandlerRegistry/PostgresTransactionManager"
 import { PostgresEventHandlerRegistry } from "../eventHandling/postgresEventHandlerRegistry/PostgresEventHandlerRegistry"
-import { PostgresBundle } from "../eventHandling/postgresEventHandlerRegistry/PostgresBundle"
+import { assemblePostgresBundle } from "../eventHandling/postgresEventHandlerRegistry/assemblePostgresBundle"
 
 const log = (message: string | object | Error) => {
     console.log(`______________________________________________________`)
@@ -20,22 +20,20 @@ const log = (message: string | object | Error) => {
 }
 
 ;(async () => {
-    const { pool, eventStore, transactionManager } = await PostgresBundle({
+    const postgresConfig = {
         host: "localhost",
         port: 5432,
         user: "postgres",
         password: "postgres",
         database: "dcb_test_1"
-    })
-    await resetDb(pool)
-
-    const handlers = {
-        CourseProjection: CourseSubscriptionsProjection(transactionManager)
     }
 
-    const handlerRegistry = new PostgresEventHandlerRegistry(transactionManager, handlers)
-    await handlerRegistry.install()
+    const handlers = {
+        CourseProjection: CourseSubscriptionsProjection
+    }
+    const { pool, eventStore, handlerRegistry } = await assemblePostgresBundle(postgresConfig, handlers)
 
+    await resetDb(pool)
     const repository = new PostgresCourseSubscriptionsRepository(pool)
     await repository.install()
     const api = EventSourcedApi(eventStore, repository, handlerRegistry)
@@ -133,7 +131,7 @@ const log = (message: string | object | Error) => {
 
                 case "Exit":
                     exit = true
-                    log("Exiting...")
+                    await pool.end()
                     break
 
                 default:
@@ -145,16 +143,16 @@ const log = (message: string | object | Error) => {
             log(err)
         }
     }
+    log("Program exited")
 })()
 async function resetDb(pool: Pool) {
     await pool.query(
         ` 
-        drop table if exists subscriptions;
-        drop table if exists courses;
-        drop table if exists students;
+            drop table if exists subscriptions;
+            drop table if exists courses;
+            drop table if exists students;
 
-        drop table if exists _event_handler_bookmarks;
-        drop table if exists events;
+            truncate table events;
         `
     )
 }

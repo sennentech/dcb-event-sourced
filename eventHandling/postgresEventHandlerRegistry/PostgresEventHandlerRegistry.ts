@@ -1,7 +1,7 @@
 import { SequenceNumber } from "../../eventStore/SequenceNumber"
 import { EventHandler } from "../EventHandler"
 import { PostgresTransactionManager } from "./PostgresTransactionManager"
-import { EventHandlerRegistry, HandlerProgress } from "../EventHandlerRegistry"
+import { EventHandlerRegistry, HandlerCheckPoints } from "../EventHandlerRegistry"
 
 const POSTGRES_TABLE_NAME = "_event_handler_bookmarks"
 
@@ -28,7 +28,7 @@ export class PostgresEventHandlerRegistry implements EventHandlerRegistry {
         await this.transactionManager.pool.query(insertQuery, this.#handlerIds)
     }
 
-    async lockHandlers(): Promise<HandlerProgress> {
+    async lockHandlers(): Promise<HandlerCheckPoints> {
         try {
             await this.transactionManager.startTransaction()
             const selectResult = await this.transactionManager.client.query(
@@ -58,7 +58,7 @@ export class PostgresEventHandlerRegistry implements EventHandlerRegistry {
         }
     }
 
-    async commitAndRelease(locks: HandlerProgress): Promise<void> {
+    async commitAndRelease(locks: HandlerCheckPoints): Promise<void> {
         if (Object.values(locks).some(lock => !lock)) throw new Error("Sequence number is required to commit")
         if (!this.transactionManager.transactionInProgress) throw new Error("No lock obtained, cannot commit")
 

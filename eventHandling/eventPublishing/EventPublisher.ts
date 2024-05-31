@@ -11,35 +11,37 @@ export class EventPublisher {
     ) {}
 
     async publish(events: EsEvent | EsEvent[], appendCondition: AppendCondition | AnyCondition): Promise<void> {
-        if (!this.eventHandlerRegistry) {
-            await this.eventStore.append(events, appendCondition)
+        const { eventStore, eventHandlerRegistry } = this
+
+        if (!eventHandlerRegistry) {
+            await eventStore.append(events, appendCondition)
             return
         }
 
-        const { eventStore, eventHandlerRegistry: eventHandlerRegistry } = this
-        const lastEventInStore = (await this.eventStore.readAll({ backwards: true, limit: 1 }).next()).value
+        const lastEventInStore = (await eventStore.readAll({ backwards: true, limit: 1 }).next()).value
         const lastSequenceNumberInStore = lastEventInStore?.sequenceNumber ?? SequenceNumber.zero()
 
-        const newEventEnvelopes = await this.eventStore.append(events, appendCondition)
+        const newEventEnvelopes = await eventStore.append(events, appendCondition)
         const toSequenceNumber = newEventEnvelopes.at(-1).sequenceNumber
 
         try {
-            const currentProgress = await eventHandlerRegistry.lockHandlers()
+            const currentCheckPoints = await eventHandlerRegistry.lockHandlers()
 
             for (const [handlerId, handler] of Object.entries(eventHandlerRegistry.handlers)) {
-                const requiresCatchup = currentProgress[handlerId] < lastSequenceNumberInStore
+                const requiresCatchup = currentCheckPoints[handlerId] < lastSequenceNumberInStore
+
                 if (requiresCatchup) {
-                    currentProgress[handlerId] = await catchupHandler(
+                    currentCheckPoints[handlerId] = await catchupHandler(
                         handler,
                         eventStore,
-                        currentProgress[handlerId],
+                        currentCheckPoints[handlerId],
                         toSequenceNumber
                     )
                 } else {
-                    currentProgress[handlerId] = await applyNewEventsDirectly(newEventEnvelopes, handler)
+                    currentCheckPoints[handlerId] = await applyNewEventsDirectly(newEventEnvelopes, handler)
                 }
             }
-            await eventHandlerRegistry.commitAndRelease(currentProgress)
+            await eventHandlerRegistry.commitAndRelease(currentCheckPoints)
         } catch (err) {
             await eventHandlerRegistry.rollbackAndRelease()
             throw err
