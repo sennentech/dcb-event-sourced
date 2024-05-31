@@ -1,5 +1,5 @@
 import { Pool } from "pg"
-import { AppendConditions, EsEvent, EsEventEnvelope, EventStore, Tags } from "../../eventStore/EventStore"
+import { AppendConditions, EsEvent, EsEventEnvelope, Tags } from "../../eventStore/EventStore"
 import { MemoryEventStore } from "../../eventStore/memoryEventStore/MemoryEventStore"
 import { streamAllEventsToArray } from "../../eventStore/utils/streamAllEventsToArray"
 import { EventHandler } from "../EventHandler"

@@ -218,7 +218,7 @@ describe("memoryEventStore.query", () => {
             let readCount = 0
             eventStore.on("read", () => readCount++)
 
-            const events = await streamAllEventsToArray(
+            await streamAllEventsToArray(
                 eventStore.read({ criteria: [{ eventTypes: ["testEvent2"], tags: {} }] }, { limit: 1, backwards: true })
             )
             expect(readCount).toBe(1)

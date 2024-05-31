@@ -81,7 +81,7 @@ describe("EventSourcedApi", () => {
         beforeAll(async () => {
             transactionManager = new PostgresTransactionManager(pool)
             registry = new PostgresEventHandlerRegistry(transactionManager, {
-                ["course-subscriptions"]: CourseSubscriptionsProjection(transactionManager)
+                CourseSubscriptionsProjection: CourseSubscriptionsProjection(transactionManager)
             })
         })
         beforeEach(async () => {

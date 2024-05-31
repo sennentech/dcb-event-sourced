@@ -1,11 +1,11 @@
 import { Pool, PoolConfig } from "pg"
 import { PostgresEventStore } from "../../eventStore/postgresEventStore/PostgresEventStore"
 import { PostgresTransactionManager } from "./PostgresTransactionManager"
-import { EventHandler } from "../EventHandler"
-import { PostgresEventHandlerRegistry } from "./PostgresEventHandlerRegistry"
-
-type PostgresHandlerClassConstructor = new (transactionManager: PostgresTransactionManager) => EventHandler
-type PostgresHandlerFunctionConstructor = (transactionManager: PostgresTransactionManager) => EventHandler
+import {
+    PostgresEventHandlerRegistry,
+    PostgresHandlerClassConstructor,
+    PostgresHandlerFunctionConstructor
+} from "./PostgresEventHandlerRegistry"
 
 export const assemblePostgresBundle = async (
     postgresConfig: PoolConfig,
@@ -18,7 +18,7 @@ export const assemblePostgresBundle = async (
     const transactionManager = new PostgresTransactionManager(pool)
     const handlers = Object.entries(handlerTypes).reduce((acc, [key, HandlerType]) => {
         acc[key] =
-            typeof HandlerType === "function"
+            typeof HandlerType === "function" //support both class and function (closure) patterns
                 ? (<PostgresHandlerFunctionConstructor>HandlerType)(transactionManager)
                 : new (<PostgresHandlerClassConstructor>HandlerType)(transactionManager)
         return acc

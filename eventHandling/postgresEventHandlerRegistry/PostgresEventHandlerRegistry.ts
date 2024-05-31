@@ -5,6 +5,9 @@ import { EventHandlerRegistry, HandlerCheckPoints } from "../EventHandlerRegistr
 
 const POSTGRES_TABLE_NAME = "_event_handler_bookmarks"
 
+export type PostgresHandlerClassConstructor = new (transactionManager: PostgresTransactionManager) => EventHandler
+export type PostgresHandlerFunctionConstructor = (transactionManager: PostgresTransactionManager) => EventHandler
+
 export class PostgresEventHandlerRegistry implements EventHandlerRegistry {
     #handlerIds: string[]
 

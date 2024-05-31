@@ -3,10 +3,7 @@ import { PostgresCourseSubscriptionsRepository } from "./repository/PostgresCour
 import { EventSourcedApi } from "./eventSourced/EventSourcedApi"
 import { CourseSubscriptionsProjection } from "./eventSourced/CourseSubscriptionsProjection"
 import inquirer from "inquirer"
-import { PostgresEventStore } from "../eventStore/postgresEventStore/PostgresEventStore"
 import "source-map-support/register"
-import { PostgresTransactionManager } from "../eventHandling/postgresEventHandlerRegistry/PostgresTransactionManager"
-import { PostgresEventHandlerRegistry } from "../eventHandling/postgresEventHandlerRegistry/PostgresEventHandlerRegistry"
 import { assemblePostgresBundle } from "../eventHandling/postgresEventHandlerRegistry/assemblePostgresBundle"
 
 const log = (message: string | object | Error) => {

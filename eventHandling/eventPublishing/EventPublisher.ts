@@ -50,7 +50,7 @@ export class EventPublisher {
 }
 
 export const catchupHandler = async (
-    handler: EventHandler<any>,
+    handler: EventHandler,
     eventStore: EventStore,
     currentSeqNumber: SequenceNumber,
     toSequenceNumber: SequenceNumber
@@ -68,7 +68,7 @@ export const catchupHandler = async (
 
 const applyNewEventsDirectly = async (
     newEventEnvelopes: import("/Users/paul.grimshaw/dev/dcb-event-store/eventStore/EventStore").EsEventEnvelope<EsEvent>[],
-    handler: EventHandler<any>
+    handler: EventHandler
 ) => {
     let currentSeqNumber: SequenceNumber
     for (const event of newEventEnvelopes) {
