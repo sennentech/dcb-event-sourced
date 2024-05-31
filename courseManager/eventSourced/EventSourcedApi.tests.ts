@@ -6,6 +6,7 @@ import { MemoryEventStore } from "../../eventStore/memoryEventStore/MemoryEventS
 import { CourseSubscriptionsProjection } from "./CourseSubscriptionsProjection"
 import { PostgresTransactionManager } from "../../eventHandling/postgresEventHandlerRegistry/PostgresTransactionManager"
 import { PostgresEventHandlerRegistry } from "../../eventHandling/postgresEventHandlerRegistry/PostgresEventHandlerRegistry"
+import { getTestPgDatabasePool } from "../../jest.testPgDbPool"
 
 const COURSE_1 = {
     id: "course-1",
@@ -25,7 +26,7 @@ describe("EventSourcedApi", () => {
     let api: Api
 
     beforeAll(async () => {
-        pool = await global.__GET_TEST_PG_POOL()
+        pool = await getTestPgDatabasePool()
         repository = new PostgresCourseSubscriptionsRepository(pool)
         await repository.install()
     })

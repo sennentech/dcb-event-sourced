@@ -2,6 +2,7 @@ import { Pool } from "pg"
 import { PostgresCourseSubscriptionsRepository } from "./PostgresCourseSubscriptionRespository"
 
 import { Student } from "../ReadModels"
+import { getTestPgDatabasePool } from "../../jest.testPgDbPool"
 
 const COURSE_1 = {
     id: "course-1",
@@ -18,7 +19,7 @@ describe("PostgresCourseSubscriptionRepository", () => {
     let repository: PostgresCourseSubscriptionsRepository
 
     beforeAll(async () => {
-        pool = await global.__GET_TEST_PG_POOL()
+        pool = await getTestPgDatabasePool()
         repository = new PostgresCourseSubscriptionsRepository(pool)
         await repository.install()
     })

@@ -2,6 +2,7 @@ import { Pool } from "pg"
 import { PostgresCourseSubscriptionsRepository } from "../repository/PostgresCourseSubscriptionRespository"
 import { ConventionalApi } from "./ConventionalApi"
 import { Api } from "../Api"
+import { getTestPgDatabasePool } from "../../jest.testPgDbPool"
 
 const COURSE_1 = {
     id: "course-1",
@@ -14,7 +15,7 @@ describe("ConventionalApi", () => {
     let api: Api
 
     beforeAll(async () => {
-        pool = await global.__GET_TEST_PG_POOL()
+        pool = await getTestPgDatabasePool()
         repository = new PostgresCourseSubscriptionsRepository(pool)
         await repository.install()
 

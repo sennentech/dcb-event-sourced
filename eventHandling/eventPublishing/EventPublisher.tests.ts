@@ -8,6 +8,7 @@ import { EventHandlerRegistry } from "../EventHandlerRegistry"
 import { PostgresTransactionManager } from "../postgresEventHandlerRegistry/PostgresTransactionManager"
 import { PostgresEventHandlerRegistry } from "../postgresEventHandlerRegistry/PostgresEventHandlerRegistry"
 import { SequenceNumber } from "../../eventStore/SequenceNumber"
+import { getTestPgDatabasePool } from "../../jest.testPgDbPool"
 
 class TestEvent implements EsEvent {
     type: "testEvent" = "testEvent"
@@ -23,7 +24,7 @@ describe(`EventPublisher`, () => {
     let eventStore: MemoryEventStore
 
     beforeAll(async () => {
-        pool = await global.__GET_TEST_PG_POOL()
+        pool = await getTestPgDatabasePool()
 
         transactionManager = new PostgresTransactionManager(pool)
     })

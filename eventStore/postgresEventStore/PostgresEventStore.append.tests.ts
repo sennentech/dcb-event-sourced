@@ -3,6 +3,7 @@ import { AppendCondition, AppendConditions, EsEvent } from "../EventStore"
 import { SequenceNumber } from "../SequenceNumber"
 import { streamAllEventsToArray } from "../utils/streamAllEventsToArray"
 import { PostgresEventStore } from "./PostgresEventStore"
+import { getTestPgDatabasePool } from "../../jest.testPgDbPool"
 
 class EventType1 implements EsEvent {
     type: "testEvent1" = "testEvent1"
@@ -20,7 +21,7 @@ describe("postgresEventStore.append", () => {
     let eventStore: PostgresEventStore
 
     beforeAll(async () => {
-        pool = await global.__GET_TEST_PG_POOL()
+        pool = await getTestPgDatabasePool()
         eventStore = new PostgresEventStore(pool)
         await eventStore.install()
     })

@@ -3,6 +3,7 @@ import { SequenceNumber } from "../../eventStore/SequenceNumber"
 import { PostgresEventHandlerRegistry } from "./PostgresEventHandlerRegistry"
 import { v4 as uuid } from "uuid"
 import { PostgresTransactionManager } from "./PostgresTransactionManager"
+import { getTestPgDatabasePool } from "../../jest.testPgDbPool"
 
 describe("PostgresEventHandlerRegistry tests", () => {
     let pool: Pool
@@ -14,7 +15,7 @@ describe("PostgresEventHandlerRegistry tests", () => {
     }
 
     beforeAll(async () => {
-        pool = await global.__GET_TEST_PG_POOL()
+        pool = await getTestPgDatabasePool()
         transactionManager = new PostgresTransactionManager(pool)
         handlerRegistry = new PostgresEventHandlerRegistry(transactionManager, handlers)
         await handlerRegistry.install()
