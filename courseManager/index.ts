@@ -7,6 +7,7 @@ import { PostgresEventStore } from "../eventStore/postgresEventStore/PostgresEve
 import "source-map-support/register"
 import { PostgresTransactionManager } from "../eventHandling/postgresEventHandlerRegistry/PostgresTransactionManager"
 import { PostgresEventHandlerRegistry } from "../eventHandling/postgresEventHandlerRegistry/PostgresEventHandlerRegistry"
+import { PostgresBundle } from "../eventHandling/postgresEventHandlerRegistry/PostgresBundle"
 
 const log = (message: string | object | Error) => {
     console.log(`______________________________________________________`)
@@ -19,40 +20,25 @@ const log = (message: string | object | Error) => {
 }
 
 ;(async () => {
-    const pool = new Pool({
+    const { pool, eventStore, transactionManager } = await PostgresBundle({
         host: "localhost",
         port: 5432,
         user: "postgres",
         password: "postgres",
         database: "dcb_test_1"
     })
+    await resetDb(pool)
 
-    //RESET
+    const handlers = {
+        CourseProjection: CourseSubscriptionsProjection(transactionManager)
+    }
 
-    await pool.query(
-        ` 
-        drop table if exists subscriptions;
-        drop table if exists courses;
-        drop table if exists students;
-
-        drop table if exists _event_handler_bookmarks;
-        drop table if exists events;
-        `
-    )
-
-    const eventStore = new PostgresEventStore(pool)
-    await eventStore.install()
+    const handlerRegistry = new PostgresEventHandlerRegistry(transactionManager, handlers)
+    await handlerRegistry.install()
 
     const repository = new PostgresCourseSubscriptionsRepository(pool)
     await repository.install()
-
-    const clientManager = new PostgresTransactionManager(pool)
-    const registry = new PostgresEventHandlerRegistry(clientManager, {
-        "course-subscription-projection": CourseSubscriptionsProjection(clientManager)
-    })
-    await registry.install()
-
-    const api = EventSourcedApi(eventStore, repository, registry)
+    const api = EventSourcedApi(eventStore, repository, handlerRegistry)
 
     log("Program started succesfully")
     let exit = false
@@ -160,3 +146,15 @@ const log = (message: string | object | Error) => {
         }
     }
 })()
+async function resetDb(pool: Pool) {
+    await pool.query(
+        ` 
+        drop table if exists subscriptions;
+        drop table if exists courses;
+        drop table if exists students;
+
+        drop table if exists _event_handler_bookmarks;
+        drop table if exists events;
+        `
+    )
+}

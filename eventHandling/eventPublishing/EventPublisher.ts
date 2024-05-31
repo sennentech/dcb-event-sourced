@@ -47,7 +47,7 @@ export class EventPublisher {
     }
 }
 
-const catchupHandler = async (
+export const catchupHandler = async (
     handler: EventHandler<any>,
     eventStore: EventStore,
     currentSeqNumber: SequenceNumber,
