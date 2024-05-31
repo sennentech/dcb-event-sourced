@@ -23,7 +23,7 @@ describe("ConventionalApi", () => {
     })
 
     beforeEach(async () => {
-        await api.registerCourse({ id: COURSE_1.id, capacity: COURSE_1.capacity })
+        await api.registerCourse({ id: COURSE_1.id, title: "Course 1", capacity: COURSE_1.capacity })
 
         const studentRegistraionPromises = []
         for (let i = 0; i < 100; i++) {

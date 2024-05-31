@@ -1,18 +1,21 @@
 import { EventStore } from "../../eventStore/EventStore"
 import { Api } from "../Api"
 import { STUDENT_SUBSCRIPTION_LIMIT } from "../ReadModels"
-import { CourseSubscriptionRepository } from "../repository/Repositories"
+import { CourseSubscriptionRepository } from "../repository/CourseSubscriptionRepository"
 import {
     CourseWasRegisteredEvent,
     StudentWasRegistered,
     StudentWasSubscribedEvent,
-    StudentWasUnsubscribedEvent
+    StudentWasUnsubscribedEvent,
+    CourseCapacityWasChangedEvent,
+    CourseTitleWasChangedEvent
 } from "./Events"
 
 import { EventPublisher } from "../../eventHandling/eventPublishing/EventPublisher"
 import {
     CourseCapacity,
     CourseExists,
+    CourseTitle,
     NextStudentNumber,
     StudentAlreadyRegistered,
     StudentAlreadySubscribed,
@@ -30,13 +33,16 @@ export const EventSourcedApi = (
     return {
         findCourseById: async (courseId: string) => repository.findCourseById(courseId),
         findStudentById: async (studentId: string) => repository.findStudentById(studentId),
-        registerCourse: async ({ id, capacity }) => {
+        registerCourse: async ({ id, title, capacity }) => {
             const { state, appendCondition } = await reconstitute(eventStore, {
                 courseExists: CourseExists(id)
             })
 
             if (state.courseExists) throw new Error(`Course with id ${id} already exists`)
-            await eventPublisher.publish(new CourseWasRegisteredEvent({ courseId: id, capacity }), appendCondition)
+            await eventPublisher.publish(
+                new CourseWasRegisteredEvent({ courseId: id, title, capacity }),
+                appendCondition
+            )
         },
         registerStudent: async ({ id, name }) => {
             const { state, appendCondition } = await reconstitute(eventStore, {
@@ -49,6 +55,28 @@ export const EventSourcedApi = (
                 new StudentWasRegistered({ studentId: id, name: name, studentNumber: state.nextStudentNumber }),
                 appendCondition
             )
+        },
+        updateCourseCapacity: async ({ courseId, newCapacity }) => {
+            const { state, appendCondition } = await reconstitute(eventStore, {
+                courseExists: CourseExists(courseId),
+                CourseCapacity: CourseCapacity(courseId)
+            })
+
+            if (!state.courseExists) throw new Error(`Course ${courseId} doesn't exist.`)
+            if (state.CourseCapacity.capacity === newCapacity)
+                throw new Error("New capacity is the same as the current capacity.")
+
+            await eventPublisher.publish(new CourseCapacityWasChangedEvent({ courseId, newCapacity }), appendCondition)
+        },
+        updateCourseTitle: async ({ courseId, newTitle }) => {
+            const { state, appendCondition } = await reconstitute(eventStore, {
+                courseExists: CourseExists(courseId),
+                courseTitle: CourseTitle(courseId)
+            })
+
+            if (!state.courseExists) throw new Error(`Course ${courseId} doesn't exist.`)
+            if (state.courseTitle === newTitle) throw new Error("New title is the same as the current title.")
+            await eventPublisher.publish(new CourseTitleWasChangedEvent({ courseId, newTitle }), appendCondition)
         },
         subscribeStudentToCourse: async ({ courseId, studentId }) => {
             const { state, appendCondition } = await reconstitute(eventStore, {

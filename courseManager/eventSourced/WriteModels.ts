@@ -4,7 +4,8 @@ import {
     CourseCapacityWasChangedEvent,
     StudentWasSubscribedEvent,
     StudentWasUnsubscribedEvent,
-    StudentWasRegistered
+    StudentWasRegistered,
+    CourseTitleWasChangedEvent
 } from "./Events"
 
 export const CourseExists = (
@@ -18,6 +19,21 @@ export const CourseExists = (
     init: false,
     when: {
         courseWasRegistered: async () => true
+    }
+})
+
+export const CourseTitle = (
+    courseId: string
+): EventHandlerWithState<{
+    state: string
+    tagFilter: { courseId: string }
+    eventHandlers: CourseWasRegisteredEvent | CourseTitleWasChangedEvent
+}> => ({
+    tagFilter: { courseId },
+    init: "",
+    when: {
+        courseWasRegistered: async ({ event }) => event.data.title,
+        courseTitleWasChanged: async ({ event }) => event.data.newTitle
     }
 })
 

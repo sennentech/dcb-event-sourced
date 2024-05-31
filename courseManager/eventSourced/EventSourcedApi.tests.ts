@@ -7,9 +7,11 @@ import { CourseSubscriptionsProjection } from "./CourseSubscriptionsProjection"
 import { PostgresTransactionManager } from "../../eventHandling/postgresEventHandlerRegistry/PostgresTransactionManager"
 import { PostgresEventHandlerRegistry } from "../../eventHandling/postgresEventHandlerRegistry/PostgresEventHandlerRegistry"
 import { getTestPgDatabasePool } from "../../jest.testPgDbPool"
+import { Course } from "../ReadModels"
 
 const COURSE_1 = {
     id: "course-1",
+    title: "Course 1",
     capacity: 5
 }
 
@@ -44,7 +46,7 @@ describe("EventSourcedApi", () => {
     describe("with one course and 100 students in database", () => {
         beforeEach(async () => {
             api = EventSourcedApi(new MemoryEventStore(), repository, null)
-            api.registerCourse({ id: COURSE_1.id, capacity: COURSE_1.capacity })
+            api.registerCourse({ id: COURSE_1.id, title: COURSE_1.title, capacity: COURSE_1.capacity })
 
             for (let i = 0; i < 100; i++) {
                 await api.registerStudent({ id: `student-${i}`, name: `Student ${i}` })
@@ -94,10 +96,15 @@ describe("EventSourcedApi", () => {
         })
 
         test("single course registered shows in repository", async () => {
-            await api.registerCourse({ id: COURSE_1.id, capacity: COURSE_1.capacity })
+            await api.registerCourse({ id: COURSE_1.id, title: COURSE_1.title, capacity: COURSE_1.capacity })
 
             const course = await repository.findCourseById(COURSE_1.id)
-            expect(course).toEqual({ id: COURSE_1.id, capacity: COURSE_1.capacity, subscribedStudents: [] })
+            expect(course).toEqual(<Course>{
+                id: COURSE_1.id,
+                title: COURSE_1.title,
+                capacity: COURSE_1.capacity,
+                subscribedStudents: []
+            })
         })
 
         test("single student registered shows in repository", async () => {
@@ -113,7 +120,7 @@ describe("EventSourcedApi", () => {
         })
 
         test("student subscribed to course shows in repository", async () => {
-            await api.registerCourse({ id: COURSE_1.id, capacity: COURSE_1.capacity })
+            await api.registerCourse({ id: COURSE_1.id, title: COURSE_1.title, capacity: COURSE_1.capacity })
             await api.registerStudent({ id: STUDENT_1.id, name: STUDENT_1.name })
             await api.subscribeStudentToCourse({ courseId: COURSE_1.id, studentId: STUDENT_1.id })
 
@@ -123,7 +130,9 @@ describe("EventSourcedApi", () => {
             expect(course.subscribedStudents).toEqual([
                 { id: STUDENT_1.id, name: STUDENT_1.name, studentNumber: STUDENT_1.studentNumber }
             ])
-            expect(student.subscribedCourses).toEqual([{ id: COURSE_1.id, capacity: COURSE_1.capacity }])
+            expect(student.subscribedCourses).toEqual([
+                { id: COURSE_1.id, title: COURSE_1.title, capacity: COURSE_1.capacity }
+            ])
         })
     })
 })

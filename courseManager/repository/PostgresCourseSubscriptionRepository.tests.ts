@@ -6,6 +6,7 @@ import { getTestPgDatabasePool } from "../../jest.testPgDbPool"
 
 const COURSE_1 = {
     id: "course-1",
+    title: "Course 1",
     capacity: 30
 }
 const STUDENT_1 = {
@@ -36,18 +37,36 @@ describe("PostgresCourseSubscriptionRepository", () => {
 
     describe("registerCourse", () => {
         test("should register a course successfully", async () => {
-            await repository.registerCourse({ courseId: COURSE_1.id, capacity: COURSE_1.capacity })
+            await repository.registerCourse({
+                courseId: COURSE_1.id,
+                title: COURSE_1.title,
+                capacity: COURSE_1.capacity
+            })
             const course = await repository.findCourseById(COURSE_1.id)
-            expect(course).toEqual({ id: COURSE_1.id, capacity: COURSE_1.capacity, subscribedStudents: [] })
+            expect(course).toEqual({
+                id: COURSE_1.id,
+                title: COURSE_1.title,
+                capacity: COURSE_1.capacity,
+                subscribedStudents: []
+            })
         })
     })
 
     describe("findCourseById", () => {
         test("should return a course by ID with correct capacity and empty subscriptions", async () => {
-            await repository.registerCourse({ courseId: COURSE_1.id, capacity: COURSE_1.capacity })
+            await repository.registerCourse({
+                courseId: COURSE_1.id,
+                title: COURSE_1.title,
+                capacity: COURSE_1.capacity
+            })
             const course = await repository.findCourseById(COURSE_1.id)
 
-            expect(course).toEqual({ id: COURSE_1.id, capacity: COURSE_1.capacity, subscribedStudents: [] })
+            expect(course).toEqual({
+                id: COURSE_1.id,
+                title: COURSE_1.title,
+                capacity: COURSE_1.capacity,
+                subscribedStudents: []
+            })
         })
         test("should return undefined if the course does not exist", async () => {
             const course = await repository.findCourseById("non-existent-course")
@@ -73,7 +92,11 @@ describe("PostgresCourseSubscriptionRepository", () => {
 
     describe("with one existing course and one registered student", () => {
         beforeEach(async () => {
-            await repository.registerCourse({ courseId: COURSE_1.id, capacity: COURSE_1.capacity })
+            await repository.registerCourse({
+                courseId: COURSE_1.id,
+                title: COURSE_1.title,
+                capacity: COURSE_1.capacity
+            })
             await repository.registerStudent({
                 studentId: STUDENT_1.id,
                 name: STUDENT_1.name,
@@ -100,7 +123,9 @@ describe("PostgresCourseSubscriptionRepository", () => {
                 expect(course.subscribedStudents).toEqual([
                     { id: STUDENT_1.id, name: STUDENT_1.name, studentNumber: STUDENT_1.studentNumber }
                 ])
-                expect(student.subscribedCourses).toEqual([{ id: COURSE_1.id, capacity: COURSE_1.capacity }])
+                expect(student.subscribedCourses).toEqual([
+                    { id: COURSE_1.id, title: COURSE_1.title, capacity: COURSE_1.capacity }
+                ])
             })
         })
 
@@ -140,7 +165,11 @@ describe("PostgresCourseSubscriptionRepository", () => {
                 name: STUDENT_1.name,
                 studentNumber: STUDENT_1.studentNumber
             })
-            await repository.registerCourse({ courseId: COURSE_1.id, capacity: COURSE_1.capacity })
+            await repository.registerCourse({
+                courseId: COURSE_1.id,
+                title: COURSE_1.title,
+                capacity: COURSE_1.capacity
+            })
             await repository.subscribeStudentToCourse({ courseId: COURSE_1.id, studentId: STUDENT_1.id })
 
             const student = await repository.findStudentById(STUDENT_1.id)
@@ -152,6 +181,7 @@ describe("PostgresCourseSubscriptionRepository", () => {
                 subscribedCourses: [
                     {
                         id: COURSE_1.id,
+                        title: COURSE_1.title,
                         capacity: COURSE_1.capacity
                     }
                 ]

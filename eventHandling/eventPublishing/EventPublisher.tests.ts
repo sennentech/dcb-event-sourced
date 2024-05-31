@@ -141,5 +141,20 @@ describe(`EventPublisher`, () => {
                 SequenceNumber.create(4)
             )
         })
+
+        test("Event publisher doesn't pass events that are not relevant to projection", async () => {
+            class OtherNotRelevantEvent implements EsEvent {
+                type: "otherEvent" = "otherEvent"
+                constructor(
+                    public data: { test: string },
+                    public tags: Tags
+                ) {}
+            }
+
+            await eventPublisher.publish(new TestEvent({ test: "test1" }, {}), AppendConditions.Any)
+            await eventPublisher.publish(new OtherNotRelevantEvent({ test: "test1" }, {}), AppendConditions.Any)
+
+            expect(eventsSeenByProjection).toHaveLength(1)
+        })
     })
 })

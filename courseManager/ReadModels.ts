@@ -2,6 +2,7 @@ export const STUDENT_SUBSCRIPTION_LIMIT = 5
 
 export class Course {
     id: string
+    title: string
     capacity: number
     subscribedStudents: Omit<Student, "subscribedCourses">[]
 }

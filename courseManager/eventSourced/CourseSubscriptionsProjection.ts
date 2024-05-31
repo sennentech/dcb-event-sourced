@@ -6,7 +6,8 @@ import {
     CourseCapacityWasChangedEvent,
     StudentWasRegistered,
     StudentWasSubscribedEvent,
-    StudentWasUnsubscribedEvent
+    StudentWasUnsubscribedEvent,
+    CourseTitleWasChangedEvent
 } from "./Events"
 
 export const CourseSubscriptionsProjection = (
@@ -15,6 +16,7 @@ export const CourseSubscriptionsProjection = (
     eventHandlers:
         | CourseWasRegisteredEvent
         | CourseCapacityWasChangedEvent
+        | CourseTitleWasChangedEvent
         | StudentWasRegistered
         | StudentWasSubscribedEvent
         | StudentWasUnsubscribedEvent
@@ -22,7 +24,11 @@ export const CourseSubscriptionsProjection = (
     when: {
         courseWasRegistered: async ({ event: { tags, data } }) => {
             const repository = new PostgresCourseSubscriptionsRepository(transactionManager.client)
-            await repository.registerCourse({ courseId: tags.courseId, capacity: data.capacity })
+            await repository.registerCourse({ courseId: tags.courseId, title: data.title, capacity: data.capacity })
+        },
+        courseTitleWasChanged: async ({ event: { tags, data } }) => {
+            const repository = new PostgresCourseSubscriptionsRepository(transactionManager.client)
+            await repository.updateCourseTitle({ courseId: tags.courseId, newTitle: data.newTitle })
         },
         courseCapacityWasChanged: async ({ event: { tags, data } }) => {
             const repository = new PostgresCourseSubscriptionsRepository(transactionManager.client)

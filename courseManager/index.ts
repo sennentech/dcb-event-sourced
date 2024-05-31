@@ -45,6 +45,8 @@ const log = (message: string | object | Error) => {
             choices: [
                 "Register course",
                 "Register student",
+                "Update course capacity",
+                "Update course title",
                 "Subscribe student to course",
                 "Unsubscribe student from course",
                 "Find course",
@@ -58,10 +60,20 @@ const log = (message: string | object | Error) => {
                 case "Register course": {
                     const course = await inquirer.prompt([
                         { name: "id", message: "Course ID:", type: "input" },
+                        { name: "title", message: "Course title:", type: "input" },
                         { name: "capacity", message: "Course capacity:", type: "number" }
                     ])
                     await api.registerCourse(course)
                     log(`Course with id ${course.id} and capacity ${course.capacity} registered`)
+                    break
+                }
+
+                case "Update course title": {
+                    const { courseId, newTitle } = await inquirer.prompt([
+                        { name: "courseId", message: "Course ID:", type: "input" },
+                        { name: "newTitle", message: "Course title:", type: "input" }
+                    ])
+                    await api.updateCourseTitle({ courseId, newTitle })
                     break
                 }
 
@@ -70,9 +82,7 @@ const log = (message: string | object | Error) => {
                         { name: "courseId", message: "Course ID:", type: "input" },
                         { name: "newCapacity", message: "Course capacity:", type: "number" }
                     ])
-                    console.log(courseId, newCapacity)
-                    // await api.updateCourseCapacity({ courseId, newCapacity })
-                    log(`method not implemented`)
+                    await api.updateCourseCapacity({ courseId, newCapacity })
                     break
                 }
 

@@ -60,7 +60,8 @@ export const catchupHandler = async (
         if (event.sequenceNumber.value > toSequenceNumber.value) {
             break
         }
-        await handler.when[event.event.type](event)
+        if (handler.when[event.event.type]) await handler.when[event.event.type](event)
+
         currentSeqNumber = event.sequenceNumber
     }
     return currentSeqNumber
@@ -72,7 +73,7 @@ const applyNewEventsDirectly = async (
 ) => {
     let currentSeqNumber: SequenceNumber
     for (const event of newEventEnvelopes) {
-        await handler.when[event.event.type](event)
+        if (handler.when[event.event.type]) await handler.when[event.event.type](event)
         currentSeqNumber = event.sequenceNumber
     }
     return currentSeqNumber

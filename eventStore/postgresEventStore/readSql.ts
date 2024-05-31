@@ -39,7 +39,7 @@ const typesFilter = (c: EsQueryCriterion, pm: ParamManager) =>
 
 const getFilterString = (c: EsQueryCriterion, pm: ParamManager, options?: EsReadOptions) => {
     const filters = [typesFilter(c, pm), tagFilterSnip(pm, c), fromSeqNoFilter(pm, "", options)]
-    return whereClause(filters) //filters.length ? `WHERE ${filters.join(" AND ")}` : ""
+    return whereClause(filters)
 }
 
 export const readCriteriaJoin = (criteria: EsQueryCriterion[], pm: ParamManager, options?: EsReadOptions): string => `

@@ -3,11 +3,11 @@ import { EsEvent } from "../../eventStore/EventStore"
 export class CourseWasRegisteredEvent implements EsEvent {
     public type: "courseWasRegistered" = "courseWasRegistered"
     public tags: { courseId: string }
-    public data: { capacity: number }
+    public data: { title: string; capacity: number }
 
-    constructor({ courseId, capacity }: { courseId: string; capacity: number }) {
+    constructor({ courseId, title, capacity }: { courseId: string; title: string; capacity: number }) {
         this.tags = { courseId }
-        this.data = { capacity }
+        this.data = { title, capacity }
     }
 }
 
@@ -30,6 +30,17 @@ export class CourseCapacityWasChangedEvent implements EsEvent {
     constructor({ courseId, newCapacity }: { courseId: string; newCapacity: number }) {
         this.tags = { courseId }
         this.data = { newCapacity }
+    }
+}
+
+export class CourseTitleWasChangedEvent implements EsEvent {
+    type: "courseTitleWasChanged" = "courseTitleWasChanged"
+    public tags: { courseId: string }
+    public data: { newTitle: string }
+
+    constructor({ courseId, newTitle }: { courseId: string; newTitle: string }) {
+        this.tags = { courseId }
+        this.data = { newTitle }
     }
 }
 

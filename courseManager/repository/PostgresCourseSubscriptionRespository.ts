@@ -1,6 +1,6 @@
 import { Pool, PoolClient, Client } from "pg"
 import { Course, Student } from "../ReadModels"
-import { CourseSubscriptionRepository } from "./Repositories"
+import { CourseSubscriptionRepository } from "./CourseSubscriptionRepository"
 
 export class PostgresCourseSubscriptionsRepository implements CourseSubscriptionRepository {
     constructor(private client: Pool | PoolClient | Client) {
@@ -11,6 +11,7 @@ export class PostgresCourseSubscriptionsRepository implements CourseSubscription
         await this.client.query(`
                 CREATE TABLE IF NOT EXISTS courses (
                     id TEXT,
+                    title TEXT NOT NULL,
                     capacity INTEGER NOT NULL
                 );
 
@@ -28,10 +29,9 @@ export class PostgresCourseSubscriptionsRepository implements CourseSubscription
     }
 
     async findCourseById(courseId: string): Promise<Course> {
-        // Query to fetch course with all subscribed students as a JSON array
         const courseResult = await this.client.query(
             `
-                SELECT c.id, c.capacity
+                SELECT c.id, c.title, c.capacity
                 FROM courses c
                 WHERE c.id = $1
             `,
@@ -56,6 +56,7 @@ export class PostgresCourseSubscriptionsRepository implements CourseSubscription
 
         const course: Course = {
             id: courseData.id,
+            title: courseData.title,
             capacity: courseData.capacity,
             subscribedStudents: studentsResult.rows
         }
@@ -64,7 +65,6 @@ export class PostgresCourseSubscriptionsRepository implements CourseSubscription
     }
 
     async findStudentById(studentId: string): Promise<Student> {
-        // Query to fetch student
         const studentResult = await this.client.query(
             `
                 SELECT s.id, s.name, s.student_number as "studentNumber"
@@ -80,10 +80,9 @@ export class PostgresCourseSubscriptionsRepository implements CourseSubscription
 
         const studentData = studentResult.rows[0]
 
-        // Query to fetch courses that the student is subscribed to
         const coursesResult = await this.client.query(
             `
-                SELECT c.id, c.capacity
+                SELECT c.id, c.title, c.capacity
                 FROM courses c
                 JOIN subscriptions sub ON c.id = sub.course_id
                 WHERE sub.student_id = $1
@@ -97,6 +96,7 @@ export class PostgresCourseSubscriptionsRepository implements CourseSubscription
             studentNumber: studentData.studentNumber,
             subscribedCourses: coursesResult.rows.map(course => ({
                 id: course.id,
+                title: course.title,
                 capacity: course.capacity
             }))
         }
@@ -104,8 +104,12 @@ export class PostgresCourseSubscriptionsRepository implements CourseSubscription
         return student
     }
 
-    async registerCourse(req: { courseId: string; capacity: number }): Promise<void> {
-        await this.client.query("INSERT INTO courses (id, capacity) VALUES ($1, $2)", [req.courseId, req.capacity])
+    async registerCourse(req: { title: string; courseId: string; capacity: number }): Promise<void> {
+        await this.client.query("INSERT INTO courses (id, title, capacity) VALUES ($1, $2, $3)", [
+            req.courseId,
+            req.title,
+            req.capacity
+        ])
     }
 
     async registerStudent(req: { studentId: string; name: string; studentNumber: number }): Promise<void> {
@@ -118,6 +122,10 @@ export class PostgresCourseSubscriptionsRepository implements CourseSubscription
 
     async updateCourseCapacity(req: { courseId: string; newCapacity: number }): Promise<void> {
         await this.client.query("UPDATE courses SET capacity = $1 WHERE id = $2", [req.newCapacity, req.courseId])
+    }
+
+    async updateCourseTitle(req: { courseId: string; newTitle: string }): Promise<void> {
+        await this.client.query("UPDATE courses SET title = $1 WHERE id = $2", [req.newTitle, req.courseId])
     }
 
     async subscribeStudentToCourse(req: { courseId: string; studentId: string }): Promise<void> {

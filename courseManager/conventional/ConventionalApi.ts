@@ -1,4 +1,4 @@
-import { CourseSubscriptionRepository } from "../repository/Repositories"
+import { CourseSubscriptionRepository } from "../repository/CourseSubscriptionRepository"
 import { STUDENT_SUBSCRIPTION_LIMIT } from "../ReadModels"
 import { Api } from "../Api"
 
@@ -10,17 +10,29 @@ export const ConventionalApi = (repository: CourseSubscriptionRepository): Api =
         findStudentById: async (studentId: string) => {
             return repository.findStudentById(studentId)
         },
-        registerCourse: async ({ id, capacity }) => {
+        registerCourse: async ({ id, title, capacity }) => {
             const course = await repository.findCourseById(id)
             if (course) throw new Error(`Course with id ${id} already exists`)
 
-            return repository.registerCourse({ courseId: id, capacity })
+            return repository.registerCourse({ courseId: id, title, capacity })
         },
         registerStudent: async ({ id, name }) => {
             const student = await repository.findStudentById(id)
             if (student) throw new Error(`Student with id ${id} already exists`)
-            
-            return repository.registerStudent({ studentId: id, name, studentNumber: 0})
+
+            return repository.registerStudent({ studentId: id, name, studentNumber: 0 })
+        },
+        updateCourseCapacity: async ({ courseId, newCapacity }) => {
+            const course = await repository.findCourseById(courseId)
+            if (!course) throw new Error(`Course with id ${courseId} does not exist.`)
+            if (course.capacity === newCapacity) throw new Error("New capacity is the same as the current capacity.")
+            return repository.updateCourseCapacity({ courseId, newCapacity })
+        },
+        updateCourseTitle: async ({ courseId, newTitle }) => {
+            const course = await repository.findCourseById(courseId)
+            if (!course) throw new Error(`Course with id ${courseId} does not exist.`)
+            if (course.title === newTitle) throw new Error("New title is the same as the current title.")
+            return repository.updateCourseTitle({ courseId, newTitle })
         },
         subscribeStudentToCourse: async ({ courseId, studentId }) => {
             const course = await repository.findCourseById(courseId)
