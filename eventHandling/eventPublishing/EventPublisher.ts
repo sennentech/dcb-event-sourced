@@ -1,4 +1,11 @@
-import { AnyCondition, AppendCondition, EsEvent, EsQueryCriterion, EventStore } from "../../eventStore/EventStore"
+import {
+    AnyCondition,
+    AppendCondition,
+    EsEvent,
+    EsEventEnvelope,
+    EsQueryCriterion,
+    EventStore
+} from "../../eventStore/EventStore"
 import { SequenceNumber } from "../../eventStore/SequenceNumber"
 import * as R from "ramda"
 import { EventHandlerRegistry } from "../EventHandlerRegistry"
@@ -67,10 +74,7 @@ export const catchupHandler = async (
     return currentSeqNumber
 }
 
-const applyNewEventsDirectly = async (
-    newEventEnvelopes: import("/Users/paul.grimshaw/dev/dcb-event-store/eventStore/EventStore").EsEventEnvelope<EsEvent>[],
-    handler: EventHandler
-) => {
+const applyNewEventsDirectly = async (newEventEnvelopes: EsEventEnvelope<EsEvent>[], handler: EventHandler) => {
     let currentSeqNumber: SequenceNumber
     for (const event of newEventEnvelopes) {
         if (handler.when[event.event.type]) await handler.when[event.event.type](event)
