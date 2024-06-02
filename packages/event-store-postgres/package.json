@@ -27,5 +27,7 @@
         "@testcontainers/postgresql": "^10.9.0",
         "@types/pg": "^8.11.6",
         "testcontainers": "^10.9.0"
-    }
+    },
+    "gitHead": "90895594972e34e3c30bf29d7347d770f4369e64",
+    "access": "public"
 }
