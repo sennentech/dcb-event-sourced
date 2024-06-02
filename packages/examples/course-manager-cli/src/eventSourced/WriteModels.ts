@@ -1,4 +1,4 @@
-import { EventHandlerWithState } from "../../event-handling/EventHandlerWithState"
+import { EventHandlerWithState } from "@dcb-es/event-handling/dist/EventHandlerWithState"
 import {
     CourseWasRegisteredEvent,
     CourseCapacityWasChangedEvent,

@@ -2,12 +2,10 @@ import { Pool } from "pg"
 import { PostgresCourseSubscriptionsRepository } from "../repository/PostgresCourseSubscriptionRespository"
 import { Api } from "../Api"
 import { EventSourcedApi } from "./EventSourcedApi"
-import { MemoryEventStore } from "../../eventStore/memoryEventStore/MemoryEventStore"
-import { CourseSubscriptionsProjection } from "./CourseSubscriptionsProjection"
-import { PostgresTransactionManager } from "../../event-handling/postgresEventHandlerRegistry/PostgresTransactionManager"
-import { PostgresEventHandlerRegistry } from "../../event-handling/postgresEventHandlerRegistry/PostgresEventHandlerRegistry"
-import { getTestPgDatabasePool } from "../../jest.testPgDbPool"
 import { Course } from "../ReadModels"
+import { getTestPgDatabasePool } from "../jest.testPgDbPool"
+import { PostgresEventHandlerRegistry, PostgresTransactionManager } from "@dcb-es/event-handling-postgres"
+import { MemoryEventStore } from "@dcb-es/event-store"
 
 const COURSE_1 = {
     id: "course-1",
@@ -64,7 +62,7 @@ describe("EventSourcedApi", () => {
         })
 
         test("should reject subscriptions when 10 students subscribe simultaneously", async () => {
-            const studentSubscriptionPromises = []
+            const studentSubscriptionPromises: Promise<void>[] = []
 
             for (let i = 0; i < 10; i++) {
                 studentSubscriptionPromises.push(

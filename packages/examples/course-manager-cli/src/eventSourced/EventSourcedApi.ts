@@ -1,4 +1,5 @@
-import { EventStore } from "../../eventStore/EventStore"
+import { EventHandlerRegistry, EventPublisher, reconstitute } from "@dcb-es/event-handling"
+import { EventStore } from "@dcb-es/event-store"
 import { Api } from "../Api"
 import { STUDENT_SUBSCRIPTION_LIMIT } from "../ReadModels"
 import { CourseSubscriptionRepository } from "../repository/CourseSubscriptionRepository"
@@ -11,7 +12,6 @@ import {
     CourseTitleWasChangedEvent
 } from "./Events"
 
-import { EventPublisher } from "../../event-handling/src/EventPublisher"
 import {
     CourseCapacity,
     CourseExists,
@@ -21,8 +21,6 @@ import {
     StudentAlreadySubscribed,
     StudentSubscriptions
 } from "./WriteModels"
-import { EventHandlerRegistry } from "../../event-handling/EventHandlerRegistry"
-import { reconstitute } from "../../event-handling/reconstitute/reconstitute"
 
 export const EventSourcedApi = (
     eventStore: EventStore,

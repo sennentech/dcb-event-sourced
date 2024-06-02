@@ -1,8 +1,10 @@
 {
     "name": "@dcb-es/event-store-postgres",
     "author": "Paul Grimshaw",
-    "version": "1.1.0",
     "license": "MIT",
+    "version": "1.1.0",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
     "scripts": {
         "test": "jest --runInBand",
         "test:watch": "jest --watch",

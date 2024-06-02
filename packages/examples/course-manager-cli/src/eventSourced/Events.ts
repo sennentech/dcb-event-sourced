@@ -1,4 +1,4 @@
-import { EsEvent } from "../../eventStore/EventStore"
+import { EsEvent } from "@dcb-es/event-store"
 
 export class CourseWasRegisteredEvent implements EsEvent {
     public type: "courseWasRegistered" = "courseWasRegistered"

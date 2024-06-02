@@ -1,4 +1,6 @@
-import { PostgresTransactionManager } from "../../../../event-handling-postgres/src/PostgresTransactionManager"
+import { EventHandler } from "@dcb-es/event-handling"
+import { PostgresTransactionManager } from "dcb-es/event-handling-postgres"
+
 import { PostgresCourseSubscriptionsRepository } from "../repository/PostgresCourseSubscriptionRespository"
 
 import {

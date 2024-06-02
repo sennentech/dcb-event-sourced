@@ -8,10 +8,11 @@
         "test": "jest --runInBand",
         "test:watch": "jest --watch",
         "test:coverage": "jest --collect-coverage",
-        "build": "../../node_modules/.bin/tsc",
-        "watch": "../../node_modules/.bin/tsc --watch",
-        "lint": "../../node_modules/.bin/eslint **/*.ts .",
-        "lint-fix": "../../node_modules/.bin/eslint **/*.ts . --fix"
+        "build": "tsc -p tsconfig.json",
+        "watch": "tsc -w -p tsconfig.json",
+        "lint": "eslint \"**/*.ts\" .",
+        "lint-fix": "eslint \"**/*.ts\" . --fix",
+        "prepare": "yarn build"
     },
     "repository": {
         "type": "git",

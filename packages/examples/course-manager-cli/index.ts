@@ -24,10 +24,24 @@ const log = (message: string | object | Error) => {
         database: "dcb_test_1"
     }
 
-    const handlers = {
+    const handlersTypes = {
         CourseProjection: CourseSubscriptionsProjection
     }
-    const { pool, eventStore, handlerRegistry } = await assemblePostgresBundle(postgresConfig, handlers)
+    const pool = new Pool(postgresConfig)
+    const eventStore = new PostgresEventStore(pool)
+    await eventStore.install()
+
+    const transactionManager = new PostgresTransactionManager(pool)
+    const handlers = Object.entries(handlerTypes).reduce((acc, [key, HandlerType]) => {
+        acc[key] =
+            typeof HandlerType === "function" //support both class and function (closure) patterns
+                ? (<PostgresHandlerFunctionConstructor>HandlerType)(transactionManager)
+                : new (<PostgresHandlerClassConstructor>HandlerType)(transactionManager)
+        return acc
+    }, {})
+
+    const handlerRegistry = new PostgresEventHandlerRegistry(transactionManager, handlers)
+    await handlerRegistry.install()
 
     await resetDb(pool)
     const repository = new PostgresCourseSubscriptionsRepository(pool)
