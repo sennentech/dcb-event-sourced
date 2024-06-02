@@ -25,5 +25,8 @@
         "@types/luxon": "^3.4.2",
         "@types/uuid": "^9.0.8"
     },
+    "publishConfig": {
+        "access": "public"
+    },
     "gitHead": "90895594972e34e3c30bf29d7347d770f4369e64"
 }

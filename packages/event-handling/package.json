@@ -18,5 +18,8 @@
     "dependencies": {
         "@dcb-es/event-store": "^1.2.0"
     },
+    "publishConfig": {
+        "access": "public"
+    },
     "gitHead": "90895594972e34e3c30bf29d7347d770f4369e64"
 }

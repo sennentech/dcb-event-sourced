@@ -25,5 +25,8 @@
         "@types/pg": "^8.11.6",
         "testcontainers": "^10.9.0"
     },
-    "gitHead": "90895594972e34e3c30bf29d7347d770f4369e64"
+    "publishConfig": {
+        "access": "public"
+    },
+    "gitHead": "0e95696be7d12203f13096f15511b8158d8be068"
 }
