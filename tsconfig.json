@@ -12,6 +12,6 @@
         "declarationMap": true
     },
 
-    "include": ["*/src/**/*", "examples/course-manager-cli/src/conventional/ConventionalApi.ts"],
+    "include": ["*/src/**/*"],
     "exclude": ["node_modules", "dist", "**/*.tests.ts"]
 }

@@ -14,7 +14,8 @@
         "prepare": "yarn build"
     },
     "dependencies": {
-        "@dcb-es/event-handling": "1.0.0",
+        "@dcb-es/event-handling": "^1.0.1",
+        "@dcb-es/event-store": "^1.0.3",
         "pg": "^8.11.5"
     },
     "devDependencies": {

@@ -39,9 +39,10 @@ describe("PostgresEventHandlerRegistry tests", () => {
 
     test("should obtain lock and get default sequence number", async () => {
         const locks = await handlerRegistry.lockHandlers()
-        Object.values(locks).forEach(sequenceNumber => {
+        for (const sequenceNumber of Object.values(locks)) {
             expect(sequenceNumber.value).toBe(0)
-        })
+        }
+
         await handlerRegistry.commitAndRelease(locks)
     })
 
