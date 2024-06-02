@@ -2,7 +2,7 @@
     "name": "@dcb-es/event-handling",
     "author": "Paul Grimshaw",
     "license": "MIT",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "scripts": {
@@ -16,6 +16,6 @@
         "prepare": "yarn build"
     },
     "dependencies": {
-        "@dcb-es/event-store": "*"
+        "@dcb-es/event-store": "^1.2.0"
     }
 }
