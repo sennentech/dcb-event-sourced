@@ -10,7 +10,7 @@ export async function reconstitute<T extends EventHandlers>(
     eventStore: EventStore,
     eventHandlers: T
 ): Promise<{ state: EventHandlerStates<T>; appendCondition: AppendCondition }> {
-    const defaultHandler = (_event: EsEventEnvelope, state: EventHandlerStates<T>) => state
+    const defaultHandler = (_: EsEventEnvelope, state: EventHandlerStates<T>) => state
     const states = Object.fromEntries(Object.entries(eventHandlers).map(([key, value]) => [key, value.init]))
 
     const query: EsQuery = {

@@ -1,4 +1,4 @@
-import { getPostgreSqlContainer } from "./jest.testPgDbPool"
+import { getPostgreSqlContainer } from "./src/jest.testPgDbPool"
 
 const setup = async () => {
     await getPostgreSqlContainer()

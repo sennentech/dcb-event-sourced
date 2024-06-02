@@ -1,9 +1,10 @@
 import { Pool } from "pg"
-import { PostgresCourseSubscriptionsRepository } from "./src/repository/PostgresCourseSubscriptionRespository"
-import { EventSourcedApi } from "./src/eventSourced/EventSourcedApi"
-import { CourseSubscriptionsProjection } from "./src/eventSourced/CourseSubscriptionsProjection"
+import { PostgresCourseSubscriptionsRepository } from "./repository/PostgresCourseSubscriptionRespository"
+import { EventSourcedApi } from "./eventSourced/EventSourcedApi"
+import { CourseSubscriptionsProjection } from "./eventSourced/CourseSubscriptionsProjection"
 import inquirer from "inquirer"
 import "source-map-support/register"
+import { assemblePostgresBundle } from "./eventSourced/assemblePostgresBundle"
 
 const log = (message: string | object | Error) => {
     console.log(`______________________________________________________`)
@@ -24,24 +25,10 @@ const log = (message: string | object | Error) => {
         database: "dcb_test_1"
     }
 
-    const handlersTypes = {
+    const handlers = {
         CourseProjection: CourseSubscriptionsProjection
     }
-    const pool = new Pool(postgresConfig)
-    const eventStore = new PostgresEventStore(pool)
-    await eventStore.install()
-
-    const transactionManager = new PostgresTransactionManager(pool)
-    const handlers = Object.entries(handlerTypes).reduce((acc, [key, HandlerType]) => {
-        acc[key] =
-            typeof HandlerType === "function" //support both class and function (closure) patterns
-                ? (<PostgresHandlerFunctionConstructor>HandlerType)(transactionManager)
-                : new (<PostgresHandlerClassConstructor>HandlerType)(transactionManager)
-        return acc
-    }, {})
-
-    const handlerRegistry = new PostgresEventHandlerRegistry(transactionManager, handlers)
-    await handlerRegistry.install()
+    const { pool, eventStore, handlerRegistry } = await assemblePostgresBundle(postgresConfig, handlers)
 
     await resetDb(pool)
     const repository = new PostgresCourseSubscriptionsRepository(pool)

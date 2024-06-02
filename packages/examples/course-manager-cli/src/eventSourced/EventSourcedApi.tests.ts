@@ -6,6 +6,7 @@ import { Course } from "../ReadModels"
 import { getTestPgDatabasePool } from "../jest.testPgDbPool"
 import { PostgresEventHandlerRegistry, PostgresTransactionManager } from "@dcb-es/event-handling-postgres"
 import { MemoryEventStore } from "@dcb-es/event-store"
+import { CourseSubscriptionsProjection } from "./CourseSubscriptionsProjection"
 
 const COURSE_1 = {
     id: "course-1",
@@ -125,10 +126,10 @@ describe("EventSourcedApi", () => {
             const course = await repository.findCourseById(COURSE_1.id)
             const student = await repository.findStudentById(STUDENT_1.id)
 
-            expect(course.subscribedStudents).toEqual([
+            expect(course?.subscribedStudents).toEqual([
                 { id: STUDENT_1.id, name: STUDENT_1.name, studentNumber: STUDENT_1.studentNumber }
             ])
-            expect(student.subscribedCourses).toEqual([
+            expect(student?.subscribedCourses).toEqual([
                 { id: COURSE_1.id, title: COURSE_1.title, capacity: COURSE_1.capacity }
             ])
         })

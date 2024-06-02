@@ -57,4 +57,12 @@ describe("matchTags", () => {
         const result = matchTags({ tags, tagFilter })
         expect(result).toBe(true)
     })
+
+    test("should return true when null tagFilter", () => {
+        const tags: Tags = { courseId: "c1", studentId: "s1" }
+        const tagFilter: Tags = null
+
+        const result = matchTags({ tags, tagFilter })
+        expect(result).toBe(true)
+    })
 })

@@ -1,5 +1,5 @@
 import { EventHandler } from "@dcb-es/event-handling"
-import { PostgresTransactionManager } from "dcb-es/event-handling-postgres"
+import { PostgresTransactionManager } from "@dcb-es/event-handling-postgres"
 
 import { PostgresCourseSubscriptionsRepository } from "../repository/PostgresCourseSubscriptionRespository"
 

@@ -22,7 +22,7 @@
         "@dcb-es/event-store": "*",
         "@dcb-es/event-store-postgres": "*",
         "@dcb-es/event-handling": "*",
-        "dcb-es/event-handling-postgres": "*",
+        "@dcb-es/event-handling-postgres": "*",
         "inquirer": "^8.0.0",
         "interactive-cli": "^1.1.6"
     },
