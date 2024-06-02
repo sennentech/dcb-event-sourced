@@ -1,5 +1,6 @@
 import { SequenceNumber } from "@dcb-es/event-store"
 import { PostgresTransactionManager } from "./PostgresTransactionManager"
+import { EventHandler, EventHandlerRegistry, HandlerCheckPoints } from "@dcb-es/event-handling"
 
 const POSTGRES_TABLE_NAME = "_event_handler_bookmarks"
 

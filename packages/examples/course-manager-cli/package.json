@@ -3,6 +3,7 @@
     "author": "Paul Grimshaw",
     "license": "MIT",
     "version": "1.0.0",
+    "private": true,
     "scripts": {
         "test": "jest --runInBand",
         "test:watch": "jest --watch",
@@ -17,8 +18,10 @@
         "url": "git+https://github.com/sennentech/dcb-event-store.git"
     },
     "dependencies": {
-        "@dcb-es/event-handling": "^1.0.1",
-        "@dcb-es/event-store": "^1.0.3",
+        "@dcb-es/event-store": "*",
+        "@dcb-es/event-store-postgres": "*",
+        "@dcb-es/event-handling": "*",
+        "dcb-es/event-handling-postgres": "*",
         "inquirer": "^8.0.0",
         "interactive-cli": "^1.1.6"
     },

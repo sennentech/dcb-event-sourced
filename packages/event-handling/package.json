@@ -1,8 +1,10 @@
 {
-    "name": "@dcb-es/event-handling-postgres",
+    "name": "@dcb-es/event-handling",
     "author": "Paul Grimshaw",
-    "version": "1.0.0",
     "license": "MIT",
+    "version": "1.1.0",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
     "scripts": {
         "test": "jest --runInBand",
         "test:watch": "jest --watch",
@@ -14,13 +16,6 @@
         "prepare": "yarn build"
     },
     "dependencies": {
-        "@dcb-es/event-handling": "^1.0.1",
-        "@dcb-es/event-store": "^1.0.3",
-        "pg": "^8.11.5"
-    },
-    "devDependencies": {
-        "@testcontainers/postgresql": "^10.9.0",
-        "@types/pg": "^8.11.6",
-        "testcontainers": "^10.9.0"
+        "@dcb-es/event-store": "*"
     }
 }
