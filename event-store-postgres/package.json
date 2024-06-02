@@ -1,0 +1,28 @@
+{
+    "name": "@dcb-es/event-store-postgres",
+    "author": "Paul Grimshaw",
+    "version": "1.0.2",
+    "scripts": {
+        "test": "jest --runInBand",
+        "test:watch": "jest --watch",
+        "test:coverage": "jest --collect-coverage",
+        "build": "tsc -p tsconfig.json",
+        "watch": "tsc -w -p tsconfig.json",
+        "lint": "eslint \"**/*.ts\" .",
+        "lint-fix": "eslint \"**/*.ts\" . --fix",
+        "prepare": "yarn build"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/sennentech/dcb-event-store.git"
+    },
+    "dependencies": {
+        "@dcb-es/event-store": "^1.0.0",
+        "pg": "^8.11.5"
+    },
+    "devDependencies": {
+        "@testcontainers/postgresql": "^10.9.0",
+        "@types/pg": "^8.11.6",
+        "testcontainers": "^10.9.0"
+    }
+}
