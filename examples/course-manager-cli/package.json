@@ -1,0 +1,30 @@
+{
+    "name": "@dcb-es/examples-course-manager-cli",
+    "author": "Paul Grimshaw",
+    "license": "MIT",
+    "version": "1.0.0",
+    "scripts": {
+        "test": "jest --runInBand",
+        "test:watch": "jest --watch",
+        "test:coverage": "jest --collect-coverage",
+        "build": "../../node_modules/.bin/tsc",
+        "watch": "../../node_modules/.bin/tsc --watch",
+        "lint": "../../node_modules/.bin/eslint **/*.ts .",
+        "lint-fix": "../../node_modules/.bin/eslint **/*.ts . --fix"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/sennentech/dcb-event-store.git"
+    },
+    "dependencies": {
+        "@dcb-es/event-handling": "^1.0.1",
+        "@dcb-es/event-store": "^1.0.3",
+        "inquirer": "^8.0.0",
+        "interactive-cli": "^1.1.6"
+    },
+    "devDependencies": {
+        "@testcontainers/postgresql": "^10.9.0",
+        "@types/inquirer": "^9.0.7",
+        "testcontainers": "^10.9.0"
+    }
+}

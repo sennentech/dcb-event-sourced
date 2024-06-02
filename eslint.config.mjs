@@ -13,7 +13,7 @@ export default [
     pluginJs.configs.recommended,
     ...tseslint.configs.recommended,
     {
-        ignores: ["node_modules/", "dist/", ".history/", "coverage/", "jest*.js"]
+        ignores: ["*/node_modules/", "*/dist/", ".history/", "coverage/"],
     },
     {
         rules: {

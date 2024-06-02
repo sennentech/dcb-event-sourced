@@ -1,13 +1,17 @@
 {
     "compilerOptions": {
+        "forceConsistentCasingInFileNames": true,
         "module": "CommonJS",
         "target": "ESNext",
         "moduleResolution": "node",
         "esModuleInterop": true,
         "allowSyntheticDefaultImports": true,
         "experimentalDecorators": true,
-        "outDir": "./dist",
-        "sourceMap": true
+        "sourceMap": true,
+        "declaration": true,
+        "declarationMap": true
     },
-    "exclude": ["./node_modules", "./dist"]
+
+    "include": ["*/src/**/*", "examples/course-manager-cli/src/conventional/ConventionalApi.ts"],
+    "exclude": ["node_modules", "dist", "**/*.tests.ts"]
 }
