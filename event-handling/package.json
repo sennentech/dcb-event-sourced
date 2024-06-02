@@ -1,0 +1,21 @@
+{
+    "name": "@dcb-es/event-handling",
+    "author": "Paul Grimshaw",
+    "license": "MIT",
+    "version": "1.0.1",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "test": "jest --runInBand",
+        "test:watch": "jest --watch",
+        "test:coverage": "jest --collect-coverage",
+        "build": "tsc -p tsconfig.json",
+        "watch": "tsc -w -p tsconfig.json",
+        "lint": "eslint \"**/*.ts\" .",
+        "lint-fix": "eslint \"**/*.ts\" . --fix",
+        "prepare": "yarn build"
+    },
+    "dependencies": {
+        "@dcb-es/event-store": "^1.0.0"
+    }
+}
