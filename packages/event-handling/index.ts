@@ -2,3 +2,4 @@ export { HandlerCheckPoints, EventHandlerRegistry } from "./src/EventHandlerRegi
 export { EventHandler } from "./src/EventHandler"
 export { EventPublisher } from "./src/EventPublisher"
 export { reconstitute } from "./src/reconstitute/reconstitute"
+export { EventHandlerWithState } from "./src/EventHandlerWithState"
