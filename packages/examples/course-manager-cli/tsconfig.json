@@ -3,5 +3,5 @@
     "compilerOptions": {
         "outDir": "./dist"
     },
-    "include": ["./src/**/*", "jest.testPgDbPool.ts"]
+    "include": ["./src/**/*", "index.ts"]
 }

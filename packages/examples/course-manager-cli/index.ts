@@ -30,7 +30,6 @@ const log = (message: string | object | Error) => {
     }
     const { pool, eventStore, handlerRegistry } = await assemblePostgresBundle(postgresConfig, handlers)
 
-    await resetDb(pool)
     const repository = new PostgresCourseSubscriptionsRepository(pool)
     await repository.install()
     const api = EventSourcedApi(eventStore, repository, handlerRegistry)
@@ -51,6 +50,7 @@ const log = (message: string | object | Error) => {
                 "Unsubscribe student from course",
                 "Find course",
                 "Find student",
+                "Reset database",
                 "Exit"
             ]
         })
@@ -133,6 +133,12 @@ const log = (message: string | object | Error) => {
                     const course = await api.findStudentById(studentId)
                     log(`Found student:`)
                     log(course)
+                    break
+                }
+
+                case "Reset database": {
+                    await resetDb(pool)
+                    log("Database reset")
                     break
                 }
 
