@@ -15,7 +15,11 @@
         "lint-fix": "eslint \"**/*.ts\" . --fix",
         "prepare": "yarn build"
     },
-    "homepage": "https://github.com/sennentech/dcb-event-store/event-store",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/sennentech/dcb-event-sourced.git"
+    },
+    "homepage": "https://github.com/sennentech/dcb-event-sourced/tree/main/packages/event-store",
     "author": "Paul Grimshaw",
     "dependencies": {
         "luxon": "^3.4.4",

@@ -17,8 +17,9 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/sennentech/dcb-event-store.git"
+        "url": "git+https://github.com/sennentech/dcb-event-sourced.git"
     },
+    "homepage": "https://github.com/sennentech/dcb-event-sourced/tree/main/packages/event-store-postgres",
     "dependencies": {
         "@dcb-es/event-store": "^1.2.3",
         "pg": "^8.11.5"

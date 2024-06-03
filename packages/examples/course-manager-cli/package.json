@@ -14,10 +14,6 @@
         "lint-fix": "eslint \"**/*.ts\" . --fix",
         "prepare": "yarn build"
     },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/sennentech/dcb-event-store.git"
-    },
     "dependencies": {
         "@dcb-es/event-handling": "^1.2.3",
         "@dcb-es/event-handling-postgres": "^1.2.3",

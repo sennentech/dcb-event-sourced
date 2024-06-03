@@ -5,6 +5,11 @@
     "version": "1.2.3",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/sennentech/dcb-event-sourced.git"
+    },
+    "homepage": "https://github.com/sennentech/dcb-event-sourced/tree/main/packages/event-handling",
     "scripts": {
         "test": "jest --runInBand",
         "test:watch": "jest --watch",
