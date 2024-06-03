@@ -1,0 +1,32 @@
+{
+    "name": "@dcb-es/event-store",
+    "version": "1.2.1",
+    "description": "Event Store package for DCB",
+    "main": "dist/index.js",
+    "license": "MIT",
+    "types": "dist/index.d.ts",
+    "scripts": {
+        "test": "jest --runInBand",
+        "test:watch": "jest --watch",
+        "test:coverage": "jest --collect-coverage",
+        "build": "tsc -p tsconfig.json",
+        "watch": "tsc -w -p tsconfig.json",
+        "lint": "eslint \"**/*.ts\" .",
+        "lint-fix": "eslint \"**/*.ts\" . --fix",
+        "prepare": "yarn build"
+    },
+    "homepage": "https://github.com/sennentech/dcb-event-store/event-store",
+    "author": "Paul Grimshaw",
+    "dependencies": {
+        "luxon": "^3.4.4",
+        "uuid": "^9.0.1"
+    },
+    "devDependencies": {
+        "@types/luxon": "^3.4.2",
+        "@types/uuid": "^9.0.8"
+    },
+    "publishConfig": {
+        "access": "public"
+    },
+    "gitHead": "90895594972e34e3c30bf29d7347d770f4369e64"
+}
