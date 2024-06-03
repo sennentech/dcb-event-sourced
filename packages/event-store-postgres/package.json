@@ -2,7 +2,7 @@
     "name": "@dcb-es/event-store-postgres",
     "author": "Paul Grimshaw",
     "license": "MIT",
-    "version": "1.2.2",
+    "version": "1.2.3",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "scripts": {
@@ -20,7 +20,7 @@
         "url": "git+https://github.com/sennentech/dcb-event-store.git"
     },
     "dependencies": {
-        "@dcb-es/event-store": "^1.2.2",
+        "@dcb-es/event-store": "^1.2.3",
         "pg": "^8.11.5"
     },
     "devDependencies": {

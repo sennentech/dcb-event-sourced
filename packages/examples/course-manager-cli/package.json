@@ -2,7 +2,7 @@
     "name": "@dcb-es/examples-course-manager-cli",
     "author": "Paul Grimshaw",
     "license": "MIT",
-    "version": "1.2.2",
+    "version": "1.2.3",
     "private": true,
     "scripts": {
         "test": "jest --runInBand",
@@ -19,10 +19,10 @@
         "url": "git+https://github.com/sennentech/dcb-event-store.git"
     },
     "dependencies": {
-        "@dcb-es/event-handling": "^1.2.2",
-        "@dcb-es/event-handling-postgres": "^1.2.2",
-        "@dcb-es/event-store": "^1.2.2",
-        "@dcb-es/event-store-postgres": "^1.2.2",
+        "@dcb-es/event-handling": "^1.2.3",
+        "@dcb-es/event-handling-postgres": "^1.2.3",
+        "@dcb-es/event-store": "^1.2.3",
+        "@dcb-es/event-store-postgres": "^1.2.3",
         "inquirer": "^8.0.0",
         "interactive-cli": "^1.1.6"
     },
