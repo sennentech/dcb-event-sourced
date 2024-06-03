@@ -1,10 +1,10 @@
 import { Pool } from "pg"
-import { PostgresCourseSubscriptionsRepository } from "./repository/PostgresCourseSubscriptionRespository"
-import { EventSourcedApi } from "./eventSourced/EventSourcedApi"
-import { CourseSubscriptionsProjection } from "./eventSourced/CourseSubscriptionsProjection"
+import { PostgresCourseSubscriptionsRepository } from "./src/repository/PostgresCourseSubscriptionRespository"
+import { EventSourcedApi } from "./src/eventSourced/EventSourcedApi"
+import { CourseSubscriptionsProjection } from "./src/eventSourced/CourseSubscriptionsProjection"
 import inquirer from "inquirer"
 import "source-map-support/register"
-import { assemblePostgresBundle } from "./eventSourced/assemblePostgresBundle"
+import { assemblePostgresBundle } from "./src/eventSourced/assemblePostgresBundle"
 
 const log = (message: string | object | Error) => {
     console.log(`______________________________________________________`)

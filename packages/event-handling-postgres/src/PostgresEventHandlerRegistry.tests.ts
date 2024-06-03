@@ -3,7 +3,7 @@ import { PostgresEventHandlerRegistry } from "./PostgresEventHandlerRegistry"
 import { v4 as uuid } from "uuid"
 import { PostgresTransactionManager } from "./PostgresTransactionManager"
 import { SequenceNumber } from "@dcb-es/event-store"
-import { getTestPgDatabasePool } from "./jest.testPgDbPool"
+import { getTestPgDatabasePool } from "../jest.testPgDbPool"
 
 describe("PostgresEventHandlerRegistry tests", () => {
     let pool: Pool

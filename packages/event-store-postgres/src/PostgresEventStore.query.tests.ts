@@ -1,7 +1,7 @@
 import { EsEvent, streamAllEventsToArray, AppendConditions, SequenceNumber } from "@dcb-es/event-store"
 import { Pool } from "pg"
 import { PostgresEventStore } from "./PostgresEventStore"
-import { getTestPgDatabasePool } from "./jest.testPgDbPool"
+import { getTestPgDatabasePool } from "../jest.testPgDbPool"
 
 class EventType1 implements EsEvent {
     type: "testEvent1" = "testEvent1"

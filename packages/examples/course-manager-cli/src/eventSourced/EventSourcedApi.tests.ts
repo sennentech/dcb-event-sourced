@@ -3,7 +3,7 @@ import { PostgresCourseSubscriptionsRepository } from "../repository/PostgresCou
 import { Api } from "../Api"
 import { EventSourcedApi } from "./EventSourcedApi"
 import { Course } from "../ReadModels"
-import { getTestPgDatabasePool } from "../jest.testPgDbPool"
+import { getTestPgDatabasePool } from "../../jest.testPgDbPool"
 import { PostgresEventHandlerRegistry, PostgresTransactionManager } from "@dcb-es/event-handling-postgres"
 import { MemoryEventStore } from "@dcb-es/event-store"
 import { CourseSubscriptionsProjection } from "./CourseSubscriptionsProjection"

@@ -2,7 +2,7 @@ import { Pool } from "pg"
 import { PostgresCourseSubscriptionsRepository } from "../repository/PostgresCourseSubscriptionRespository"
 import { ConventionalApi } from "./ConventionalApi"
 import { Api } from "../Api"
-import { getTestPgDatabasePool } from "../jest.testPgDbPool"
+import { getTestPgDatabasePool } from "../../jest.testPgDbPool"
 
 const COURSE_1 = {
     id: "course-1",
