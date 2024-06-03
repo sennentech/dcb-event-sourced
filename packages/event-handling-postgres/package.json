@@ -1,7 +1,7 @@
 {
     "name": "@dcb-es/event-handling-postgres",
     "author": "Paul Grimshaw",
-    "version": "1.2.3",
+    "version": "1.2.4",
     "main": "dist/index.js",
     "license": "MIT",
     "types": "dist/index.d.ts",
@@ -21,8 +21,8 @@
         "prepare": "yarn build"
     },
     "dependencies": {
-        "@dcb-es/event-handling": "^1.2.3",
-        "@dcb-es/event-store": "^1.2.3",
+        "@dcb-es/event-handling": "^1.2.4",
+        "@dcb-es/event-store": "^1.2.4",
         "pg": "^8.11.5"
     },
     "devDependencies": {
