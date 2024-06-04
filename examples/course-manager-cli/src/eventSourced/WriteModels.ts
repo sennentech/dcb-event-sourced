@@ -18,7 +18,7 @@ export const CourseExists = (
     tagFilter: { courseId },
     init: false,
     when: {
-        courseWasRegistered: async () => true
+        courseWasRegistered: () => true
     }
 })
 
@@ -32,8 +32,8 @@ export const CourseTitle = (
     tagFilter: { courseId },
     init: "",
     when: {
-        courseWasRegistered: async ({ event }) => event.data.title,
-        courseTitleWasChanged: async ({ event }) => event.data.newTitle
+        courseWasRegistered: ({ event }) => event.data.title,
+        courseTitleWasChanged: ({ event }) => event.data.newTitle
     }
 })
 
@@ -51,7 +51,6 @@ export const CourseCapacity = (
     init: { subscriberCount: 0, capacity: 0 },
     when: {
         courseWasRegistered: ({ event }) => ({
-            isFull: event.data.capacity === 0,
             capacity: event.data.capacity,
             subscriberCount: 0
         }),
@@ -80,7 +79,7 @@ export const StudentAlreadyRegistered = (
     tagFilter: { studentId },
     init: false,
     when: {
-        studentWasRegistered: async () => true
+        studentWasRegistered: () => true
     }
 })
 
@@ -91,7 +90,7 @@ export const NextStudentNumber = (): EventHandlerWithState<{
     init: 1,
     onlyLastEvent: true,
     when: {
-        studentWasRegistered: async ({ event }) => event.data.studentNumber + 1
+        studentWasRegistered: ({ event }) => event.data.studentNumber + 1
     }
 })
 

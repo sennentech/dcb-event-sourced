@@ -97,6 +97,8 @@ The write model (_EventHandlerWithState_) is an object that defines what events 
 
 This example _WriteModel_ is interested only in _courseWasRegistered_ event for courses with Id `course-1234`. The handler has a "default state" (_init_) of `false` (doesn't exist). Everytime a _courseWasRegistered_ is received, this state is changed to `true`.
 
+Each eventHandler function (e.g. `courseWasRegistered`) receives the eventEnvelope and the current state, and returns the new state. Note here we have not used either of these parameters (in fact they could be ommitted)
+
 ```typescript
 const courseExists = (
     courseId: string
@@ -108,7 +110,7 @@ const courseExists = (
     tagFilter: { courseId: "course-1234" },
     init: false,
     when: {
-        courseWasRegistered: async () => true
+        courseWasRegistered: (eventEvenlope, state) => true
     }
 })
 ```
@@ -126,7 +128,7 @@ export const CourseExists = (
     tagFilter: { courseId },
     init: false,
     when: {
-        courseWasRegistered: async () => true
+        courseWasRegistered: () => true
     }
 })
 
@@ -154,7 +156,7 @@ const registerCourseCommandHandler = async (course: { id: string; title: string;
 }
 ```
 
-The `reconsitute` function m
+The `reconsitute` function will take care of deciding which events each handler requires, efficiently querying the event store and applying them to the state. It returns a pre-built _AppendCondition_ that can be passed with the subsequent `append` method.
 
 In this example, the `append` would fail if another user created a course with the ID `course-1234` _after_ the reconsitute of the WriteModel but _before_ the append.
 
@@ -162,7 +164,7 @@ This is one of the guarantees the library provides.
 
 #### Multiple WriteModels
 
-Often you will have multiple checks to do. We advise you separate each of these checks into small, granular _WriteModels_ each with its dedicated purpose.
+Often you will have multiple checks to do. We advise you separate each of these checks into small, granular _WriteModels_ each with its own dedicated purpose.
 
 For example here is another _WriteModel_ to check the existing capacity of a course:
 
@@ -181,7 +183,6 @@ export const CourseCapacity = (
     init: { subscriberCount: 0, capacity: 0 },
     when: {
         courseWasRegistered: ({ event }) => ({
-            isFull: event.data.capacity === 0,
             capacity: event.data.capacity,
             subscriberCount: 0
         }),
@@ -189,7 +190,7 @@ export const CourseCapacity = (
             subscriberCount,
             capacity: event.data.newCapacity
         }),
-        studentWasSubscribed: (_eventEnvelope, { capacity, subscriberCount }) => ({
+        studentWasSubscribed: (eventEnvelope, { capacity, subscriberCount }) => ({
             subscriberCount: subscriberCount + 1,
             capacity
         }),
@@ -201,7 +202,7 @@ export const CourseCapacity = (
 })
 ```
 
-This model handles 4 different types of events, and is filtered to `courseId` as well.
+This model handles 4 different types of events, and is filtered to `courseId` as well. Note each event handler receives the `eventEnvelope` and the `currentState`, and returns the new state.
 
 The command handler to subscribe a student might check for both existence of the course, and to check there is remaining capacity:
 
