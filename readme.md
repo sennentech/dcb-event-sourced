@@ -10,7 +10,7 @@ It is important to have an understanding of the concepts of event-sourcing and p
 
 ## Purpose
 
-The purpose of the event-store and event-handling libraries are to allow the following:
+The purpose of this event-store and event-handling libraries are to fulfil the following:
 
 -   Querying the event-store in a Command Handler prior to appending events to determine if the system is in a valid state.
 -   Publishing new events to the event-store, while guaranteeing no _relevant_ events have been added in the meantime (avoids race conditions).
