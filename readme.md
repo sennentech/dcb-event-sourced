@@ -2,7 +2,7 @@
 
 Implementation of the Dynamic Consistency Boundary pattern for nodejs/typescript [described by Sara Pellegrini](https://sara.event-thinking.io/2023/04/kill-aggregate-chapter-1-I-am-here-to-kill-the-aggregate.html)
 
-This repository contains the key core concepts (event-store and event-handling) as well as specific implementations of each of these against different backend persistence layers (currently only Postgres). There is also an example CLI application, following Sara's Course/Students example implemented using this pattern.
+This repository contains the key concepts (event-store and event-handling) as well as specific implementations of each of these against different backend persistence layers (currently only Postgres). There is also an example CLI application, following Sara's Course/Students example implemented using this pattern.
 
 ## Prerequisites
 
