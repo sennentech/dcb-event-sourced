@@ -26,8 +26,4 @@ Contributions in the form of [issues](https://github.com/sennentech/dcb-event-so
 
 ## License
 
-Licensed under an [MIT license](./LICENSE.md)
-
-```
-
-```
+Licensed under an [MIT license](https://github.com/sennentech/dcb-event-sourced/blob/main/LICENSE.md)
