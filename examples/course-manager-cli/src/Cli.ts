@@ -1,42 +1,10 @@
-import { Pool } from "pg"
-import { PostgresCourseSubscriptionsRepository } from "./src/repository/PostgresCourseSubscriptionRespository"
-import { EventSourcedApi } from "./src/eventSourced/EventSourcedApi"
-import { CourseSubscriptionsProjection } from "./src/eventSourced/CourseSubscriptionsProjection"
 import inquirer from "inquirer"
-import "source-map-support/register"
-import { assemblePostgresBundle } from "./src/eventSourced/assemblePostgresBundle"
+import { Api } from "./Api"
 
-const log = (message: string | object | Error) => {
-    console.log(`______________________________________________________`)
-    if (message instanceof Error) {
-        console.log(`\n\x1b[31m${message?.message ?? message}\x1b[0m`)
-    } else {
-        console.log(`\n${typeof message === "object" ? JSON.stringify(message, null, 2) : message}`)
-    }
-    console.log(`______________________________________________________\n`)
-}
-
-;(async () => {
-    const postgresConfig = {
-        host: "localhost",
-        port: 5432,
-        user: "postgres",
-        password: "postgres",
-        database: "dcb_test_1"
-    }
-
-    const handlers = {
-        CourseProjection: CourseSubscriptionsProjection
-    }
-    const { pool, eventStore, handlerRegistry } = await assemblePostgresBundle(postgresConfig, handlers)
-
-    const repository = new PostgresCourseSubscriptionsRepository(pool)
-    await repository.install()
-    const api = EventSourcedApi(eventStore, repository, handlerRegistry)
-
+export const startCli = async (api: Api) => {
     log("Program started succesfully")
-    let exit = false
-    while (!exit) {
+
+    while (true) {
         const choices = await inquirer.prompt({
             type: "list",
             name: "action",
@@ -136,15 +104,8 @@ const log = (message: string | object | Error) => {
                     break
                 }
 
-                case "Reset database": {
-                    await resetDb(pool)
-                    log("Database reset")
-                    break
-                }
-
                 case "Exit":
-                    exit = true
-                    await pool.end()
+                    process.exit(0)
                     break
 
                 default:
@@ -157,15 +118,14 @@ const log = (message: string | object | Error) => {
         }
     }
     log("Program exited")
-})()
-async function resetDb(pool: Pool) {
-    await pool.query(
-        ` 
-            drop table if exists subscriptions;
-            drop table if exists courses;
-            drop table if exists students;
+}
 
-            truncate table events;
-        `
-    )
+const log = (message: string | object | Error) => {
+    console.log(`______________________________________________________`)
+    if (message instanceof Error) {
+        console.log(`\n\x1b[31m${message?.message ?? message}\x1b[0m`)
+    } else {
+        console.log(`\n${typeof message === "object" ? JSON.stringify(message, null, 2) : message}`)
+    }
+    console.log(`______________________________________________________\n`)
 }

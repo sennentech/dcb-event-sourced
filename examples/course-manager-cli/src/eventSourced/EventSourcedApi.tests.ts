@@ -6,7 +6,7 @@ import { Course } from "../ReadModels"
 import { getTestPgDatabasePool } from "../../jest.testPgDbPool"
 import { PostgresEventHandlerRegistry, PostgresTransactionManager } from "@dcb-es/event-handling-postgres"
 import { MemoryEventStore } from "@dcb-es/event-store"
-import { CourseSubscriptionsProjection } from "./CourseSubscriptionsProjection"
+import { PostgresCourseSubscriptionsProjection } from "./PostgresCourseSubscriptionsProjection"
 
 const COURSE_1 = {
     id: "course-1",
@@ -83,7 +83,7 @@ describe("EventSourcedApi", () => {
         beforeAll(async () => {
             transactionManager = new PostgresTransactionManager(pool)
             registry = new PostgresEventHandlerRegistry(transactionManager, {
-                CourseSubscriptionsProjection: CourseSubscriptionsProjection(transactionManager)
+                CourseSubscriptionsProjection: PostgresCourseSubscriptionsProjection(transactionManager)
             })
         })
         beforeEach(async () => {

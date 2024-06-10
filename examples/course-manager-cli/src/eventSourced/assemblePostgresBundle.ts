@@ -7,6 +7,7 @@ import {
 import { PostgresEventStore } from "@dcb-es/event-store-postgres"
 import { Pool, PoolConfig } from "pg"
 
+
 export const assemblePostgresBundle = async (
     postgresConfig: PoolConfig,
     handlerTypes: Record<string, PostgresHandlerClassConstructor | PostgresHandlerFunctionConstructor>

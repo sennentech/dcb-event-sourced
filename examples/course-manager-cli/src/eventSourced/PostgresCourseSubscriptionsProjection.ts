@@ -12,7 +12,7 @@ import {
     CourseTitleWasChangedEvent
 } from "./Events"
 
-export const CourseSubscriptionsProjection = (
+export const PostgresCourseSubscriptionsProjection = (
     transactionManager: PostgresTransactionManager
 ): EventHandler<{
     eventHandlers:

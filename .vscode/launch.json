@@ -4,9 +4,9 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Launch CLI",
-            "runtimeExecutable": "yarn",
-            "runtimeArgs": ["run", "debug"],
+            "name": "Launch Postgres Example CLI",
+            "runtimeExecutable": "node",
+            "runtimeArgs": ["examples/course-manager-cli/dist/index.postgres.js"],
             "skipFiles": ["<node_internals>/**"],
             "console": "integratedTerminal",
             "restart": false,
