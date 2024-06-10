@@ -1,5 +1,6 @@
 {
     "name": "@dcb-es/event-store-postgres",
+    "description": "Postgres implementation of event store form @dcv-es/event-store",
     "author": "Paul Grimshaw",
     "license": "MIT",
     "version": "1.2.4",

@@ -1,5 +1,6 @@
 {
     "name": "@dcb-es/event-handling-postgres",
+    "description": "Postgres implementation of the event handling interface for the DCB Event Sourced library, following @dcb-es/event-handling.",
     "author": "Paul Grimshaw",
     "version": "1.2.4",
     "main": "dist/index.js",

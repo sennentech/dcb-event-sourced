@@ -1,5 +1,6 @@
 {
     "name": "@dcb-es/event-handling",
+    "description": "Event handling methods for DCB event sourced projects folloing @dcb-es/event-store",
     "author": "Paul Grimshaw",
     "license": "MIT",
     "version": "1.2.4",
