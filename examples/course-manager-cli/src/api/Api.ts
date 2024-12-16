@@ -1,4 +1,4 @@
-import { EventHandlerRegistry, EventPublisher, reconstitute } from "@dcb-es/event-handling"
+import { EventHandlerRegistry, EventPublisher, buildDecisionModel } from "@dcb-es/event-handling"
 import { EventStore } from "@dcb-es/event-store"
 import { Course, PostgresCourseSubscriptionsRepository, Student, STUDENT_SUBSCRIPTION_LIMIT } from "../postgresCourseSubscriptionRepository/PostgresCourseSubscriptionRespository"
 import {
@@ -41,7 +41,7 @@ export const EventSourcedApi = (
         findCourseById: async (courseId: string) => repository.findCourseById(courseId),
         findStudentById: async (studentId: string) => repository.findStudentById(studentId),
         registerCourse: async ({ id, title, capacity }) => {
-            const { state, appendCondition } = await reconstitute(eventStore, {
+            const { state, appendCondition } = await buildDecisionModel(eventStore, {
                 courseExists: CourseExists(id)
             })
 
@@ -52,7 +52,7 @@ export const EventSourcedApi = (
             )
         },
         registerStudent: async ({ id, name }) => {
-            const { state, appendCondition } = await reconstitute(eventStore, {
+            const { state, appendCondition } = await buildDecisionModel(eventStore, {
                 studentAlreadyRegistered: StudentAlreadyRegistered(id),
                 nextStudentNumber: NextStudentNumber()
             })
@@ -64,7 +64,7 @@ export const EventSourcedApi = (
             )
         },
         updateCourseCapacity: async ({ courseId, newCapacity }) => {
-            const { state, appendCondition } = await reconstitute(eventStore, {
+            const { state, appendCondition } = await buildDecisionModel(eventStore, {
                 courseExists: CourseExists(courseId),
                 CourseCapacity: CourseCapacity(courseId)
             })
@@ -76,7 +76,7 @@ export const EventSourcedApi = (
             await eventPublisher.publish(new CourseCapacityWasChangedEvent({ courseId, newCapacity }), appendCondition)
         },
         updateCourseTitle: async ({ courseId, newTitle }) => {
-            const { state, appendCondition } = await reconstitute(eventStore, {
+            const { state, appendCondition } = await buildDecisionModel(eventStore, {
                 courseExists: CourseExists(courseId),
                 courseTitle: CourseTitle(courseId)
             })
@@ -86,7 +86,7 @@ export const EventSourcedApi = (
             await eventPublisher.publish(new CourseTitleWasChangedEvent({ courseId, newTitle }), appendCondition)
         },
         subscribeStudentToCourse: async ({ courseId, studentId }) => {
-            const { state, appendCondition } = await reconstitute(eventStore, {
+            const { state, appendCondition } = await buildDecisionModel(eventStore, {
                 courseExists: CourseExists(courseId),
                 courseCapacity: CourseCapacity(courseId),
                 studentAlreadySubscribed: StudentAlreadySubscribed({
@@ -110,7 +110,7 @@ export const EventSourcedApi = (
             await eventPublisher.publish(new StudentWasSubscribedEvent({ courseId, studentId }), appendCondition)
         },
         unsubscribeStudentFromCourse: async ({ courseId, studentId }) => {
-            const { state, appendCondition } = await reconstitute(eventStore, {
+            const { state, appendCondition } = await buildDecisionModel(eventStore, {
                 studentAlreadySubscribed: StudentAlreadySubscribed({
                     courseId: courseId,
                     studentId: studentId

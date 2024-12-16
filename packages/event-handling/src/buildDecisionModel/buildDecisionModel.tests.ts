@@ -1,11 +1,11 @@
 import { AppendCondition, AppendConditions, MemoryEventStore } from "@dcb-es/event-store"
-import { reconstitute } from "./reconstitute"
-import { CourseCapacity, CourseExists } from "./reconsititue.tests.handlers"
-import { CourseCapacityWasChangedEvent, CourseWasRegisteredEvent } from "./reconstitute.tests.events"
+import { buildDecisionModel } from "./buildDecisionModel"
+import { CourseCapacity, CourseExists } from "./buildDecisionModel.tests.handlers"
+import { CourseCapacityWasChangedEvent, CourseWasRegisteredEvent } from "./buildDecisionModel.tests.events"
 
 const COURSE_ID = "course-1"
 
-describe("reconstitute", () => {
+describe("buildDecisionModel", () => {
     let eventStore: MemoryEventStore
     let appendCondition: AppendCondition
 
@@ -18,7 +18,7 @@ describe("reconstitute", () => {
             let courseExists: boolean
 
             beforeEach(async () => {
-                const result = await reconstitute(eventStore, {
+                const result = await buildDecisionModel(eventStore, {
                     courseExists: CourseExists(COURSE_ID)
                 })
                 courseExists = result.state.courseExists
@@ -58,7 +58,7 @@ describe("reconstitute", () => {
                 AppendConditions.Any
             )
 
-            const result = await reconstitute(eventStore, {
+            const result = await buildDecisionModel(eventStore, {
                 courseExists: CourseExists(COURSE_ID)
             })
             courseExists = result.state.courseExists
@@ -103,7 +103,7 @@ describe("reconstitute", () => {
                 }),
                 AppendConditions.Any
             )
-            const result = await reconstitute(eventStore, {
+            const result = await buildDecisionModel(eventStore, {
                 courseCapacity: CourseCapacity(COURSE_ID)
             })
             courseCapacity = result.state.courseCapacity
@@ -156,7 +156,7 @@ describe("reconstitute", () => {
                 }),
                 AppendConditions.Any
             )
-            const result = await reconstitute(eventStore, {
+            const result = await buildDecisionModel(eventStore, {
                 courseCapacity: CourseCapacity(COURSE_ID),
                 courseExists: CourseExists(COURSE_ID)
             })

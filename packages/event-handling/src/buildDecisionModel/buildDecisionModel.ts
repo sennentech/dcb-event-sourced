@@ -6,7 +6,7 @@ type EventHandlerStates<T extends EventHandlers> = {
     [K in keyof T]: T[K]["init"]
 }
 
-export async function reconstitute<T extends EventHandlers>(
+export async function buildDecisionModel<T extends EventHandlers>(
     eventStore: EventStore,
     eventHandlers: T
 ): Promise<{ state: EventHandlerStates<T>; appendCondition: AppendCondition }> {

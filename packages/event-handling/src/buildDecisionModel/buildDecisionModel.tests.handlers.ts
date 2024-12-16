@@ -4,7 +4,7 @@ import {
     CourseCapacityWasChangedEvent,
     StudentWasSubscribedEvent,
     StudentWasUnsubscribedEvent
-} from "./reconstitute.tests.events"
+} from "./buildDecisionModel.tests.events"
 
 export const CourseExists = (
     courseId: string
@@ -25,10 +25,10 @@ export const CourseCapacity = (
 ): EventHandlerWithState<{
     state: { isFull: boolean; subscriberCount: number; capacity: number }
     eventHandlers:
-        | CourseWasRegisteredEvent
-        | CourseCapacityWasChangedEvent
-        | StudentWasSubscribedEvent
-        | StudentWasUnsubscribedEvent
+    | CourseWasRegisteredEvent
+    | CourseCapacityWasChangedEvent
+    | StudentWasSubscribedEvent
+    | StudentWasUnsubscribedEvent
 }> => ({
     tagFilter: { courseId },
     init: { isFull: true, subscriberCount: 0, capacity: 0 },
