@@ -3,5 +3,5 @@
     "compilerOptions": {
         "outDir": "./dist"
     },
-    "include": ["./src/**/*", "index.postgres.ts"]
+    "include": ["./src/**/*", "src/index.ts"]
 }

@@ -1,7 +1,5 @@
 import { Pool } from "pg"
-import { PostgresCourseSubscriptionsRepository } from "./PostgresCourseSubscriptionRespository"
-
-import { Student } from "../ReadModels"
+import { PostgresCourseSubscriptionsRepository, Student } from "./PostgresCourseSubscriptionRespository"
 import { getTestPgDatabasePool } from "../../jest.testPgDbPool"
 
 const COURSE_1 = {

@@ -1,27 +1,18 @@
 import { EventHandler } from "@dcb-es/event-handling"
 import { PostgresTransactionManager } from "@dcb-es/event-handling-postgres"
-
-import { PostgresCourseSubscriptionsRepository } from "../repository/PostgresCourseSubscriptionRespository"
-
-import {
-    CourseWasRegisteredEvent,
-    CourseCapacityWasChangedEvent,
-    StudentWasRegistered,
-    StudentWasSubscribedEvent,
-    StudentWasUnsubscribedEvent,
-    CourseTitleWasChangedEvent
-} from "./Events"
+import { CourseWasRegisteredEvent, CourseCapacityWasChangedEvent, CourseTitleWasChangedEvent, StudentWasRegistered, StudentWasSubscribedEvent, StudentWasUnsubscribedEvent } from "./Events"
+import { PostgresCourseSubscriptionsRepository } from "../postgresCourseSubscriptionRepository/PostgresCourseSubscriptionRespository"
 
 export const PostgresCourseSubscriptionsProjection = (
     transactionManager: PostgresTransactionManager
 ): EventHandler<{
     eventHandlers:
-        | CourseWasRegisteredEvent
-        | CourseCapacityWasChangedEvent
-        | CourseTitleWasChangedEvent
-        | StudentWasRegistered
-        | StudentWasSubscribedEvent
-        | StudentWasUnsubscribedEvent
+    | CourseWasRegisteredEvent
+    | CourseCapacityWasChangedEvent
+    | CourseTitleWasChangedEvent
+    | StudentWasRegistered
+    | StudentWasSubscribedEvent
+    | StudentWasUnsubscribedEvent
 }> => ({
     when: {
         courseWasRegistered: async ({ event: { tags, data } }) => {

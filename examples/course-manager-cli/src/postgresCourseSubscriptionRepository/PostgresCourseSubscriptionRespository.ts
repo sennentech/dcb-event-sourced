@@ -1,8 +1,27 @@
 import { Pool, PoolClient, Client } from "pg"
-import { Course, Student } from "../ReadModels"
-import { CourseSubscriptionRepository } from "./CourseSubscriptionRepository"
+export const STUDENT_SUBSCRIPTION_LIMIT = 5
 
-export class PostgresCourseSubscriptionsRepository implements CourseSubscriptionRepository {
+/*
+    This repository has nothing to do with the event sourcing, and is a simple layer following a repository 
+    pattern with a simple CRUD like postgres implementation.  It is used here with the 
+    PostgresCourseSubscriptionsProjection to demonstrate how the projection might persist state to a database.
+*/
+
+export class Course {
+    id: string
+    title: string
+    capacity: number
+    subscribedStudents: Omit<Student, "subscribedCourses">[]
+}
+
+export class Student {
+    id: string
+    name: string
+    studentNumber: number
+    subscribedCourses: Omit<Course, "subscribedStudents">[]
+}
+
+export class PostgresCourseSubscriptionsRepository {
     constructor(private client: Pool | PoolClient | Client) {
         if (!client) throw new Error(`Postgres client is not initialised`)
     }

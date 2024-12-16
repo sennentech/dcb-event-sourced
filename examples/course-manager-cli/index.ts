@@ -1,12 +1,12 @@
 import { Pool } from "pg"
-import { PostgresCourseSubscriptionsRepository } from "./src/repository/PostgresCourseSubscriptionRespository"
-import { EventSourcedApi } from "./src/eventSourced/EventSourcedApi"
-import { PostgresCourseSubscriptionsProjection } from "./src/eventSourced/PostgresCourseSubscriptionsProjection"
+import { PostgresCourseSubscriptionsProjection } from "./src/api/PostgresCourseSubscriptionsProjection"
 import "source-map-support/register"
 import { startCli } from "./src/Cli"
 import { PostgresTransactionManager, PostgresEventHandlerRegistry } from "@dcb-es/event-handling-postgres"
 import { PostgresEventStore } from "@dcb-es/event-store-postgres"
-;(async () => {
+import { PostgresCourseSubscriptionsRepository } from "./src/postgresCourseSubscriptionRepository/PostgresCourseSubscriptionRespository"
+import { EventSourcedApi } from "./src/api/Api"
+(async () => {
     const postgresConfig = {
         host: "localhost",
         port: 5432,

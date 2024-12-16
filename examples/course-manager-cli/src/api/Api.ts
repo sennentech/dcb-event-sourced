@@ -1,8 +1,6 @@
 import { EventHandlerRegistry, EventPublisher, reconstitute } from "@dcb-es/event-handling"
 import { EventStore } from "@dcb-es/event-store"
-import { Api } from "../Api"
-import { STUDENT_SUBSCRIPTION_LIMIT } from "../ReadModels"
-import { CourseSubscriptionRepository } from "../repository/CourseSubscriptionRepository"
+import { Course, PostgresCourseSubscriptionsRepository, Student, STUDENT_SUBSCRIPTION_LIMIT } from "../postgresCourseSubscriptionRepository/PostgresCourseSubscriptionRespository"
 import {
     CourseWasRegisteredEvent,
     StudentWasRegistered,
@@ -20,11 +18,22 @@ import {
     StudentAlreadyRegistered,
     StudentAlreadySubscribed,
     StudentSubscriptions
-} from "./WriteModels"
+} from "./DecisionModels"
+
+export interface Api {
+    findCourseById(courseId: string): Promise<Course | undefined>
+    findStudentById(studentId: string): Promise<Student | undefined>
+    registerCourse(req: { id: string; title: string; capacity: number }): Promise<void>
+    registerStudent(req: { id: string; name: string }): Promise<void>
+    updateCourseCapacity(req: { courseId: string; newCapacity: number }): Promise<void>
+    updateCourseTitle(req: { courseId: string; newTitle: string }): Promise<void>
+    subscribeStudentToCourse(req: { courseId: string; studentId: string }): Promise<void>
+    unsubscribeStudentFromCourse(req: { courseId: string; studentId: string }): Promise<void>
+}
 
 export const EventSourcedApi = (
     eventStore: EventStore,
-    repository: CourseSubscriptionRepository,
+    repository: PostgresCourseSubscriptionsRepository,
     eventHandlerRegistry: EventHandlerRegistry
 ): Api => {
     const eventPublisher = new EventPublisher(eventStore, eventHandlerRegistry)
