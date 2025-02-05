@@ -4,7 +4,7 @@ import { v4 as uuid } from "uuid"
 
 export const getPostgreSqlContainer = async (): Promise<StartedPostgreSqlContainer> => {
     if (!global.__PG_CONTAINER_INSTANCE) {
-        global.__PG_CONTAINER_INSTANCE = await new PostgreSqlContainer().withDatabase("postgres").start()
+        global.__PG_CONTAINER_INSTANCE = await new PostgreSqlContainer("postgres:17").withDatabase("postgres").start()
     }
     return global.__PG_CONTAINER_INSTANCE
 }
@@ -22,6 +22,7 @@ export const getTestPgDatabasePool = async (): Promise<Pool> => {
     await client.end()
 
     return new Pool({
-        connectionString: baseUri.replace("/postgres", `/${dbName}`)
+        connectionString: baseUri.replace("/postgres", `/${dbName}`),
+        max: 100
     })
 }

@@ -8,6 +8,17 @@ class EventType1 implements EsEvent {
     tags: { testTagKey?: string }
     data: Record<string, never>
 
+    constructor(tags: Record<string, string> = {}) {
+        this.tags = tags
+        this.data = {}
+    }
+}
+
+class EventType2 implements EsEvent {
+    type: "testEvent2" = "testEvent2"
+    tags: { testTagKey?: string }
+    data: Record<string, never>
+
     constructor(tagValue?: string) {
         this.tags = tagValue ? { testTagKey: tagValue } : {}
         this.data = {}
@@ -66,7 +77,7 @@ describe("postgresEventStore.append", () => {
         })
 
         test("should increment sequence number to 2 when a second event is appended", async () => {
-            const lastSequenceNumber = await (await eventStore.append(new EventType1(), AppendConditions.Any)).at(-1)
+            const lastSequenceNumber = (await eventStore.append(new EventType1(), AppendConditions.Any)).at(-1)
                 .sequenceNumber
             expect(lastSequenceNumber.value).toBe(2)
         })
@@ -108,6 +119,58 @@ describe("postgresEventStore.append", () => {
                 -1
             ).sequenceNumber
             expect(lastSequenceNumber.value).toBe(4)
+        })
+
+        test("should concurrently add a single event when lots attempted in parallel with same append condition", async () => {
+            const storeEvents = [];
+
+            const appendCondition: AppendCondition = {
+                query: {
+                    criteria: [{ eventTypes: ["testEvent1"] }]
+                },
+                maxSequenceNumber: SequenceNumber.create(1)
+            }
+
+            for (let i = 0; i < 10; i++) {
+                storeEvents.push(eventStore.append(new EventType1(), appendCondition));
+            }
+            const results = await Promise.allSettled(storeEvents);
+            expect(results.filter(r => r.status === "fulfilled").length).toBe(1)
+            const events = await streamAllEventsToArray(eventStore.readAll())
+            expect(events.length).toBe(2)
+        })
+
+        test("should concurrently add a all events when lots attempted in parralel", async () => {
+            const storeEvents = [];
+            const iterations = 1000
+            for (let i = 0; i < iterations; i++) {
+                storeEvents.push(eventStore.append(new EventType1(), AppendConditions.Any))
+            }
+            const results = await Promise.allSettled(storeEvents);
+            expect(results.filter(r => r.status === "fulfilled").length).toBe(iterations)
+        })
+
+
+        test("should fail to append next event if append condition is no longer met", async () => {
+            const appendCondition: AppendCondition = {
+                query: {
+                    criteria: [{ eventTypes: ["testEvent1"], tags: {} }]
+                },
+                maxSequenceNumber: SequenceNumber.create(1)
+            }
+
+            // First append should pass and set sequence_number to 2
+            const firstInsert = await eventStore.append(new EventType1(), appendCondition)
+            expect(firstInsert.at(-1).sequenceNumber.value).toBe(2)
+
+            // Second append should pass and as its unrelated (different event type)
+            const secondInsert = await eventStore.append(new EventType2(), AppendConditions.Any)
+            expect(secondInsert.at(-1).sequenceNumber.value).toBe(3)
+
+            // Third append with the same condition should fail because it would exceed maxSequenceNumber=2
+            await expect(eventStore.append(new EventType1(), appendCondition)).rejects.toThrow(
+                "Expected Version fail: New events matching appendCondition found."
+            )
         })
     })
 })

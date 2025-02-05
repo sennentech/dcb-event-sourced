@@ -1,6 +1,6 @@
 import { Pool, QueryResult } from "pg"
 import { dbEventConverter } from "./utils"
-import { readSql as readQuery } from "./readSql"
+import { readSql as readQuery, readSqlWithCursor } from "./readSql"
 import { appendSql as appendCommand } from "./appendCommand"
 import {
     EventStore,
@@ -16,7 +16,7 @@ import { createEventsTableSql } from "./createEventsTableSql"
 const BATCH_SIZE = 100
 
 export class PostgresEventStore implements EventStore {
-    constructor(private pool: Pool) {}
+    constructor(private pool: Pool) { }
 
     async append(
         events: EsEvent | EsEvent[],
@@ -58,7 +58,7 @@ export class PostgresEventStore implements EventStore {
         const client = await this.pool.connect()
         try {
             await client.query("BEGIN")
-            const { sql, params } = readQuery(query?.criteria, options)
+            const { sql, params } = readSqlWithCursor(query?.criteria, options)
 
             await client.query(sql, params)
 
