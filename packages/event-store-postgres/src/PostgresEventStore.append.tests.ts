@@ -8,7 +8,7 @@ class EventType1 implements DcbEvent {
     type: "testEvent1" = "testEvent1"
     tags: { testTagKey?: string }
     data: Record<string, never>
-    metadata: Record<string, never> = {}
+    metadata: { userId: string } = { userId: "user-1" }
 
     constructor(tags: Record<string, string> = {}) {
         this.tags = tags
@@ -20,7 +20,7 @@ class EventType2 implements DcbEvent {
     type: "testEvent2" = "testEvent2"
     tags: { testTagKey?: string }
     data: Record<string, never>
-    metadata: Record<string, never> = {}
+    metadata: { userId: string } = { userId: "user-1" }
 
     constructor(tagValue?: string) {
         this.tags = tagValue ? { testTagKey: tagValue } : {}
@@ -70,6 +70,13 @@ describe("postgresEventStore.append", () => {
                     -1
                 )?.sequenceNumber
                 expect(lastSequenceNumber?.value).toBe(1)
+            })
+
+            test("should store and return metadata on event successfully", async () => {
+                await eventStore.append(new EventType1())
+                const events = await streamAllEventsToArray(eventStore.read(Queries.all))
+                const lastEvent = events.at(-1).event as EventType1
+                expect(lastEvent.metadata.userId).toBe("user-1")
             })
         })
     })

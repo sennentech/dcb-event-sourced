@@ -13,14 +13,14 @@ export const appendSql = (
 
     //prettier-ignore
     const statement = `
-        WITH new_events (type, data, tags) AS ( 
+        WITH new_events (type, data, metadata, tags) AS ( 
             VALUES ${formattedEvents
-            .map(e => `(${params.add(e.type)},${params.add(e.data)}::JSONB, ${params.add(e.tags)}::JSONB)`)
+            .map(e => `(${params.add(e.type)},${params.add(e.data)}::JSONB,${params.add(e.metadata)}::JSONB, ${params.add(e.tags)}::JSONB)`)
             .join(", ")}
         ),
         inserted AS (
-            INSERT INTO events (type, data, tags)
-            SELECT type, data, tags
+            INSERT INTO events (type, data, metadata, tags)
+            SELECT type, data, metadata, tags
             FROM new_events
             ${query && query.length > 0 && query !== "All" ? `
                 WHERE NOT EXISTS (

@@ -18,6 +18,7 @@ export const readSql = (query: Query, options?: ReadOptions) => {
             e.sequence_number,
             type,
             data,
+            metadata,
             tags,
             to_char("timestamp" AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') "timestamp"
         FROM events e

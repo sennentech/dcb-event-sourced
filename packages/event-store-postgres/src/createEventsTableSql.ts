@@ -3,6 +3,7 @@ export const createEventsTableSql = `
         sequence_number BIGSERIAL PRIMARY KEY,
         type TEXT NOT NULL,
         data JSONB NOT NULL,
+        metadata JSONB NOT NULL,
         tags JSONB NOT NULL,
         "timestamp" TIMESTAMPTZ DEFAULT now()
     );
