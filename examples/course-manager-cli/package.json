@@ -2,7 +2,7 @@
     "name": "@dcb-es/examples-course-manager-cli",
     "author": "Paul Grimshaw",
     "license": "MIT",
-    "version": "1.5.2",
+    "version": "1.5.3",
     "private": true,
     "scripts": {
         "test": "jest --runInBand",
@@ -15,10 +15,10 @@
         "prepare": "yarn build"
     },
     "dependencies": {
-        "@dcb-es/event-handling": "^4.0.1",
-        "@dcb-es/event-handling-postgres": "^3.0.1",
-        "@dcb-es/event-store": "^3.0.1",
-        "@dcb-es/event-store-postgres": "^3.0.1",
+        "@dcb-es/event-handling": "^4.0.2",
+        "@dcb-es/event-handling-postgres": "^3.0.2",
+        "@dcb-es/event-store": "^3.0.2",
+        "@dcb-es/event-store-postgres": "^3.0.2",
         "inquirer": "^8.0.0",
         "interactive-cli": "^1.1.6"
     },
