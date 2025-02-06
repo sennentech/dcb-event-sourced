@@ -1,4 +1,4 @@
-import { AppendCondition, AppendConditions, MemoryEventStore } from "@dcb-es/event-store"
+import { AppendCondition, MemoryEventStore, QueryItem } from "@dcb-es/event-store"
 import { buildDecisionModel } from "./buildDecisionModel"
 import { CourseCapacity, CourseExists } from "./buildDecisionModel.tests.handlers"
 import { CourseCapacityWasChangedEvent, CourseWasRegisteredEvent } from "./buildDecisionModel.tests.events"
@@ -34,13 +34,13 @@ describe("buildDecisionModel", () => {
             })
 
             test("should have a single eventType of 'courseWasRegistered' in appendCondition", async () => {
-                const { eventTypes } = appendCondition.query.criteria[0]
+                const { eventTypes } = <QueryItem>appendCondition.query[0]
                 expect(eventTypes.length).toBe(1)
                 expect(eventTypes[0]).toBe("courseWasRegistered")
             })
 
             test("should include 'courseId' as a tag in appendCondition", async () => {
-                const { tags } = appendCondition.query.criteria[0]
+                const { tags } = <QueryItem>appendCondition.query[0]
                 expect(Object.keys(tags).length).toBe(1)
                 expect(tags.courseId).toBe("course-1")
             })
@@ -54,8 +54,7 @@ describe("buildDecisionModel", () => {
                 new CourseWasRegisteredEvent({
                     courseId: COURSE_ID,
                     capacity: 10
-                }),
-                AppendConditions.Any
+                })
             )
 
             const result = await buildDecisionModel(eventStore, {
@@ -74,13 +73,13 @@ describe("buildDecisionModel", () => {
         })
 
         test("should have a single eventType of 'courseWasRegistered' in appendCondition", async () => {
-            const { eventTypes } = appendCondition.query.criteria[0]
+            const { eventTypes } = <QueryItem>appendCondition.query[0]
             expect(eventTypes.length).toBe(1)
             expect(eventTypes[0]).toBe("courseWasRegistered")
         })
 
         test("should include 'courseId' as a tag in appendCondition", async () => {
-            const { tags } = appendCondition.query.criteria[0]
+            const { tags } = <QueryItem>appendCondition.query[0]
             expect(Object.keys(tags).length).toBe(1)
             expect(tags.courseId).toBe("course-1")
         })
@@ -93,15 +92,13 @@ describe("buildDecisionModel", () => {
                 new CourseWasRegisteredEvent({
                     courseId: COURSE_ID,
                     capacity: 10
-                }),
-                AppendConditions.Any
+                })
             )
             await eventStore.append(
                 new CourseCapacityWasChangedEvent({
                     courseId: COURSE_ID,
                     newCapacity: 15
-                }),
-                AppendConditions.Any
+                })
             )
             const result = await buildDecisionModel(eventStore, {
                 courseCapacity: CourseCapacity(COURSE_ID)
@@ -119,7 +116,7 @@ describe("buildDecisionModel", () => {
         })
 
         test("should have the 4 correct eventTypes in appendCondition", async () => {
-            const { eventTypes } = appendCondition.query.criteria[0]
+            const { eventTypes } = <QueryItem>appendCondition.query[0]
             expect(eventTypes.length).toBe(4)
             expect(
                 [
@@ -132,7 +129,7 @@ describe("buildDecisionModel", () => {
         })
 
         test("should include 'courseId' as a tag in appendCondition", async () => {
-            const { tags } = appendCondition.query.criteria[0]
+            const { tags } = <QueryItem>appendCondition.query[0]
             expect(Object.keys(tags).length).toBe(1)
             expect(tags.courseId).toBe("course-1")
         })
@@ -146,15 +143,13 @@ describe("buildDecisionModel", () => {
                 new CourseWasRegisteredEvent({
                     courseId: COURSE_ID,
                     capacity: 10
-                }),
-                AppendConditions.Any
+                })
             )
             await eventStore.append(
                 new CourseCapacityWasChangedEvent({
                     courseId: COURSE_ID,
                     newCapacity: 15
-                }),
-                AppendConditions.Any
+                })
             )
             const result = await buildDecisionModel(eventStore, {
                 courseCapacity: CourseCapacity(COURSE_ID),
@@ -174,7 +169,7 @@ describe("buildDecisionModel", () => {
         })
 
         test("should have the 4 correct eventTypes in appendCondition", async () => {
-            const { eventTypes } = appendCondition.query.criteria[0]
+            const { eventTypes } = <QueryItem>appendCondition.query[0]
             expect(eventTypes.length).toBe(4)
             expect(
                 [
@@ -187,7 +182,7 @@ describe("buildDecisionModel", () => {
         })
 
         test("should include 'courseId' as a tag in appendCondition", async () => {
-            const { tags } = appendCondition.query.criteria[0]
+            const { tags } = <QueryItem>appendCondition.query[0]
             expect(Object.keys(tags).length).toBe(1)
             expect(tags.courseId).toBe("course-1")
         })

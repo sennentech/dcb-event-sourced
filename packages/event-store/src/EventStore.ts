@@ -3,47 +3,42 @@ import { Timestamp } from "./Timestamp"
 
 export type Tags = Record<string, string | string[]>
 
-export interface EsEvent {
+export interface DcbEvent {
     type: string
     tags: Tags
     data: unknown
+    metadata: unknown
 }
 
-export interface EsEventEnvelope<T extends EsEvent = EsEvent> {
+export interface EventEnvelope<T extends DcbEvent = DcbEvent> {
     event: T
     timestamp: Timestamp
     sequenceNumber: SequenceNumber
-    matchedCriteria?: string[]
 }
 
-export interface EsQueryCriterion {
+export interface QueryItem {
     tags?: Tags
     eventTypes?: string[]
     onlyLastEvent?: boolean
 }
 
-export interface EsQuery {
-    criteria: EsQueryCriterion[]
-}
+/* helper to enable eventStore.query(Queries.all) */
+export const Queries: { all: All } = { all: "All" }
+export type All = "All"
+export type Query = QueryItem[] | All
 
-export type AnyCondition = "Any"
-
-export const AppendConditions: Record<AnyCondition, AnyCondition> = {
-    Any: "Any"
-}
 export type AppendCondition = {
-    query: EsQuery
+    query: Query
     maxSequenceNumber: SequenceNumber
 }
 
-export interface EsReadOptions {
+export interface ReadOptions {
     backwards?: boolean
     fromSequenceNumber?: SequenceNumber
     limit?: number
 }
-export interface EventStore {
-    append: (events: EsEvent | EsEvent[], condition: AppendCondition | AnyCondition) => Promise<EsEventEnvelope[]>
 
-    read: (query: EsQuery, options?: EsReadOptions) => AsyncGenerator<EsEventEnvelope>
-    readAll: (options?: EsReadOptions) => AsyncGenerator<EsEventEnvelope>
+export interface EventStore {
+    append: (events: DcbEvent | DcbEvent[], condition?: AppendCondition) => Promise<void>
+    read: (query: Query, options?: ReadOptions) => AsyncGenerator<EventEnvelope>
 }

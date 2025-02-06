@@ -1,12 +1,13 @@
 import { MemoryEventStore } from "./MemoryEventStore"
-import { AppendConditions, EsEvent } from "../EventStore"
+import { DcbEvent, Queries } from "../EventStore"
 import { SequenceNumber } from "../SequenceNumber"
 import { streamAllEventsToArray } from "../streamAllEventsToArray"
 
-class EventType1 implements EsEvent {
+class EventType1 implements DcbEvent {
     type: "testEvent1" = "testEvent1"
     tags: { testTagKey?: string }
     data: Record<string, never>
+    metadata: Record<string, never> = {}
 
     constructor(tagValue?: string) {
         this.tags = tagValue ? { testTagKey: tagValue } : {}
@@ -14,10 +15,11 @@ class EventType1 implements EsEvent {
     }
 }
 
-class EventType2 implements EsEvent {
+class EventType2 implements DcbEvent {
     type: "testEvent2" = "testEvent2"
     tags: { testTagKey?: string }
     data: Record<string, never>
+    metadata: Record<string, never> = {}
 
     constructor(tagValue?: string) {
         this.tags = tagValue ? { testTagKey: tagValue } : {}
@@ -34,12 +36,12 @@ describe("memoryEventStore.query", () => {
         })
 
         test("should return no events when read forward", async () => {
-            const events = await streamAllEventsToArray(eventStore.readAll())
+            const events = await streamAllEventsToArray(eventStore.read(Queries.all,))
             expect(events.length).toBe(0)
         })
 
         test("should return no events when read backward", async () => {
-            const events = await streamAllEventsToArray(eventStore.readAll())
+            const events = await streamAllEventsToArray(eventStore.read(Queries.all,))
             expect(events.length).toBe(0)
         })
     })
@@ -47,16 +49,16 @@ describe("memoryEventStore.query", () => {
     describe("when event store contains exactly one event", () => {
         beforeEach(async () => {
             eventStore = new MemoryEventStore()
-            await eventStore.append(new EventType1("tag-key-1"), AppendConditions.Any)
+            await eventStore.append(new EventType1("tag-key-1"))
         })
 
         test("should return a single event when read forward", async () => {
-            const events = await streamAllEventsToArray(eventStore.readAll())
+            const events = await streamAllEventsToArray(eventStore.read(Queries.all,))
             expect(events.length).toBe(1)
         })
 
         test("should return a single event when read backward", async () => {
-            const events = await streamAllEventsToArray(eventStore.readAll({ backwards: true }))
+            const events = await streamAllEventsToArray(eventStore.read(Queries.all, { backwards: true }))
             expect(events.length).toBe(1)
         })
     })
@@ -64,14 +66,14 @@ describe("memoryEventStore.query", () => {
     describe("when event store contains two events", () => {
         beforeEach(async () => {
             eventStore = new MemoryEventStore()
-            await eventStore.append(new EventType1("tag-key-1"), AppendConditions.Any)
-            await eventStore.append(new EventType2("tag-key-2"), AppendConditions.Any)
+            await eventStore.append(new EventType1("tag-key-1"))
+            await eventStore.append(new EventType2("tag-key-2"))
         })
 
         describe("with a fromSequenceNumber filter applied", () => {
             test("should return the second event when read forward from sequence number 2", async () => {
                 const events = await streamAllEventsToArray(
-                    eventStore.readAll({ fromSequenceNumber: SequenceNumber.create(2) })
+                    eventStore.read(Queries.all, { fromSequenceNumber: SequenceNumber.create(2) })
                 )
                 expect(events.length).toBe(1)
                 expect(events[0].sequenceNumber.value).toBe(2)
@@ -79,7 +81,7 @@ describe("memoryEventStore.query", () => {
 
             test("should return the first event when read backward from sequence number 1", async () => {
                 const events = await streamAllEventsToArray(
-                    eventStore.readAll({ fromSequenceNumber: SequenceNumber.create(1), backwards: true })
+                    eventStore.read(Queries.all, { fromSequenceNumber: SequenceNumber.create(1), backwards: true })
                 )
                 expect(events.length).toBe(1)
                 expect(events[0].sequenceNumber.value).toBe(1)
@@ -87,7 +89,7 @@ describe("memoryEventStore.query", () => {
 
             test("should return both first and second event when read backward from sequence number 2", async () => {
                 const events = await streamAllEventsToArray(
-                    eventStore.readAll({ fromSequenceNumber: SequenceNumber.create(2), backwards: true })
+                    eventStore.read(Queries.all, { fromSequenceNumber: SequenceNumber.create(2), backwards: true })
                 )
                 expect(events.length).toBe(2)
             })
@@ -96,7 +98,7 @@ describe("memoryEventStore.query", () => {
         describe("when filtered by event types", () => {
             test("should return the event of type 'testEvent1' when read forward with event type filter", async () => {
                 const events = await streamAllEventsToArray(
-                    eventStore.read({ criteria: [{ eventTypes: ["testEvent1"], tags: {} }] })
+                    eventStore.read([{ eventTypes: ["testEvent1"] }])
                 )
                 expect(events.length).toBe(1)
                 expect(events[0].event.type).toBe("testEvent1")
@@ -106,14 +108,14 @@ describe("memoryEventStore.query", () => {
         describe("when filtered by tags", () => {
             test("should return no events when tag keys do not match", async () => {
                 const events = await streamAllEventsToArray(
-                    eventStore.read({ criteria: [{ eventTypes: [], tags: { unmatchedId: "tag-key-1" } }] })
+                    eventStore.read([{ eventTypes: [], tags: { unmatchedId: "tag-key-1" } }])
                 )
                 expect(events.length).toBe(0)
             })
 
             test("should return the event matching specific tag key when read forward", async () => {
                 const events = await streamAllEventsToArray(
-                    eventStore.read({ criteria: [{ eventTypes: [], tags: { testTagKey: "tag-key-1" } }] })
+                    eventStore.read([{ eventTypes: [], tags: { testTagKey: "tag-key-1" } }])
                 )
                 expect(events.length).toBe(1)
                 expect(events[0].event.tags.testTagKey).toBe("tag-key-1")
@@ -124,14 +126,14 @@ describe("memoryEventStore.query", () => {
     describe("when event store contains three events", () => {
         beforeEach(async () => {
             eventStore = new MemoryEventStore()
-            await eventStore.append(new EventType1("tag-key-1"), AppendConditions.Any)
-            await eventStore.append(new EventType2("tag-key-2"), AppendConditions.Any)
-            await eventStore.append(new EventType2("ev-3"), AppendConditions.Any)
+            await eventStore.append(new EventType1("tag-key-1"))
+            await eventStore.append(new EventType2("tag-key-2"))
+            await eventStore.append(new EventType2("ev-3"))
         })
 
         test("should return two events of type 'testEvent2' when read forward with event type filter", async () => {
             const events = await streamAllEventsToArray(
-                eventStore.read({ criteria: [{ eventTypes: ["testEvent2"], tags: {} }] })
+                eventStore.read([{ eventTypes: ["testEvent2"] }])
             )
             expect(events.length).toBe(2)
             expect(events[0].event.type).toBe("testEvent2")
@@ -140,19 +142,19 @@ describe("memoryEventStore.query", () => {
 
         test("should treat multiple criteria as OR and return all events when read forward with multiple filters", async () => {
             const events = await streamAllEventsToArray(
-                eventStore.read({
-                    criteria: [
-                        { eventTypes: ["testEvent2"], tags: {} },
-                        { eventTypes: ["testEvent1"], tags: {} }
+                eventStore.read(
+                    [
+                        { eventTypes: ["testEvent2"] },
+                        { eventTypes: ["testEvent1"] }
                     ]
-                })
+                )
             )
             expect(events.length).toBe(3)
         })
 
         test("should respect onlyLastEvent flag on read", async () => {
             const events = await streamAllEventsToArray(
-                eventStore.read({ criteria: [{ eventTypes: ["testEvent2"], tags: {}, onlyLastEvent: true }] })
+                eventStore.read([{ eventTypes: ["testEvent2"], onlyLastEvent: true }])
             )
             expect(events.length).toBe(1)
             expect(events[0].event.type).toBe("testEvent2")
@@ -161,12 +163,11 @@ describe("memoryEventStore.query", () => {
 
         test("should respect onlyLastEvent flag on read with other criteria", async () => {
             const events = await streamAllEventsToArray(
-                eventStore.read({
-                    criteria: [
-                        { eventTypes: ["testEvent2"], tags: {}, onlyLastEvent: true },
-                        { eventTypes: ["testEvent1"], tags: {} }
-                    ]
-                })
+                eventStore.read([
+                    { eventTypes: ["testEvent2"], onlyLastEvent: true },
+                    { eventTypes: ["testEvent1"] }
+                ]
+                )
             )
             expect(events.length).toBe(2)
             expect(events[0].event.type).toBe("testEvent1")
@@ -178,9 +179,8 @@ describe("memoryEventStore.query", () => {
         test("should respect onlyLastEvent flag on read with backwards", async () => {
             const events = await streamAllEventsToArray(
                 eventStore.read(
-                    {
-                        criteria: [{ eventTypes: ["testEvent2"], tags: {}, onlyLastEvent: true }]
-                    },
+                    [{ eventTypes: ["testEvent2"], onlyLastEvent: true }]
+                    ,
                     { backwards: true }
                 )
             )
@@ -190,7 +190,7 @@ describe("memoryEventStore.query", () => {
         })
 
         test("should return respect limit clause when readAll backward", async () => {
-            const events = await streamAllEventsToArray(eventStore.readAll({ limit: 1, backwards: true }))
+            const events = await streamAllEventsToArray(eventStore.read(Queries.all, { limit: 1, backwards: true }))
             expect(events.length).toBe(1)
             expect(events[0].event.type).toBe("testEvent2")
             expect(events[0].event.tags.testTagKey).toBe("ev-3")
@@ -198,7 +198,7 @@ describe("memoryEventStore.query", () => {
 
         test("should return respect limit clause when read forward", async () => {
             const events = await streamAllEventsToArray(
-                eventStore.read({ criteria: [{ eventTypes: ["testEvent2"], tags: {} }] }, { limit: 1 })
+                eventStore.read([{ eventTypes: ["testEvent2"] }], { limit: 1 })
             )
             expect(events.length).toBe(1)
             expect(events[0].event.type).toBe("testEvent2")
@@ -207,7 +207,7 @@ describe("memoryEventStore.query", () => {
 
         test("should return respect limit clause when read backward", async () => {
             const events = await streamAllEventsToArray(
-                eventStore.read({ criteria: [{ eventTypes: ["testEvent2"], tags: {} }] }, { limit: 1, backwards: true })
+                eventStore.read([{ eventTypes: ["testEvent2"] }], { limit: 1, backwards: true })
             )
             expect(events.length).toBe(1)
             expect(events[0].event.type).toBe("testEvent2")
@@ -219,7 +219,7 @@ describe("memoryEventStore.query", () => {
             eventStore.on("read", () => readCount++)
 
             await streamAllEventsToArray(
-                eventStore.read({ criteria: [{ eventTypes: ["testEvent2"], tags: {} }] }, { limit: 1, backwards: true })
+                eventStore.read([{ eventTypes: ["testEvent2"] }], { limit: 1, backwards: true })
             )
             expect(readCount).toBe(1)
         })

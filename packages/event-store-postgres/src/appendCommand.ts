@@ -1,36 +1,36 @@
-import { EsEvent, EsQueryCriterion, SequenceNumber } from "@dcb-es/event-store"
+import { DcbEvent, Query, SequenceNumber } from "@dcb-es/event-store"
 import { ParamManager, dbEventConverter, tagConverter } from "./utils"
 
 export const appendSql = (
-    events: EsEvent[],
-    criteria: EsQueryCriterion[],
-    maxSeqNumber: SequenceNumber
-): { query: string; params: unknown[] } => {
+    events: DcbEvent[],
+    query: Query | undefined,
+    maxSeqNumber: SequenceNumber | undefined
+): { statement: string; params: unknown[] } => {
     const params = new ParamManager()
 
     const maxSeqNoParam = maxSeqNumber ? params.add(maxSeqNumber?.value) : null
     const formattedEvents = events.map(dbEventConverter.toDb)
 
     //prettier-ignore
-    const query = `
+    const statement = `
         WITH new_events (type, data, tags) AS ( 
             VALUES ${formattedEvents
-                .map(e => `(${params.add(e.type)},${params.add(e.data)}::JSONB, ${params.add(e.tags)}::JSONB)`)
-                .join(", ")}
+            .map(e => `(${params.add(e.type)},${params.add(e.data)}::JSONB, ${params.add(e.tags)}::JSONB)`)
+            .join(", ")}
         ),
         inserted AS (
             INSERT INTO events (type, data, tags)
             SELECT type, data, tags
             FROM new_events
-            ${criteria.length > 0 ? `
+            ${query && query.length > 0 && query !== "All" ? `
                 WHERE NOT EXISTS (
-                    ${criteria.map(
-                        c => ` 
-                        SELECT 1 FROM events WHERE type IN (${c.eventTypes.map(t => params.add(t)).join(", ")})
-                        AND tags @> ${params.add(JSON.stringify(tagConverter.toDb(c.tags)))}::jsonb
+                    ${query.map(
+                c => ` 
+                        SELECT 1 FROM events WHERE type IN (${(c.eventTypes ?? []).map(t => params.add(t)).join(", ")})
+                        AND tags @> ${params.add(JSON.stringify(tagConverter.toDb(c.tags ?? {})))}::jsonb
                         AND sequence_number > ${maxSeqNoParam}::bigint
                         `
-                    ).join(`
+            ).join(`
                         UNION ALL
                     `)}
                 )
@@ -46,5 +46,5 @@ export const appendSql = (
         FROM inserted;
         ;
     `
-    return { query, params: params.params }
+    return { statement, params: params.params }
 }

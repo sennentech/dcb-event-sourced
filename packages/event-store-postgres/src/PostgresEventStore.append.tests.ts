@@ -1,12 +1,14 @@
 import { Pool } from "pg"
-import { AppendCondition, AppendConditions, EsEvent, SequenceNumber, streamAllEventsToArray } from "@dcb-es/event-store"
+import { AppendCondition, DcbEvent, SequenceNumber, streamAllEventsToArray } from "@dcb-es/event-store"
 import { PostgresEventStore } from "./PostgresEventStore"
 import { getTestPgDatabasePool } from "../jest.testPgDbPool"
+import { Queries } from "@dcb-es/event-store/dist/src/EventStore"
 
-class EventType1 implements EsEvent {
+class EventType1 implements DcbEvent {
     type: "testEvent1" = "testEvent1"
     tags: { testTagKey?: string }
     data: Record<string, never>
+    metadata: Record<string, never> = {}
 
     constructor(tags: Record<string, string> = {}) {
         this.tags = tags
@@ -14,10 +16,11 @@ class EventType1 implements EsEvent {
     }
 }
 
-class EventType2 implements EsEvent {
+class EventType2 implements DcbEvent {
     type: "testEvent2" = "testEvent2"
     tags: { testTagKey?: string }
     data: Record<string, never>
+    metadata: Record<string, never> = {}
 
     constructor(tagValue?: string) {
         this.tags = tagValue ? { testTagKey: tagValue } : {}
@@ -46,55 +49,53 @@ describe("postgresEventStore.append", () => {
 
     describe("when event store empty", () => {
         test("should return an empty array when no events are stored", async () => {
-            const events = await streamAllEventsToArray(eventStore.readAll())
+            const events = await streamAllEventsToArray(eventStore.read(Queries.all))
             expect(events.length).toBe(0)
         })
         test("should assign a sequence number of 1 on appending the first event", async () => {
-            const lastSequenceNumber = (await eventStore.append(new EventType1(), AppendConditions.Any)).at(
+            await eventStore.append(new EventType1())
+            const lastSequenceNumber = (await streamAllEventsToArray(eventStore.read(Queries.all))).at(
                 -1
-            ).sequenceNumber
-            expect(lastSequenceNumber.value).toBe(1)
+            )?.sequenceNumber
+            expect(lastSequenceNumber?.value).toBe(1)
         })
         describe("when append condition with eventTypes filter and maxSequenceNumber provided", () => {
             const appendCondition: AppendCondition = {
-                query: {
-                    criteria: [{ eventTypes: ["testEvent1"], tags: {} }]
-                },
+                query: [{ eventTypes: ["testEvent1"], tags: {} }],
                 maxSequenceNumber: SequenceNumber.create(1)
             }
             test("should successfully append an event without throwing under specified conditions", async () => {
-                const lastSequenceNumber = (await eventStore.append(new EventType1(), appendCondition)).at(
+                await eventStore.append(new EventType1(), appendCondition)
+                const lastSequenceNumber = (await streamAllEventsToArray(eventStore.read(Queries.all))).at(
                     -1
-                ).sequenceNumber
-                expect(lastSequenceNumber.value).toBe(1)
+                )?.sequenceNumber
+                expect(lastSequenceNumber?.value).toBe(1)
             })
         })
     })
 
     describe("when event store has exactly one event", () => {
         beforeEach(async () => {
-            await eventStore.append(new EventType1(), AppendConditions.Any)
+            await eventStore.append(new EventType1())
         })
 
         test("should increment sequence number to 2 when a second event is appended", async () => {
-            const lastSequenceNumber = (await eventStore.append(new EventType1(), AppendConditions.Any)).at(-1)
-                .sequenceNumber
-            expect(lastSequenceNumber.value).toBe(2)
+            await eventStore.append(new EventType1())
+            const lastSequenceNumber = (await streamAllEventsToArray(eventStore.read(Queries.all))).at(-1)?.sequenceNumber
+            expect(lastSequenceNumber?.value).toBe(2)
         })
 
         test("should update the sequence number to 3 after appending two more events", async () => {
-            const lastSequenceNumber = (
-                await eventStore.append([new EventType1(), new EventType1()], AppendConditions.Any)
-            ).at(-1).sequenceNumber
 
-            expect(lastSequenceNumber.value).toBe(3)
+            await eventStore.append([new EventType1(), new EventType1()])
+            const lastSequenceNumber = (await streamAllEventsToArray(eventStore.read(Queries.all))).at(-1)?.sequenceNumber
+
+            expect(lastSequenceNumber?.value).toBe(3)
         })
 
         describe("when append condition with eventTypes filter and maxSequenceNumber provided", () => {
             const appendCondition: AppendCondition = {
-                query: {
-                    criteria: [{ eventTypes: ["testEvent1"], tags: {} }]
-                },
+                query: [{ eventTypes: ["testEvent1"], tags: {} }],
                 maxSequenceNumber: SequenceNumber.zero()
             }
             test("should throw an error if appended event exceeds the maximum allowed sequence number", async () => {
@@ -106,28 +107,24 @@ describe("postgresEventStore.append", () => {
 
         test("should successfully append an event without throwing under specified conditions", async () => {
             const appendCondition: AppendCondition = {
-                query: {
-                    criteria: [{ eventTypes: ["testEvent1"], tags: {}, onlyLastEvent: true }]
-                },
+                query: [{ eventTypes: ["testEvent1"], tags: {}, onlyLastEvent: true }],
                 maxSequenceNumber: SequenceNumber.create(3)
             }
 
-            await eventStore.append(new EventType1(), AppendConditions.Any)
-            await eventStore.append(new EventType1(), AppendConditions.Any)
+            await eventStore.append(new EventType1(), appendCondition)
+            await eventStore.append(new EventType1(), appendCondition)
+            await eventStore.append(new EventType1(), appendCondition)
 
-            const lastSequenceNumber = (await eventStore.append(new EventType1(), appendCondition)).at(
-                -1
-            ).sequenceNumber
-            expect(lastSequenceNumber.value).toBe(4)
+            const lastSequenceNumber = (await streamAllEventsToArray(eventStore.read(Queries.all))).at(-1)?.sequenceNumber
+
+            expect(lastSequenceNumber?.value).toBe(4)
         })
 
         test("should concurrently add a single event when lots attempted in parallel with same append condition", async () => {
             const storeEvents = [];
 
             const appendCondition: AppendCondition = {
-                query: {
-                    criteria: [{ eventTypes: ["testEvent1"] }]
-                },
+                query: [{ eventTypes: ["testEvent1"] }],
                 maxSequenceNumber: SequenceNumber.create(1)
             }
 
@@ -136,7 +133,7 @@ describe("postgresEventStore.append", () => {
             }
             const results = await Promise.allSettled(storeEvents);
             expect(results.filter(r => r.status === "fulfilled").length).toBe(1)
-            const events = await streamAllEventsToArray(eventStore.readAll())
+            const events = await streamAllEventsToArray(eventStore.read(Queries.all))
             expect(events.length).toBe(2)
         })
 
@@ -144,7 +141,7 @@ describe("postgresEventStore.append", () => {
             const storeEvents = [];
             const iterations = 1000
             for (let i = 0; i < iterations; i++) {
-                storeEvents.push(eventStore.append(new EventType1(), AppendConditions.Any))
+                storeEvents.push(eventStore.append(new EventType1()))
             }
             const results = await Promise.allSettled(storeEvents);
             expect(results.filter(r => r.status === "fulfilled").length).toBe(iterations)
@@ -153,19 +150,18 @@ describe("postgresEventStore.append", () => {
 
         test("should fail to append next event if append condition is no longer met", async () => {
             const appendCondition: AppendCondition = {
-                query: {
-                    criteria: [{ eventTypes: ["testEvent1"], tags: {} }]
-                },
-                maxSequenceNumber: SequenceNumber.create(1)
+                query: [{ eventTypes: ["testEvent1"], tags: {} }], maxSequenceNumber: SequenceNumber.create(1)
             }
 
             // First append should pass and set sequence_number to 2
-            const firstInsert = await eventStore.append(new EventType1(), appendCondition)
-            expect(firstInsert.at(-1).sequenceNumber.value).toBe(2)
+            await eventStore.append(new EventType1(), appendCondition)
+            await eventStore.append(new EventType2())
+
+            const events = await streamAllEventsToArray(eventStore.read(Queries.all))
+            expect(events.at(-2)?.sequenceNumber?.value).toBe(2)
 
             // Second append should pass and as its unrelated (different event type)
-            const secondInsert = await eventStore.append(new EventType2(), AppendConditions.Any)
-            expect(secondInsert.at(-1).sequenceNumber.value).toBe(3)
+            expect(events.at(-1)?.sequenceNumber?.value).toBe(3)
 
             // Third append with the same condition should fail because it would exceed maxSequenceNumber=2
             await expect(eventStore.append(new EventType1(), appendCondition)).rejects.toThrow(

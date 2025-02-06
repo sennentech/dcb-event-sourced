@@ -1,4 +1,4 @@
-import { Tags, EsEvent, EsEventEnvelope, SequenceNumber, Timestamp } from "@dcb-es/event-store"
+import { Tags, DcbEvent, EventEnvelope, SequenceNumber, Timestamp } from "@dcb-es/event-store"
 
 export type DbTags = {
     key: string
@@ -8,12 +8,14 @@ export type DbTags = {
 export type DbWriteEvent = {
     type: string
     data: string
+    metadata: string
     tags: string
 }
 
 export type DbReadEvent = {
     type: string
     data: unknown
+    metadata: unknown
     tags: DbTags
     timestamp: string
     sequence_number: string
@@ -45,17 +47,19 @@ export const tagConverter = {
 }
 
 export const dbEventConverter = {
-    toDb: (esEvent: EsEvent): DbWriteEvent => ({
-        type: esEvent.type,
-        data: JSON.stringify(esEvent.data),
-        tags: JSON.stringify(tagConverter.toDb(esEvent.tags))
+    toDb: (dcbEvent: DcbEvent): DbWriteEvent => ({
+        type: dcbEvent.type,
+        data: JSON.stringify(dcbEvent.data),
+        metadata: JSON.stringify(dcbEvent.metadata),
+        tags: JSON.stringify(tagConverter.toDb(dcbEvent.tags))
     }),
-    fromDb: (dbEvent: DbReadEvent): EsEventEnvelope => ({
+    fromDb: (dbEvent: DbReadEvent): EventEnvelope => ({
         sequenceNumber: SequenceNumber.create(parseInt(dbEvent.sequence_number)),
         timestamp: Timestamp.create(dbEvent.timestamp),
         event: {
             type: dbEvent.type,
             data: dbEvent.data,
+            metadata: dbEvent.metadata,
             tags: tagConverter.fromDb(dbEvent.tags)
         }
     })

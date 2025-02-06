@@ -1,15 +1,14 @@
 import { Pool, QueryResult } from "pg"
 import { dbEventConverter } from "./utils"
-import { readSql as readQuery, readSqlWithCursor } from "./readSql"
+import { readSqlWithCursor } from "./readSql"
 import { appendSql as appendCommand } from "./appendCommand"
 import {
     EventStore,
-    EsEvent,
+    DcbEvent,
     AppendCondition,
-    AnyCondition,
-    EsEventEnvelope,
-    EsReadOptions,
-    EsQuery
+    EventEnvelope,
+    ReadOptions,
+    Query
 } from "@dcb-es/event-store"
 import { createEventsTableSql } from "./createEventsTableSql"
 
@@ -19,25 +18,24 @@ export class PostgresEventStore implements EventStore {
     constructor(private pool: Pool) { }
 
     async append(
-        events: EsEvent | EsEvent[],
-        appendCondition: AppendCondition | AnyCondition
-    ): Promise<EsEventEnvelope[]> {
+        events: DcbEvent | DcbEvent[],
+        appendCondition?: AppendCondition
+    ): Promise<void> {
         events = Array.isArray(events) ? events : [events]
 
-        const maxSeqNumber = appendCondition === "Any" ? null : appendCondition.maxSequenceNumber
-        const criteria = appendCondition !== "Any" ? appendCondition.query.criteria ?? [] : []
-        const { query, params } = appendCommand(events, criteria, maxSeqNumber)
+        const query = !appendCondition ? undefined : appendCondition.query
+        const maxSeqNumber = !appendCondition ? undefined : appendCondition.maxSequenceNumber
+        const { statement, params } = appendCommand(events, query, maxSeqNumber)
 
         const client = await this.pool.connect()
         try {
             await client.query(`BEGIN ISOLATION LEVEL SERIALIZABLE;`)
-            const result = await client.query(query, params)
+            const result = await client.query(statement, params)
             await client.query("COMMIT")
-            const esEVentEnvelopes = result.rows.map(dbEventConverter.fromDb)
-            if (!esEVentEnvelopes.length)
+            const EVentEnvelopes = result.rows.map(dbEventConverter.fromDb)
+            if (!EVentEnvelopes.length)
                 throw new Error(`Expected Version fail: New events matching appendCondition found.`)
 
-            return esEVentEnvelopes
         } catch (err) {
             await client.query("ROLLBACK")
             throw err
@@ -46,19 +44,15 @@ export class PostgresEventStore implements EventStore {
         }
     }
 
-    async *readAll(options?: EsReadOptions): AsyncGenerator<EsEventEnvelope> {
-        yield* this.#read({ query: null, options: options })
-    }
-
-    async *read(query: EsQuery, options?: EsReadOptions): AsyncGenerator<EsEventEnvelope> {
+    async *read(query: Query, options?: ReadOptions): AsyncGenerator<EventEnvelope> {
         yield* this.#read({ query, options })
     }
 
-    async *#read({ query, options }: { query?: EsQuery; options?: EsReadOptions }): AsyncGenerator<EsEventEnvelope> {
+    async *#read({ query, options }: { query: Query; options?: ReadOptions }): AsyncGenerator<EventEnvelope> {
         const client = await this.pool.connect()
         try {
             await client.query("BEGIN")
-            const { sql, params } = readSqlWithCursor(query?.criteria, options)
+            const { sql, params } = readSqlWithCursor(query, options)
 
             await client.query(sql, params)
 

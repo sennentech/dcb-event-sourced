@@ -1,14 +1,12 @@
 export {
     EventStore,
-    EsEvent,
-    EsEventEnvelope,
-    EsQuery,
+    DcbEvent,
+    EventEnvelope,
+    QueryItem,
     Tags,
-    EsQueryCriterion,
+    Query,
     AppendCondition,
-    AnyCondition,
-    AppendConditions,
-    EsReadOptions
+    ReadOptions
 } from "./src/EventStore"
 export { SequenceNumber } from "./src/SequenceNumber"
 export { Timestamp } from "./src/Timestamp"
