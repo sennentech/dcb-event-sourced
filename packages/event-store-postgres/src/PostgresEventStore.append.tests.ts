@@ -127,7 +127,7 @@ describe("postgresEventStore.append", () => {
             expect(lastSequenceNumber?.value).toBe(4)
         })
 
-        test("should concurrently add a single event when lots attempted in parallel with same append condition", async () => {
+        test("should concurrently add a single event rejecting rest when lots attempted in parallel with same append condition", async () => {
             const storeEvents = [];
 
             const appendCondition: AppendCondition = {
