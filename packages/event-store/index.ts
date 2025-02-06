@@ -5,6 +5,7 @@ export {
     QueryItem,
     Tags,
     Query,
+    Queries,
     AppendCondition,
     ReadOptions
 } from "./src/EventStore"

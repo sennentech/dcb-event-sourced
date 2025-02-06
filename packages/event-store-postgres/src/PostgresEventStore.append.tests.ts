@@ -2,7 +2,7 @@ import { Pool } from "pg"
 import { AppendCondition, DcbEvent, SequenceNumber, streamAllEventsToArray } from "@dcb-es/event-store"
 import { PostgresEventStore } from "./PostgresEventStore"
 import { getTestPgDatabasePool } from "../jest.testPgDbPool"
-import { Queries } from "@dcb-es/event-store/dist/src/EventStore"
+import { Queries } from "@dcb-es/event-store"
 
 class EventType1 implements DcbEvent {
     type: "testEvent1" = "testEvent1"

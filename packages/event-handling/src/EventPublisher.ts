@@ -6,7 +6,7 @@ import {
 } from "@dcb-es/event-store"
 import { EventHandler } from "./EventHandler"
 import { EventHandlerRegistry } from "./EventHandlerRegistry"
-import { Queries, Query } from "@dcb-es/event-store/dist/src/EventStore"
+import { Queries, Query } from "@dcb-es/event-store"
 
 export class EventPublisher {
     constructor(
