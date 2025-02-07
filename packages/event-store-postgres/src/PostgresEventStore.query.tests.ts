@@ -1,4 +1,4 @@
-import { DcbEvent, streamAllEventsToArray, SequenceNumber } from "@dcb-es/event-store"
+import { DcbEvent, streamAllEventsToArray, SequenceNumber, EventStore } from "@dcb-es/event-store"
 import { Pool, PoolClient } from "pg"
 import { getTestPgDatabasePool } from "../jest.testPgDbPool"
 import { PostgresEventStore } from "./PostgresEventStore"
@@ -31,7 +31,7 @@ class EventType2 implements DcbEvent {
 
 describe("memoryEventStore.query", () => {
     let pool: Pool
-    let eventStore: PostgresEventStore
+    let eventStore: EventStore
     let client: PoolClient
 
     beforeAll(async () => {
@@ -41,7 +41,7 @@ describe("memoryEventStore.query", () => {
     beforeEach(async () => {
         client = await pool.connect()
         await client.query("BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE")
-        eventStore = new PostgresEventStore(client)
+        eventStore = PostgresEventStore(client)
     })
 
     afterEach(async () => {

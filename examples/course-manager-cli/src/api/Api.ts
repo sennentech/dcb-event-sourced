@@ -52,7 +52,7 @@ export const EventSourcedApi = (
             const client = await pool.connect()
             await client.query("BEGIN transaction isolation level serializable")
             try {
-                const eventStore = new PostgresEventStore(client)
+                const eventStore = PostgresEventStore(client)
                 const { state, appendCondition } = await buildDecisionModel(eventStore, {
                     courseExists: CourseExists(id)
                 })
@@ -74,7 +74,7 @@ export const EventSourcedApi = (
             const client = await pool.connect()
             await client.query("BEGIN transaction isolation level serializable")
             try {
-                const eventStore = new PostgresEventStore(client)
+                const eventStore = PostgresEventStore(client)
                 const { state, appendCondition } = await buildDecisionModel(eventStore, {
                     studentAlreadyRegistered: StudentAlreadyRegistered(id),
                     nextStudentNumber: NextStudentNumber()
@@ -100,7 +100,7 @@ export const EventSourcedApi = (
             const client = await pool.connect()
             await client.query("BEGIN transaction isolation level serializable")
             try {
-                const eventStore = new PostgresEventStore(client)
+                const eventStore = PostgresEventStore(client)
 
                 const { state, appendCondition } = await buildDecisionModel(eventStore, {
                     courseExists: CourseExists(courseId),
@@ -127,7 +127,7 @@ export const EventSourcedApi = (
             const client = await pool.connect()
             await client.query("BEGIN transaction isolation level serializable")
             try {
-                const eventStore = new PostgresEventStore(client)
+                const eventStore = PostgresEventStore(client)
 
                 const { state, appendCondition } = await buildDecisionModel(eventStore, {
                     courseExists: CourseExists(courseId),
@@ -151,7 +151,7 @@ export const EventSourcedApi = (
             const client = await pool.connect()
             await client.query("BEGIN transaction isolation level serializable")
             try {
-                const eventStore = new PostgresEventStore(client)
+                const eventStore = PostgresEventStore(client)
 
                 const { state, appendCondition } = await buildDecisionModel(eventStore, {
                     courseExists: CourseExists(courseId),
@@ -190,7 +190,7 @@ export const EventSourcedApi = (
             const client = await pool.connect()
             await client.query("BEGIN transaction isolation level serializable")
             try {
-                const eventStore = new PostgresEventStore(client)
+                const eventStore = PostgresEventStore(client)
 
                 const { state, appendCondition } = await buildDecisionModel(eventStore, {
                     studentAlreadySubscribed: StudentAlreadySubscribed({

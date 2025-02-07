@@ -24,7 +24,7 @@ describe("UpdatePostgresHandlers tests", () => {
     beforeEach(async () => {
         client = await pool.connect()
         await client.query("BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE")
-        eventStore = new PostgresEventStore(client)
+        eventStore = PostgresEventStore(client)
     })
 
     afterEach(async () => {
