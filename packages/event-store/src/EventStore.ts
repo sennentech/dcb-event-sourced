@@ -3,11 +3,11 @@ import { Timestamp } from "./Timestamp"
 
 export type Tags = Record<string, string | string[]>
 
-export interface DcbEvent {
-    type: string
-    tags: Tags
-    data: unknown
-    metadata: unknown
+export interface DcbEvent<Tpe extends string = string, Tgs extends Tags = Tags, Dta = unknown, Mtdta = unknown> {
+    type: Tpe
+    tags: Tgs
+    data: Dta
+    metadata: Mtdta
 }
 
 export interface EventEnvelope<T extends DcbEvent = DcbEvent> {

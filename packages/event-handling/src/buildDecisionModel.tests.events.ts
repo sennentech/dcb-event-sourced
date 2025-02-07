@@ -1,5 +1,4 @@
 import { DcbEvent } from "@dcb-es/event-store"
-
 export class CourseWasRegisteredEvent implements DcbEvent {
     public type: "courseWasRegistered" = "courseWasRegistered"
     public tags: { courseId: string }
@@ -13,7 +12,7 @@ export class CourseWasRegisteredEvent implements DcbEvent {
 }
 
 export class CourseCapacityWasChangedEvent implements DcbEvent {
-    type: "courseCapacityWasChanged" = "courseCapacityWasChanged"
+    public type: "courseCapacityWasChanged" = "courseCapacityWasChanged"
     public tags: { courseId: string }
     public data: { newCapacity: number }
     public metadata: Record<string, never> = {}
@@ -25,7 +24,7 @@ export class CourseCapacityWasChangedEvent implements DcbEvent {
 }
 
 export class StudentWasSubscribedEvent implements DcbEvent {
-    type: "studentWasSubscribed" = "studentWasSubscribed"
+    public type: "studentWasSubscribed" = "studentWasSubscribed"
     public tags: { courseId: string; studentId: string }
     public data: Record<string, never> = {}
     public metadata: Record<string, never> = {}
@@ -36,7 +35,7 @@ export class StudentWasSubscribedEvent implements DcbEvent {
 }
 
 export class StudentWasUnsubscribedEvent implements DcbEvent {
-    type: "studentWasUnsubscribed" = "studentWasUnsubscribed"
+    public type: "studentWasUnsubscribed" = "studentWasUnsubscribed"
     public tags: { courseId: string; studentId: string }
     public data: Record<string, never> = {}
     public metadata: Record<string, never> = {}
