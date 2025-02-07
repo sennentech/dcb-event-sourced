@@ -1,8 +1,9 @@
-import { Pool } from "pg"
+import { Pool, PoolClient } from "pg"
 import { AppendCondition, DcbEvent, SequenceNumber, streamAllEventsToArray } from "@dcb-es/event-store"
 import { PostgresEventStore } from "./PostgresEventStore"
 import { getTestPgDatabasePool } from "../jest.testPgDbPool"
 import { Queries } from "@dcb-es/event-store"
+import { ensureEventStoreInstalled } from "./ensureEventStoreInstalled"
 
 class EventType1 implements DcbEvent {
     type: "testEvent1" = "testEvent1"
@@ -30,15 +31,22 @@ class EventType2 implements DcbEvent {
 
 describe("postgresEventStore.append", () => {
     let pool: Pool
+    let client: PoolClient
     let eventStore: PostgresEventStore
 
     beforeAll(async () => {
         pool = await getTestPgDatabasePool()
-        eventStore = new PostgresEventStore(pool)
-        await eventStore.install()
+        await ensureEventStoreInstalled(pool)
+    })
+    beforeEach(async () => {
+        client = await pool.connect()
+        await client.query("BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE")
+        eventStore = new PostgresEventStore(client)
     })
 
     afterEach(async () => {
+        await client.query("COMMIT")
+        client.release()
         await pool.query("TRUNCATE table events")
         await pool.query("ALTER SEQUENCE events_sequence_number_seq RESTART WITH 1")
     })
@@ -175,5 +183,30 @@ describe("postgresEventStore.append", () => {
                 "Expected Version fail: New events matching appendCondition found."
             )
         })
+    })
+
+    test("should throw error if given a transaction that is not at isolation level serializable (READ COMMITTED)", async () => {
+        const client = await pool.connect()
+        await client.query("BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED")
+        const eventStore = new PostgresEventStore(client)
+        await expect(eventStore.append(new EventType1())).rejects.toThrow("Transaction is not serializable")
+        await client.query("ROLLBACK")
+        client.release()
+    })
+
+    test("should throw error if given a transaction that is not at isolation level serializable (default level)", async () => {
+        const client = await pool.connect()
+        await client.query("BEGIN TRANSACTION")
+        const eventStore = new PostgresEventStore(client)
+        await expect(eventStore.append(new EventType1())).rejects.toThrow("Transaction is not serializable")
+        await client.query("ROLLBACK")
+        client.release()
+    })
+
+    test("should throw error if transaction is not started", async () => {
+        const client = await pool.connect()
+        const eventStore = new PostgresEventStore(client)
+        await expect(eventStore.append(new EventType1())).rejects.toThrow("Transaction is not serializable")
+        client.release()
     })
 })

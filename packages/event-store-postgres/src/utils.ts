@@ -1,4 +1,5 @@
 import { Tags, DcbEvent, EventEnvelope, SequenceNumber, Timestamp } from "@dcb-es/event-store"
+import { PoolClient } from "pg"
 
 export type DbTags = {
     key: string

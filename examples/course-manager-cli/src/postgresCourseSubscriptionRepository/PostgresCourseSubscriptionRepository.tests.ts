@@ -1,5 +1,5 @@
-import { Pool } from "pg"
-import { PostgresCourseSubscriptionsRepository, Student } from "./PostgresCourseSubscriptionRespository"
+import { Pool, PoolClient } from "pg"
+import { installPostgresCourseSubscriptionsRepository, PostgresCourseSubscriptionsRepository, Student } from "./PostgresCourseSubscriptionRespository"
 import { getTestPgDatabasePool } from "../../jest.testPgDbPool"
 
 const COURSE_1 = {
@@ -15,15 +15,27 @@ const STUDENT_1 = {
 
 describe("PostgresCourseSubscriptionRepository", () => {
     let pool: Pool
-    let repository: PostgresCourseSubscriptionsRepository
+    let client: PoolClient
+    let repository: ReturnType<typeof PostgresCourseSubscriptionsRepository>
 
     beforeAll(async () => {
         pool = await getTestPgDatabasePool()
-        repository = new PostgresCourseSubscriptionsRepository(pool)
-        await repository.install()
+        const installClient = await pool.connect()
+        await installClient.query("BEGIN")
+        await installPostgresCourseSubscriptionsRepository(installClient)
+        await installClient.query("COMMIT")
+        installClient.release()
+    })
+
+    beforeEach(async () => {
+        client = await pool.connect()
+        await client.query("BEGIN")
+        repository = PostgresCourseSubscriptionsRepository(client)
     })
 
     afterEach(async () => {
+        await client.query("ROLLBACK")
+        client.release()
         await pool.query("TRUNCATE table courses")
         await pool.query("TRUNCATE table students")
         await pool.query("TRUNCATE table subscriptions")

@@ -1,5 +1,5 @@
 import { EventStore, AppendCondition, EventEnvelope, Query, SequenceNumber, Tags } from "@dcb-es/event-store"
-import { EventHandlerWithState } from "../EventHandlerWithState"
+import { EventHandlerWithState } from "./EventHandlerWithState"
 import { matchTags } from "./matchTags"
 type EventHandlers = Record<string, EventHandlerWithState>
 type EventHandlerStates<T extends EventHandlers> = {

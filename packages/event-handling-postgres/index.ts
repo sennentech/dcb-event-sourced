@@ -1,6 +1,2 @@
-export {
-    PostgresEventHandlerRegistry,
-    PostgresHandlerClassConstructor,
-    PostgresHandlerFunctionConstructor
-} from "./src/PostgresEventHandlerRegistry"
-export { PostgresTransactionManager } from "./src/PostgresTransactionManager"
+export { catchupHandlers } from "./src/catchupHandlers"
+export { ensureHandlersInstalled } from "./src/ensureHandlersInstalled"

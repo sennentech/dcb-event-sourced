@@ -1,5 +1,5 @@
-export { HandlerCheckPoints, EventHandlerRegistry } from "./src/EventHandlerRegistry"
 export { EventHandler } from "./src/EventHandler"
-export { EventPublisher } from "./src/EventPublisher"
-export { buildDecisionModel } from "./src/buildDecisionModel/buildDecisionModel"
 export { EventHandlerWithState } from "./src/EventHandlerWithState"
+export { buildDecisionModel } from "./src/buildDecisionModel"
+
+

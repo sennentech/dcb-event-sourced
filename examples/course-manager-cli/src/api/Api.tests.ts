@@ -1,11 +1,10 @@
-import { Pool } from "pg"
-import { Course, PostgresCourseSubscriptionsRepository } from "../postgresCourseSubscriptionRepository/PostgresCourseSubscriptionRespository"
-import { Api } from "./Api"
+import { Pool, PoolClient } from "pg"
+import { Course, installPostgresCourseSubscriptionsRepository, PostgresCourseSubscriptionsRepository } from "../postgresCourseSubscriptionRepository/PostgresCourseSubscriptionRespository"
+import { Api, setupHandlers } from "./Api"
 import { EventSourcedApi } from "./Api"
 import { getTestPgDatabasePool } from "../../jest.testPgDbPool"
-import { PostgresEventHandlerRegistry, PostgresTransactionManager } from "@dcb-es/event-handling-postgres"
-import { MemoryEventStore } from "@dcb-es/event-store"
-import { PostgresCourseSubscriptionsProjection } from "./PostgresCourseSubscriptionsProjection"
+import { ensureEventStoreInstalled } from "@dcb-es/event-store-postgres"
+import { ensureHandlersInstalled } from "@dcb-es/event-handling-postgres"
 
 const COURSE_1 = {
     id: "course-1",
@@ -21,30 +20,84 @@ const STUDENT_1 = {
 
 describe("EventSourcedApi", () => {
     let pool: Pool
-    let transactionManager: PostgresTransactionManager
-    let repository: PostgresCourseSubscriptionsRepository
+    let repository: ReturnType<typeof PostgresCourseSubscriptionsRepository>
     let api: Api
+    let client: PoolClient
 
     beforeAll(async () => {
         pool = await getTestPgDatabasePool()
-        repository = new PostgresCourseSubscriptionsRepository(pool)
-        await repository.install()
+
+        await ensureEventStoreInstalled(pool)
+        await installPostgresCourseSubscriptionsRepository(pool)
+        api = EventSourcedApi(pool)
+    })
+
+    beforeEach(async () => {
+        client = await pool.connect()
+
+        await ensureHandlersInstalled(pool, Object.keys(setupHandlers(client)))
+        await client.query("BEGIN transaction isolation level serializable")
+        repository = PostgresCourseSubscriptionsRepository(client)
     })
 
     afterEach(async () => {
+        client.query("ROLLBACK;")
+        client.release()
+        await pool.query("TRUNCATE table events")
         await pool.query("TRUNCATE table courses")
         await pool.query("TRUNCATE table students")
         await pool.query("TRUNCATE table subscriptions")
+        await pool.query("TRUNCATE table _event_handler_bookmarks")
     })
 
     afterAll(async () => {
         if (pool) await pool.end()
     })
 
+    test("single course registered shows in repository", async () => {
+        await api.registerCourse({ id: COURSE_1.id, title: COURSE_1.title, capacity: COURSE_1.capacity })
+
+        const course = await repository.findCourseById(COURSE_1.id)
+        expect(course).toEqual(<Course>{
+            id: COURSE_1.id,
+            title: COURSE_1.title,
+            capacity: COURSE_1.capacity,
+            subscribedStudents: []
+        })
+    })
+
+    test("single student registered shows in repository", async () => {
+        await api.registerStudent({ id: STUDENT_1.id, name: STUDENT_1.name })
+
+        const student = await repository.findStudentById(STUDENT_1.id)
+        expect(student).toEqual({
+            id: STUDENT_1.id,
+            name: STUDENT_1.name,
+            studentNumber: STUDENT_1.studentNumber,
+            subscribedCourses: []
+        })
+    })
+
+    test("student subscribed to course shows in repository", async () => {
+        await api.registerCourse({ id: COURSE_1.id, title: COURSE_1.title, capacity: COURSE_1.capacity })
+        await api.registerStudent({ id: STUDENT_1.id, name: STUDENT_1.name })
+        await api.subscribeStudentToCourse({ courseId: COURSE_1.id, studentId: STUDENT_1.id })
+
+        const course = await repository.findCourseById(COURSE_1.id)
+        const student = await repository.findStudentById(STUDENT_1.id)
+
+        expect(course?.subscribedStudents).toEqual([
+            { id: STUDENT_1.id, name: STUDENT_1.name, studentNumber: STUDENT_1.studentNumber }
+        ])
+        expect(student?.subscribedCourses).toEqual([
+            { id: COURSE_1.id, title: COURSE_1.title, capacity: COURSE_1.capacity }
+        ])
+    })
+
     describe("with one course and 100 students in database", () => {
         beforeEach(async () => {
-            api = EventSourcedApi(new MemoryEventStore(), repository, null)
-            api.registerCourse({ id: COURSE_1.id, title: COURSE_1.title, capacity: COURSE_1.capacity })
+            api = EventSourcedApi(pool)
+            await api.registerCourse({ id: COURSE_1.id, title: COURSE_1.title, capacity: COURSE_1.capacity })
 
             for (let i = 0; i < 100; i++) {
                 await api.registerStudent({ id: `student-${i}`, name: `Student ${i}` })
@@ -75,62 +128,5 @@ describe("EventSourcedApi", () => {
             expect(succeeded).toBeLessThanOrEqual(COURSE_1.capacity)
         })
     })
-
-    describe("with a course projection", () => {
-        let registry: PostgresEventHandlerRegistry
-
-        beforeAll(async () => {
-            transactionManager = new PostgresTransactionManager(pool)
-            registry = new PostgresEventHandlerRegistry(transactionManager, {
-                CourseSubscriptionsProjection: PostgresCourseSubscriptionsProjection(transactionManager)
-            })
-        })
-        beforeEach(async () => {
-            await registry.install()
-            api = EventSourcedApi(new MemoryEventStore(), repository, registry)
-        })
-        afterEach(async () => {
-            await pool.query("TRUNCATE table _event_handler_bookmarks")
-        })
-
-        test("single course registered shows in repository", async () => {
-            await api.registerCourse({ id: COURSE_1.id, title: COURSE_1.title, capacity: COURSE_1.capacity })
-
-            const course = await repository.findCourseById(COURSE_1.id)
-            expect(course).toEqual(<Course>{
-                id: COURSE_1.id,
-                title: COURSE_1.title,
-                capacity: COURSE_1.capacity,
-                subscribedStudents: []
-            })
-        })
-
-        test("single student registered shows in repository", async () => {
-            await api.registerStudent({ id: STUDENT_1.id, name: STUDENT_1.name })
-
-            const student = await repository.findStudentById(STUDENT_1.id)
-            expect(student).toEqual({
-                id: STUDENT_1.id,
-                name: STUDENT_1.name,
-                studentNumber: STUDENT_1.studentNumber,
-                subscribedCourses: []
-            })
-        })
-
-        test("student subscribed to course shows in repository", async () => {
-            await api.registerCourse({ id: COURSE_1.id, title: COURSE_1.title, capacity: COURSE_1.capacity })
-            await api.registerStudent({ id: STUDENT_1.id, name: STUDENT_1.name })
-            await api.subscribeStudentToCourse({ courseId: COURSE_1.id, studentId: STUDENT_1.id })
-
-            const course = await repository.findCourseById(COURSE_1.id)
-            const student = await repository.findStudentById(STUDENT_1.id)
-
-            expect(course?.subscribedStudents).toEqual([
-                { id: STUDENT_1.id, name: STUDENT_1.name, studentNumber: STUDENT_1.studentNumber }
-            ])
-            expect(student?.subscribedCourses).toEqual([
-                { id: COURSE_1.id, title: COURSE_1.title, capacity: COURSE_1.capacity }
-            ])
-        })
-    })
 })
+

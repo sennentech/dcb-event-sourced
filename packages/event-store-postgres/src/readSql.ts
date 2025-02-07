@@ -4,9 +4,11 @@ import { ParamManager, tagConverter } from "./utils"
 export const readSqlWithCursor = (query: Query, options?: ReadOptions) => {
     const { sql, params } = readSql(query, options)
 
+    const cursorName = `event_cursor_${Math.random().toString(36).substring(7)}`
     return {
-        sql: ` DECLARE event_cursor CURSOR FOR ${sql}`,
-        params
+        sql: ` DECLARE ${cursorName} CURSOR FOR ${sql}`,
+        params,
+        cursorName: cursorName
     }
 }
 

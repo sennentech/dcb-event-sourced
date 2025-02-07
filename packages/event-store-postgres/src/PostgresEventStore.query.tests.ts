@@ -1,8 +1,9 @@
 import { DcbEvent, streamAllEventsToArray, SequenceNumber } from "@dcb-es/event-store"
-import { Pool } from "pg"
+import { Pool, PoolClient } from "pg"
 import { getTestPgDatabasePool } from "../jest.testPgDbPool"
 import { PostgresEventStore } from "./PostgresEventStore"
 import { Queries } from "@dcb-es/event-store"
+import { ensureEventStoreInstalled } from "./ensureEventStoreInstalled"
 
 class EventType1 implements DcbEvent {
     type: "testEvent1" = "testEvent1"
@@ -31,14 +32,21 @@ class EventType2 implements DcbEvent {
 describe("memoryEventStore.query", () => {
     let pool: Pool
     let eventStore: PostgresEventStore
+    let client: PoolClient
 
     beforeAll(async () => {
         pool = await getTestPgDatabasePool()
-        eventStore = new PostgresEventStore(pool)
-        await eventStore.install()
+        await ensureEventStoreInstalled(pool)
+    })
+    beforeEach(async () => {
+        client = await pool.connect()
+        await client.query("BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE")
+        eventStore = new PostgresEventStore(client)
     })
 
     afterEach(async () => {
+        await client.query("COMMIT")
+        client.release()
         await pool.query("TRUNCATE table events")
         await pool.query("ALTER SEQUENCE events_sequence_number_seq RESTART WITH 1")
     })
@@ -244,5 +252,12 @@ describe("memoryEventStore.query", () => {
             expect(events[0].event.type).toBe("testEvent2")
             expect(events[0].event.tags.testTagKey).toBe("ev-3")
         })
+    })
+
+    test("should allow two consequtive reads in same transaction wihtout throwing", async () => {
+        await eventStore.append(new EventType1())
+        await eventStore.append(new EventType2())
+        await streamAllEventsToArray(eventStore.read(Queries.all))
+        await streamAllEventsToArray(eventStore.read(Queries.all))
     })
 })

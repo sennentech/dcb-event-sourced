@@ -1,4 +1,4 @@
-import { Pool, QueryResult } from "pg"
+import { PoolClient, QueryResult } from "pg"
 import { dbEventConverter } from "./utils"
 import { readSqlWithCursor } from "./readSql"
 import { appendSql as appendCommand } from "./appendCommand"
@@ -10,68 +10,44 @@ import {
     ReadOptions,
     Query
 } from "@dcb-es/event-store"
-import { createEventsTableSql } from "./createEventsTableSql"
 
 const BATCH_SIZE = 100
 
 export class PostgresEventStore implements EventStore {
-    constructor(private pool: Pool) { }
+    constructor(private client: PoolClient) { }
 
     async append(
         events: DcbEvent | DcbEvent[],
         appendCondition?: AppendCondition
     ): Promise<void> {
-        events = Array.isArray(events) ? events : [events]
+        /*  To be completely safe, we need to ensure append with transaction isolation level set to serializable */
+        const isolation = (await this.client.query("SELECT current_setting('transaction_isolation') as iso")).rows[0].iso
+        if (isolation.toLowerCase() !== "serializable") throw new Error("Transaction is not serializable")
 
-        const query = !appendCondition ? undefined : appendCondition.query
-        const maxSeqNumber = !appendCondition ? undefined : appendCondition.maxSequenceNumber
-        const { statement, params } = appendCommand(events, query, maxSeqNumber)
+        const evts = Array.isArray(events) ? events : [events]
+        const query = appendCondition?.query
+        const maxSeqNumber = appendCondition?.maxSequenceNumber
+        const { statement, params } = appendCommand(evts, query, maxSeqNumber)
+        const result = await this.client.query(statement, params)
 
-        const client = await this.pool.connect()
-        try {
-            await client.query(`BEGIN ISOLATION LEVEL SERIALIZABLE;`)
-            const result = await client.query(statement, params)
-            await client.query("COMMIT")
-            const EVentEnvelopes = result.rows.map(dbEventConverter.fromDb)
-            if (!EVentEnvelopes.length)
-                throw new Error(`Expected Version fail: New events matching appendCondition found.`)
-
-        } catch (err) {
-            await client.query("ROLLBACK")
-            throw err
-        } finally {
-            client.release()
-        }
+        const EVentEnvelopes = result.rows.map(dbEventConverter.fromDb)
+        if (!EVentEnvelopes.length) throw new Error("Expected Version fail: New events matching appendCondition found.")
     }
+
 
     async *read(query: Query, options?: ReadOptions): AsyncGenerator<EventEnvelope> {
         yield* this.#read({ query, options })
     }
 
     async *#read({ query, options }: { query: Query; options?: ReadOptions }): AsyncGenerator<EventEnvelope> {
-        const client = await this.pool.connect()
-        try {
-            await client.query("BEGIN")
-            const { sql, params } = readSqlWithCursor(query, options)
+        const { sql, params, cursorName } = readSqlWithCursor(query, options)
+        await this.client.query(sql, params)
 
-            await client.query(sql, params)
-
-            let result: QueryResult
-            while ((result = await client.query(`FETCH ${BATCH_SIZE} FROM event_cursor`))?.rows?.length) {
-                for (const ev of result.rows) {
-                    yield dbEventConverter.fromDb(ev)
-                }
+        let result: QueryResult
+        while ((result = await this.client.query(`FETCH ${BATCH_SIZE} FROM ${cursorName}`))?.rows?.length) {
+            for (const ev of result.rows) {
+                yield dbEventConverter.fromDb(ev)
             }
-            await client.query("COMMIT")
-        } catch (err) {
-            await client.query("ROLLBACK")
-            throw err
-        } finally {
-            client.release()
         }
-    }
-
-    async install() {
-        await this.pool.query(createEventsTableSql)
     }
 }
