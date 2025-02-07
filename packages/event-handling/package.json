@@ -3,7 +3,7 @@
     "description": "Event handling methods for DCB event sourced projects folloing @dcb-es/event-store",
     "author": "Paul Grimshaw",
     "license": "MIT",
-    "version": "5.0.0",
+    "version": "5.0.1",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "repository": {
@@ -22,7 +22,7 @@
         "prepare": "yarn build"
     },
     "dependencies": {
-        "@dcb-es/event-store": "^4.0.0"
+        "@dcb-es/event-store": "^4.0.1"
     },
     "publishConfig": {
         "access": "public"
