@@ -25,10 +25,10 @@ export const CourseCapacity = (
 ): EventHandlerWithState<{
     state: { isFull: boolean; subscriberCount: number; capacity: number }
     eventHandlers:
-    | CourseWasRegisteredEvent
-    | CourseCapacityWasChangedEvent
-    | StudentWasSubscribedEvent
-    | StudentWasUnsubscribedEvent
+        | CourseWasRegisteredEvent
+        | CourseCapacityWasChangedEvent
+        | StudentWasSubscribedEvent
+        | StudentWasUnsubscribedEvent
 }> => ({
     tagFilter: { courseId },
     init: { isFull: true, subscriberCount: 0, capacity: 0 },

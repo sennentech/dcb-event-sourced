@@ -96,14 +96,17 @@ describe("postgresEventStore.append", () => {
 
         test("should increment sequence number to 2 when a second event is appended", async () => {
             await eventStore.append(new EventType1())
-            const lastSequenceNumber = (await streamAllEventsToArray(eventStore.read(Queries.all))).at(-1)?.sequenceNumber
+            const lastSequenceNumber = (await streamAllEventsToArray(eventStore.read(Queries.all))).at(
+                -1
+            )?.sequenceNumber
             expect(lastSequenceNumber?.value).toBe(2)
         })
 
         test("should update the sequence number to 3 after appending two more events", async () => {
-
             await eventStore.append([new EventType1(), new EventType1()])
-            const lastSequenceNumber = (await streamAllEventsToArray(eventStore.read(Queries.all))).at(-1)?.sequenceNumber
+            const lastSequenceNumber = (await streamAllEventsToArray(eventStore.read(Queries.all))).at(
+                -1
+            )?.sequenceNumber
 
             expect(lastSequenceNumber?.value).toBe(3)
         })
@@ -130,13 +133,15 @@ describe("postgresEventStore.append", () => {
             await eventStore.append(new EventType1(), appendCondition)
             await eventStore.append(new EventType1(), appendCondition)
 
-            const lastSequenceNumber = (await streamAllEventsToArray(eventStore.read(Queries.all))).at(-1)?.sequenceNumber
+            const lastSequenceNumber = (await streamAllEventsToArray(eventStore.read(Queries.all))).at(
+                -1
+            )?.sequenceNumber
 
             expect(lastSequenceNumber?.value).toBe(4)
         })
 
         test("should concurrently add a single event rejecting rest when lots attempted in parallel with same append condition", async () => {
-            const storeEvents = [];
+            const storeEvents = []
 
             const appendCondition: AppendCondition = {
                 query: [{ eventTypes: ["testEvent1"] }],
@@ -144,28 +149,28 @@ describe("postgresEventStore.append", () => {
             }
 
             for (let i = 0; i < 10; i++) {
-                storeEvents.push(eventStore.append(new EventType1(), appendCondition));
+                storeEvents.push(eventStore.append(new EventType1(), appendCondition))
             }
-            const results = await Promise.allSettled(storeEvents);
+            const results = await Promise.allSettled(storeEvents)
             expect(results.filter(r => r.status === "fulfilled").length).toBe(1)
             const events = await streamAllEventsToArray(eventStore.read(Queries.all))
             expect(events.length).toBe(2)
         })
 
         test("should concurrently add a all events when lots attempted in parralel", async () => {
-            const storeEvents = [];
+            const storeEvents = []
             const iterations = 1000
             for (let i = 0; i < iterations; i++) {
                 storeEvents.push(eventStore.append(new EventType1()))
             }
-            const results = await Promise.allSettled(storeEvents);
+            const results = await Promise.allSettled(storeEvents)
             expect(results.filter(r => r.status === "fulfilled").length).toBe(iterations)
         })
 
-
         test("should fail to append next event if append condition is no longer met", async () => {
             const appendCondition: AppendCondition = {
-                query: [{ eventTypes: ["testEvent1"], tags: {} }], maxSequenceNumber: SequenceNumber.create(1)
+                query: [{ eventTypes: ["testEvent1"], tags: {} }],
+                maxSequenceNumber: SequenceNumber.create(1)
             }
 
             // First append should pass and set sequence_number to 2

@@ -5,18 +5,30 @@ export type HandlerCheckPoints = Record<string, SequenceNumber>
 
 export const POSTGRES_TABLE_NAME = "_event_handler_bookmarks"
 
-export const catchupHandlers = async (client: PoolClient, eventStore: EventStore, handlers: Record<string, EventHandler>) => {
+export const catchupHandlers = async (
+    client: PoolClient,
+    eventStore: EventStore,
+    handlers: Record<string, EventHandler>
+) => {
     const currentCheckPoints = await lockHandlers(client, handlers)
 
     await Promise.all(
-        Object.entries(handlers).map(async ([handlerId, handler]) =>
-            currentCheckPoints[handlerId] = await catchupHandler(handler, eventStore, currentCheckPoints[handlerId])
+        Object.entries(handlers).map(
+            async ([handlerId, handler]) =>
+                (currentCheckPoints[handlerId] = await catchupHandler(
+                    handler,
+                    eventStore,
+                    currentCheckPoints[handlerId]
+                ))
         )
     )
     await updateBookmarksAndReleaseLocks(client, currentCheckPoints)
 }
 
-const lockHandlers = async (client: PoolClient, handlers: Record<string, EventHandler>): Promise<HandlerCheckPoints> => {
+const lockHandlers = async (
+    client: PoolClient,
+    handlers: Record<string, EventHandler>
+): Promise<HandlerCheckPoints> => {
     try {
         const selectResult = await client.query(
             `

@@ -36,8 +36,7 @@ describe("memoryEventStore.append", () => {
         })
         describe("when append condition with eventTypes filter and maxSequenceNumber provided", () => {
             const appendCondition: AppendCondition = {
-                query: [{ eventTypes: ["testEvent1"], tags: {} }]
-                ,
+                query: [{ eventTypes: ["testEvent1"], tags: {} }],
                 maxSequenceNumber: SequenceNumber.create(1)
             }
             test("should successfully append an event without throwing under specified conditions", async () => {

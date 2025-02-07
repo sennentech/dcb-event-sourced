@@ -2,23 +2,12 @@ import { PoolClient, QueryResult } from "pg"
 import { dbEventConverter } from "./utils"
 import { readSqlWithCursor } from "./readSql"
 import { appendSql as appendCommand } from "./appendCommand"
-import {
-    EventStore,
-    DcbEvent,
-    AppendCondition,
-    EventEnvelope,
-    ReadOptions,
-    Query
-} from "@dcb-es/event-store"
+import { EventStore, DcbEvent, AppendCondition, EventEnvelope, ReadOptions, Query } from "@dcb-es/event-store"
 
 const BATCH_SIZE = 100
 
 export const PostgresEventStore = (client: PoolClient): EventStore => {
-
-    const append = async (
-        events: DcbEvent | DcbEvent[],
-        appendCondition?: AppendCondition
-    ): Promise<void> => {
+    const append = async (events: DcbEvent | DcbEvent[], appendCondition?: AppendCondition): Promise<void> => {
         /*  To be completely safe, we need to ensure append with transaction isolation level set to serializable */
         const isolation = (await client.query("SELECT current_setting('transaction_isolation') as iso")).rows[0].iso
         if (isolation.toLowerCase() !== "serializable") throw new Error("Transaction is not serializable")
@@ -33,19 +22,16 @@ export const PostgresEventStore = (client: PoolClient): EventStore => {
         if (!EVentEnvelopes.length) throw new Error("Expected Version fail: New events matching appendCondition found.")
     }
 
-    const read = async function* (
-        query: Query,
-        options?: ReadOptions
-    ): AsyncGenerator<EventEnvelope> {
+    const read = async function* (query: Query, options?: ReadOptions): AsyncGenerator<EventEnvelope> {
         yield* readInternal({ query, options })
     }
 
     const readInternal = async function* ({
         query,
-        options,
+        options
     }: {
-        query: Query;
-        options?: ReadOptions;
+        query: Query
+        options?: ReadOptions
     }): AsyncGenerator<EventEnvelope> {
         const { sql, params, cursorName } = readSqlWithCursor(query, options)
         await client.query(sql, params)
@@ -60,6 +46,6 @@ export const PostgresEventStore = (client: PoolClient): EventStore => {
 
     return {
         append,
-        read,
+        read
     }
 }

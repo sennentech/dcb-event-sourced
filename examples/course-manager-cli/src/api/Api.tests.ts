@@ -1,5 +1,9 @@
 import { Pool, PoolClient } from "pg"
-import { Course, installPostgresCourseSubscriptionsRepository, PostgresCourseSubscriptionsRepository } from "../postgresCourseSubscriptionRepository/PostgresCourseSubscriptionRespository"
+import {
+    Course,
+    installPostgresCourseSubscriptionsRepository,
+    PostgresCourseSubscriptionsRepository
+} from "../postgresCourseSubscriptionRepository/PostgresCourseSubscriptionRespository"
 import { Api, setupHandlers } from "./Api"
 import { EventSourcedApi } from "./Api"
 import { getTestPgDatabasePool } from "../../jest.testPgDbPool"
@@ -129,4 +133,3 @@ describe("EventSourcedApi", () => {
         })
     })
 })
-

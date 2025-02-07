@@ -1,27 +1,18 @@
-import {
-    EventEnvelope,
-    EventStore,
-    AppendCondition,
-    Query,
-    DcbEvent,
-    ReadOptions,
-    Queries
-} from "../EventStore"
+import { EventEnvelope, EventStore, AppendCondition, Query, DcbEvent, ReadOptions, Queries } from "../EventStore"
 import { SequenceNumber } from "../SequenceNumber"
 import { Timestamp } from "../Timestamp"
 import { isSeqOutOfRange, matchesCriterion as matchesQueryItem, deduplicateEvents } from "./utils"
 
-export const ensureIsArray = (events: DcbEvent | DcbEvent[]) =>
-    Array.isArray(events) ? events : [events]
+export const ensureIsArray = (events: DcbEvent | DcbEvent[]) => (Array.isArray(events) ? events : [events])
 
 const maxSeqNo = (events: EventEnvelope[]) =>
     events
         .map(event => event.sequenceNumber)
         .filter(seqNum => seqNum !== undefined)
-        .pop() || SequenceNumber.zero();
+        .pop() || SequenceNumber.zero()
 
 export class MemoryEventStore implements EventStore {
-    private testListenerRegistry: { read: () => void, append: () => void } = {
+    private testListenerRegistry: { read: () => void; append: () => void } = {
         read: () => null,
         append: () => null
     }
@@ -48,20 +39,23 @@ export class MemoryEventStore implements EventStore {
         let currentSequenceNumber = options?.fromSequenceNumber ?? defaultSeqNumber
         let yieldedCount = 0
 
-        const allMatchedEvents = query !== Queries.all
-            ? query.flatMap((criterion, index) => {
-                const matchedEvents = this.events
-                    .filter(
-                        event =>
-                            !isSeqOutOfRange(event.sequenceNumber, currentSequenceNumber, options?.backwards) &&
-                            matchesQueryItem(criterion, event)
-                    )
-                    .map(event => ({ ...event, matchedCriteria: [index.toString()] }))
-                    .sort((a, b) => a.sequenceNumber.value - b.sequenceNumber.value)
+        const allMatchedEvents =
+            query !== Queries.all
+                ? query.flatMap((criterion, index) => {
+                      const matchedEvents = this.events
+                          .filter(
+                              event =>
+                                  !isSeqOutOfRange(event.sequenceNumber, currentSequenceNumber, options?.backwards) &&
+                                  matchesQueryItem(criterion, event)
+                          )
+                          .map(event => ({ ...event, matchedCriteria: [index.toString()] }))
+                          .sort((a, b) => a.sequenceNumber.value - b.sequenceNumber.value)
 
-                return criterion.onlyLastEvent ? matchedEvents.slice(-1) : matchedEvents
-            })
-            : this.events.filter(ev => !isSeqOutOfRange(ev.sequenceNumber, currentSequenceNumber, options?.backwards))
+                      return criterion.onlyLastEvent ? matchedEvents.slice(-1) : matchedEvents
+                  })
+                : this.events.filter(
+                      ev => !isSeqOutOfRange(ev.sequenceNumber, currentSequenceNumber, options?.backwards)
+                  )
 
         const uniqueEvents = deduplicateEvents(allMatchedEvents)
             .sort((a, b) => a.sequenceNumber.value - b.sequenceNumber.value)
@@ -81,10 +75,7 @@ export class MemoryEventStore implements EventStore {
         }
     }
 
-    async append(
-        events: DcbEvent | DcbEvent[],
-        appendCondition?: AppendCondition
-    ): Promise<void> {
+    async append(events: DcbEvent | DcbEvent[], appendCondition?: AppendCondition): Promise<void> {
         if (this.testListenerRegistry.append) this.testListenerRegistry.append()
         const nextSequenceNumber = maxSeqNo(this.events).inc()
         const eventEnvelopes: Array<EventEnvelope> = ensureIsArray(events).map((ev, i) => ({
@@ -95,7 +86,6 @@ export class MemoryEventStore implements EventStore {
 
         if (appendCondition) {
             const { query, maxSequenceNumber } = appendCondition
-
 
             const matchingEvents = getMatchingEvents(query, maxSequenceNumber, this.events)
 
@@ -114,9 +104,7 @@ const getMatchingEvents = (query: Query, maxSeqNo: SequenceNumber, events: Event
     return (query ?? []).flatMap(queryItem =>
         events.filter(
             event =>
-                !isSeqOutOfRange(event.sequenceNumber, maxSeqNo.plus(1), false) &&
-                matchesQueryItem(queryItem, event)
+                !isSeqOutOfRange(event.sequenceNumber, maxSeqNo.plus(1), false) && matchesQueryItem(queryItem, event)
         )
     )
-
 }

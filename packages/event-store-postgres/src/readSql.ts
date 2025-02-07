@@ -54,7 +54,8 @@ const getFilterString = (c: QueryItem, pm: ParamManager, options?: ReadOptions) 
 
 export const readCriteriaJoin = (query: Query, pm: ParamManager, options?: ReadOptions): string => {
     if (query === "All") return ""
-    const criteriaQueries = query.map((c) => `
+    const criteriaQueries = query.map(
+        c => `
         SELECT 
             ${c.onlyLastEvent ? `max(sequence_number)` : `sequence_number`} sequence_number
         FROM events

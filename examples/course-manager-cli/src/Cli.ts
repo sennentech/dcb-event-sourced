@@ -117,7 +117,6 @@ export const startCli = async (api: Api) => {
             log(err)
         }
     }
-    log("Program exited")
 }
 
 const log = (message: string | object | Error) => {

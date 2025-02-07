@@ -2,10 +2,10 @@ import { Pool } from "pg"
 import "source-map-support/register"
 import { startCli } from "./src/Cli"
 import { ensureEventStoreInstalled } from "@dcb-es/event-store-postgres"
-import { installPostgresCourseSubscriptionsRepository, PostgresCourseSubscriptionsRepository } from "./src/postgresCourseSubscriptionRepository/PostgresCourseSubscriptionRespository"
+import { installPostgresCourseSubscriptionsRepository } from "./src/postgresCourseSubscriptionRepository/PostgresCourseSubscriptionRespository"
 import { EventSourcedApi, setupHandlers } from "./src/api/Api"
 import { ensureHandlersInstalled } from "@dcb-es/event-handling-postgres"
-(async () => {
+;(async () => {
     const postgresConfig = {
         host: "localhost",
         port: 5432,

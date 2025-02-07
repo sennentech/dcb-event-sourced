@@ -1,8 +1,6 @@
 import { EventEnvelope } from "./EventStore"
 
-export const streamAllEventsToArray = async (
-    generator: AsyncGenerator<EventEnvelope>
-): Promise<EventEnvelope[]> => {
+export const streamAllEventsToArray = async (generator: AsyncGenerator<EventEnvelope>): Promise<EventEnvelope[]> => {
     const results: EventEnvelope[] = []
     let done: boolean | undefined = false
     while (!done) {

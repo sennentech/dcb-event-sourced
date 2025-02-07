@@ -1,5 +1,10 @@
 import { buildDecisionModel } from "@dcb-es/event-handling"
-import { Course, PostgresCourseSubscriptionsRepository, Student, STUDENT_SUBSCRIPTION_LIMIT } from "../postgresCourseSubscriptionRepository/PostgresCourseSubscriptionRespository"
+import {
+    Course,
+    PostgresCourseSubscriptionsRepository,
+    Student,
+    STUDENT_SUBSCRIPTION_LIMIT
+} from "../postgresCourseSubscriptionRepository/PostgresCourseSubscriptionRespository"
 import { Pool, PoolClient } from "pg"
 import {
     CourseWasRegisteredEvent,
@@ -40,9 +45,7 @@ export const setupHandlers = (client: PoolClient) => {
     }
 }
 
-export const EventSourcedApi = (
-    pool: Pool
-): Api => {
+export const EventSourcedApi = (pool: Pool): Api => {
     /* read model repository */
     const readModelRepository = PostgresCourseSubscriptionsRepository(pool)
     return {
@@ -58,14 +61,16 @@ export const EventSourcedApi = (
                 })
 
                 if (state.courseExists) throw new Error(`Course with id ${id} already exists`)
-                await eventStore.append(new CourseWasRegisteredEvent({ courseId: id, title, capacity }), appendCondition)
+                await eventStore.append(
+                    new CourseWasRegisteredEvent({ courseId: id, title, capacity }),
+                    appendCondition
+                )
 
                 await catchupHandlers(client, eventStore, setupHandlers(client))
                 await client.query("COMMIT")
             } catch (err) {
                 await client.query("ROLLBACK")
                 throw err
-
             } finally {
                 client.release()
             }
@@ -94,7 +99,6 @@ export const EventSourcedApi = (
             } finally {
                 client.release()
             }
-
         },
         updateCourseCapacity: async ({ courseId, newCapacity }) => {
             const client = await pool.connect()
@@ -121,7 +125,6 @@ export const EventSourcedApi = (
             } finally {
                 client.release()
             }
-
         },
         updateCourseTitle: async ({ courseId, newTitle }) => {
             const client = await pool.connect()
@@ -184,7 +187,6 @@ export const EventSourcedApi = (
             } finally {
                 client.release()
             }
-
         },
         unsubscribeStudentFromCourse: async ({ courseId, studentId }) => {
             const client = await pool.connect()
@@ -214,7 +216,6 @@ export const EventSourcedApi = (
             } finally {
                 client.release()
             }
-
         }
     }
 }

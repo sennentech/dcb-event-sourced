@@ -15,7 +15,7 @@ export class Timestamp {
         try {
             Timestamp.create(timestamp)
             return true
-        } catch (err) {
+        } catch {
             return false
         }
     }

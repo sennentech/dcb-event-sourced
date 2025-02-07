@@ -56,4 +56,3 @@ describe("UpdatePostgresHandlers tests", () => {
         expect(result.rows[1].handler_id).toBe(Object.keys(handlers)[1])
     })
 })
-

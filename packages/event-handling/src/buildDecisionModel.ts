@@ -24,7 +24,8 @@ export async function buildDecisionModel<T extends EventHandlers>(
 
         for (const [handlerId, eventHandler] of Object.entries(eventHandlers)) {
             const handlerIsRelevant =
-                eventHandler.when[event.type] && matchTags({ tags: event.tags, tagFilter: eventHandler.tagFilter as Tags })
+                eventHandler.when[event.type] &&
+                matchTags({ tags: event.tags, tagFilter: eventHandler.tagFilter as Tags })
 
             const handler = handlerIsRelevant ? eventHandler.when[event.type] : defaultHandler
             states[handlerId] = await handler(eventEnvelope, states[handlerId] as EventHandlerStates<T>)

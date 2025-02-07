@@ -1,5 +1,9 @@
 import { Pool, PoolClient } from "pg"
-import { installPostgresCourseSubscriptionsRepository, PostgresCourseSubscriptionsRepository, Student } from "./PostgresCourseSubscriptionRespository"
+import {
+    installPostgresCourseSubscriptionsRepository,
+    PostgresCourseSubscriptionsRepository,
+    Student
+} from "./PostgresCourseSubscriptionRespository"
 import { getTestPgDatabasePool } from "../../jest.testPgDbPool"
 
 const COURSE_1 = {

@@ -1,5 +1,12 @@
 import { EventHandler } from "@dcb-es/event-handling"
-import { CourseWasRegisteredEvent, CourseCapacityWasChangedEvent, CourseTitleWasChangedEvent, StudentWasRegistered, StudentWasSubscribedEvent, StudentWasUnsubscribedEvent } from "./Events"
+import {
+    CourseWasRegisteredEvent,
+    CourseCapacityWasChangedEvent,
+    CourseTitleWasChangedEvent,
+    StudentWasRegistered,
+    StudentWasSubscribedEvent,
+    StudentWasUnsubscribedEvent
+} from "./Events"
 import { PostgresCourseSubscriptionsRepository } from "../postgresCourseSubscriptionRepository/PostgresCourseSubscriptionRespository"
 import { PoolClient } from "pg"
 
@@ -7,12 +14,12 @@ export const PostgresCourseSubscriptionsProjection = (
     client: PoolClient
 ): EventHandler<{
     eventHandlers:
-    | CourseWasRegisteredEvent
-    | CourseCapacityWasChangedEvent
-    | CourseTitleWasChangedEvent
-    | StudentWasRegistered
-    | StudentWasSubscribedEvent
-    | StudentWasUnsubscribedEvent
+        | CourseWasRegisteredEvent
+        | CourseCapacityWasChangedEvent
+        | CourseTitleWasChangedEvent
+        | StudentWasRegistered
+        | StudentWasSubscribedEvent
+        | StudentWasUnsubscribedEvent
 }> => ({
     when: {
         courseWasRegistered: async ({ event: { tags, data } }) => {

@@ -6,7 +6,9 @@ type ExtendedGlobal = typeof global & { __PG_CONTAINER_INSTANCE: StartedPostgreS
 
 export const getPostgreSqlContainer = async (): Promise<StartedPostgreSqlContainer> => {
     if (!(<ExtendedGlobal>global).__PG_CONTAINER_INSTANCE) {
-        (<ExtendedGlobal>global).__PG_CONTAINER_INSTANCE = await new PostgreSqlContainer("postgres:17").withDatabase("postgres").start()
+        ;(<ExtendedGlobal>global).__PG_CONTAINER_INSTANCE = await new PostgreSqlContainer("postgres:17")
+            .withDatabase("postgres")
+            .start()
     }
     return (<ExtendedGlobal>global).__PG_CONTAINER_INSTANCE
 }

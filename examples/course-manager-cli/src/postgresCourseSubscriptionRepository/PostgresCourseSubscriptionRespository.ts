@@ -22,7 +22,6 @@ export interface Student {
 }
 
 export const installPostgresCourseSubscriptionsRepository = async (client: Pool | PoolClient) => {
-
     await client.query(`
         CREATE TABLE IF NOT EXISTS courses (
             id TEXT,
@@ -41,7 +40,6 @@ export const installPostgresCourseSubscriptionsRepository = async (client: Pool 
             student_id TEXT
         );
     `)
-
 }
 
 export const PostgresCourseSubscriptionsRepository = (client: Pool | PoolClient) => {
