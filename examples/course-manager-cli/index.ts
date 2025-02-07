@@ -21,6 +21,8 @@ import { ensureHandlersInstalled } from "@dcb-es/event-handling-postgres"
     await ensureEventStoreInstalled(pool)
     await ensureHandlersInstalled(pool, Object.keys(setupHandlers(installClient)))
     await installPostgresCourseSubscriptionsRepository(installClient)
+    await installClient.query("COMMIT")
+    installClient.release()
 
     const api = EventSourcedApi(pool)
 
