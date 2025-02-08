@@ -2,8 +2,7 @@ import { SequenceNumber } from "./SequenceNumber"
 import { Timestamp } from "./Timestamp"
 
 export type Tags = Record<string, string | string[]>
-
-export interface DcbEvent<Tpe extends string = string, Tgs extends Tags = Tags, Dta = unknown, Mtdta = unknown> {
+export interface DcbEvent<Tpe extends string = string, Tgs = Tags, Dta = unknown, Mtdta = unknown> {
     type: Tpe
     tags: Tgs
     data: Dta

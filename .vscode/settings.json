@@ -2,7 +2,7 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true,
     "jestrunner.codeLensSelector": "**/*.{tests}.{ts}",
-    "[javascript]": {
-        "editor.defaultFormatter": "vscode.typescript-language-features"
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": "always"
     }
 }
