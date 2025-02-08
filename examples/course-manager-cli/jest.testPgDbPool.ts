@@ -2,11 +2,15 @@ import { PostgreSqlContainer, StartedPostgreSqlContainer } from "@testcontainers
 import { Pool, Client } from "pg"
 import { v4 as uuid } from "uuid"
 
+type ExtendedGlobal = typeof global & { __PG_CONTAINER_INSTANCE: StartedPostgreSqlContainer }
+
 export const getPostgreSqlContainer = async (): Promise<StartedPostgreSqlContainer> => {
-    if (!global.__PG_CONTAINER_INSTANCE) {
-        global.__PG_CONTAINER_INSTANCE = await new PostgreSqlContainer().withDatabase("postgres").start()
+    if (!(<ExtendedGlobal>global).__PG_CONTAINER_INSTANCE) {
+        ;(<ExtendedGlobal>global).__PG_CONTAINER_INSTANCE = await new PostgreSqlContainer("postgres:17")
+            .withDatabase("postgres")
+            .start()
     }
-    return global.__PG_CONTAINER_INSTANCE
+    return (<ExtendedGlobal>global).__PG_CONTAINER_INSTANCE
 }
 
 export const getTestPgDatabasePool = async (): Promise<Pool> => {

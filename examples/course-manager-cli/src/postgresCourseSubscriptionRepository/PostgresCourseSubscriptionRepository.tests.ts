@@ -124,7 +124,7 @@ describe("PostgresCourseSubscriptionRepository", () => {
             test("should update a course's capacity successfully", async () => {
                 await repository.updateCourseCapacity({ courseId: COURSE_1.id, newCapacity })
                 const course = await repository.findCourseById(COURSE_1.id)
-                expect(course.capacity).toBe(newCapacity)
+                expect(course?.capacity).toBe(newCapacity)
             })
         })
 
@@ -134,10 +134,10 @@ describe("PostgresCourseSubscriptionRepository", () => {
                 const course = await repository.findCourseById(COURSE_1.id)
                 const student = await repository.findStudentById(STUDENT_1.id)
 
-                expect(course.subscribedStudents).toEqual([
+                expect(course?.subscribedStudents).toEqual([
                     { id: STUDENT_1.id, name: STUDENT_1.name, studentNumber: STUDENT_1.studentNumber }
                 ])
-                expect(student.subscribedCourses).toEqual([
+                expect(student?.subscribedCourses).toEqual([
                     { id: COURSE_1.id, title: COURSE_1.title, capacity: COURSE_1.capacity }
                 ])
             })
@@ -150,8 +150,8 @@ describe("PostgresCourseSubscriptionRepository", () => {
                 const course = await repository.findCourseById(COURSE_1.id)
                 const student = await repository.findStudentById(STUDENT_1.id)
 
-                expect(course.subscribedStudents).toEqual([])
-                expect(student.subscribedCourses).toEqual([])
+                expect(course?.subscribedStudents).toEqual([])
+                expect(student?.subscribedCourses).toEqual([])
             })
         })
     })

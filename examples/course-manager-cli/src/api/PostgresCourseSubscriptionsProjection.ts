@@ -12,15 +12,14 @@ import { PoolClient } from "pg"
 
 export const PostgresCourseSubscriptionsProjection = (
     client: PoolClient
-): EventHandler<{
-    eventHandlers:
-        | CourseWasRegisteredEvent
-        | CourseCapacityWasChangedEvent
-        | CourseTitleWasChangedEvent
-        | StudentWasRegistered
-        | StudentWasSubscribedEvent
-        | StudentWasUnsubscribedEvent
-}> => ({
+): EventHandler<
+    | CourseWasRegisteredEvent
+    | CourseCapacityWasChangedEvent
+    | CourseTitleWasChangedEvent
+    | StudentWasRegistered
+    | StudentWasSubscribedEvent
+    | StudentWasUnsubscribedEvent
+> => ({
     when: {
         courseWasRegistered: async ({ event: { tags, data } }) => {
             const repository = PostgresCourseSubscriptionsRepository(client)

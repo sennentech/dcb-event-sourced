@@ -8,18 +8,19 @@ export const POSTGRES_TABLE_NAME = "_event_handler_bookmarks"
 export const catchupHandlers = async (
     client: PoolClient,
     eventStore: EventStore,
-    handlers: Record<string, EventHandler>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    handlers: Record<string, EventHandler<any, any>>
 ) => {
     const currentCheckPoints = await lockHandlers(client, handlers)
 
     await Promise.all(
         Object.entries(handlers).map(
             async ([handlerId, handler]) =>
-            (currentCheckPoints[handlerId] = await catchupHandler(
-                handler,
-                eventStore,
-                currentCheckPoints[handlerId]
-            ))
+                (currentCheckPoints[handlerId] = await catchupHandler(
+                    handler,
+                    eventStore,
+                    currentCheckPoints[handlerId]
+                ))
         )
     )
     await updateBookmarksAndReleaseLocks(client, currentCheckPoints)
@@ -27,7 +28,8 @@ export const catchupHandlers = async (
 
 const lockHandlers = async (
     client: PoolClient,
-    handlers: Record<string, EventHandler>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    handlers: Record<string, EventHandler<any, any>>
 ): Promise<HandlerCheckPoints> => {
     try {
         const selectResult = await client.query(
@@ -82,7 +84,8 @@ const updateBookmarksAndReleaseLocks = async (client: PoolClient, locks: Handler
 }
 
 export const catchupHandler = async (
-    handler: EventHandler,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    handler: EventHandler<any, any>,
     eventStore: EventStore,
     currentSeqNumber: SequenceNumber,
     toSequenceNumber?: SequenceNumber

@@ -8,13 +8,7 @@ import {
     CourseTitleWasChangedEvent
 } from "./Events"
 
-export const CourseExists = (
-    courseId: string
-): EventHandlerWithState<{
-    state: boolean
-    tagFilter: { courseId: string }
-    eventHandlers: CourseWasRegisteredEvent
-}> => ({
+export const CourseExists = (courseId: string): EventHandlerWithState<CourseWasRegisteredEvent, boolean> => ({
     tagFilter: { courseId },
     init: false,
     when: {
@@ -24,11 +18,7 @@ export const CourseExists = (
 
 export const CourseTitle = (
     courseId: string
-): EventHandlerWithState<{
-    state: string
-    tagFilter: { courseId: string }
-    eventHandlers: CourseWasRegisteredEvent | CourseTitleWasChangedEvent
-}> => ({
+): EventHandlerWithState<CourseWasRegisteredEvent | CourseTitleWasChangedEvent, string> => ({
     tagFilter: { courseId },
     init: "",
     when: {
@@ -39,14 +29,10 @@ export const CourseTitle = (
 
 export const CourseCapacity = (
     courseId: string
-): EventHandlerWithState<{
-    state: { subscriberCount: number; capacity: number }
-    eventHandlers:
-        | CourseWasRegisteredEvent
-        | CourseCapacityWasChangedEvent
-        | StudentWasSubscribedEvent
-        | StudentWasUnsubscribedEvent
-}> => ({
+): EventHandlerWithState<
+    CourseWasRegisteredEvent | CourseCapacityWasChangedEvent | StudentWasSubscribedEvent | StudentWasUnsubscribedEvent,
+    { subscriberCount: number; capacity: number }
+> => ({
     tagFilter: { courseId },
     init: { subscriberCount: 0, capacity: 0 },
     when: {
@@ -69,13 +55,7 @@ export const CourseCapacity = (
     }
 })
 
-export const StudentAlreadyRegistered = (
-    studentId: string
-): EventHandlerWithState<{
-    state: boolean
-    tagFilter: { studentId: string }
-    eventHandlers: StudentWasRegistered
-}> => ({
+export const StudentAlreadyRegistered = (studentId: string): EventHandlerWithState<StudentWasRegistered, boolean> => ({
     tagFilter: { studentId },
     init: false,
     when: {
@@ -83,10 +63,7 @@ export const StudentAlreadyRegistered = (
     }
 })
 
-export const NextStudentNumber = (): EventHandlerWithState<{
-    state: number
-    eventHandlers: StudentWasRegistered
-}> => ({
+export const NextStudentNumber = (): EventHandlerWithState<StudentWasRegistered, number> => ({
     init: 1,
     onlyLastEvent: true,
     when: {
@@ -100,11 +77,7 @@ export const StudentAlreadySubscribed = ({
 }: {
     courseId: string
     studentId: string
-}): EventHandlerWithState<{
-    state: boolean
-    tagFilter: { courseId: string; studentId: string }
-    eventHandlers: StudentWasSubscribedEvent | StudentWasUnsubscribedEvent
-}> => ({
+}): EventHandlerWithState<StudentWasSubscribedEvent | StudentWasUnsubscribedEvent, boolean> => ({
     tagFilter: { courseId, studentId },
     init: false,
     when: {
@@ -115,10 +88,7 @@ export const StudentAlreadySubscribed = ({
 
 export const StudentSubscriptions = (
     studentId: string
-): EventHandlerWithState<{
-    state: { subscriptionCount: number }
-    eventHandlers: StudentWasSubscribedEvent | StudentWasUnsubscribedEvent
-}> => ({
+): EventHandlerWithState<StudentWasSubscribedEvent | StudentWasUnsubscribedEvent, { subscriptionCount: number }> => ({
     tagFilter: { studentId },
     init: { subscriptionCount: 0 },
     when: {

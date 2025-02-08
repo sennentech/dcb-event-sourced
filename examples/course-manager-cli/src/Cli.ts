@@ -114,12 +114,12 @@ export const startCli = async (api: Api) => {
             }
         } catch (err) {
             if (process.env.DEBUG) throw err
-            log(err)
+            log(<Error>err)
         }
     }
 }
 
-const log = (message: string | object | Error) => {
+const log = (message: string | object | Error | undefined) => {
     console.log(`______________________________________________________`)
     if (message instanceof Error) {
         console.log(`\n\x1b[31m${message?.message ?? message}\x1b[0m`)
