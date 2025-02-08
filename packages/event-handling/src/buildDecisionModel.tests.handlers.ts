@@ -6,13 +6,7 @@ import {
     StudentWasUnsubscribedEvent
 } from "./buildDecisionModel.tests.events"
 
-export const CourseExists = (
-    courseId: string
-): EventHandlerWithState<{
-    state: boolean
-    tagFilter: { courseId: string }
-    eventHandlers: CourseWasRegisteredEvent
-}> => ({
+export const CourseExists = (courseId: string): EventHandlerWithState<CourseWasRegisteredEvent, boolean> => ({
     tagFilter: { courseId },
     init: false,
     when: {
@@ -22,14 +16,10 @@ export const CourseExists = (
 
 export const CourseCapacity = (
     courseId: string
-): EventHandlerWithState<{
-    state: { isFull: boolean; subscriberCount: number; capacity: number }
-    eventHandlers:
-        | CourseWasRegisteredEvent
-        | CourseCapacityWasChangedEvent
-        | StudentWasSubscribedEvent
-        | StudentWasUnsubscribedEvent
-}> => ({
+): EventHandlerWithState<
+    CourseWasRegisteredEvent | CourseCapacityWasChangedEvent | StudentWasSubscribedEvent | StudentWasUnsubscribedEvent,
+    { isFull: boolean; subscriberCount: number; capacity: number }
+> => ({
     tagFilter: { courseId },
     init: { isFull: true, subscriberCount: 0, capacity: 0 },
     when: {

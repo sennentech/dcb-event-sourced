@@ -83,7 +83,7 @@ describe("postgresEventStore.append", () => {
             test("should store and return metadata on event successfully", async () => {
                 await eventStore.append(new EventType1())
                 const events = await streamAllEventsToArray(eventStore.read(Queries.all))
-                const lastEvent = events.at(-1).event as EventType1
+                const lastEvent = events.at(-1)?.event as EventType1
                 expect(lastEvent.metadata.userId).toBe("user-1")
             })
         })

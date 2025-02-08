@@ -15,11 +15,11 @@ export const catchupHandlers = async (
     await Promise.all(
         Object.entries(handlers).map(
             async ([handlerId, handler]) =>
-                (currentCheckPoints[handlerId] = await catchupHandler(
-                    handler,
-                    eventStore,
-                    currentCheckPoints[handlerId]
-                ))
+            (currentCheckPoints[handlerId] = await catchupHandler(
+                handler,
+                eventStore,
+                currentCheckPoints[handlerId]
+            ))
         )
     )
     await updateBookmarksAndReleaseLocks(client, currentCheckPoints)
@@ -53,7 +53,8 @@ const lockHandlers = async (
 
         return result
     } catch (error) {
-        if (error.code === "55P03") {
+        const err = error as { code?: string }
+        if (err.code === "55P03") {
             throw new Error("Could not obtain lock as it is already locked by another process")
         }
         throw error
@@ -93,7 +94,7 @@ export const catchupHandler = async (
 
     const query: Query = [{ eventTypes: Object.keys(handler.when) as string[], tags: {} }]
     for await (const event of eventStore.read(query, { fromSequenceNumber: currentSeqNumber.inc() })) {
-        if (event.sequenceNumber.value > toSequenceNumber.value) {
+        if (toSequenceNumber && event.sequenceNumber.value > toSequenceNumber.value) {
             break
         }
         if (handler.when[event.event.type]) await handler.when[event.event.type](event)

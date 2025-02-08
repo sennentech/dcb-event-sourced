@@ -1,7 +1,9 @@
 import { EventStore, AppendCondition, EventEnvelope, Query, SequenceNumber, Tags } from "@dcb-es/event-store"
 import { EventHandlerWithState } from "./EventHandlerWithState"
 import { matchTags } from "./matchTags"
-type EventHandlers = Record<string, EventHandlerWithState>
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type EventHandlers = Record<string, EventHandlerWithState<any, any>>
 type EventHandlerStates<T extends EventHandlers> = {
     [K in keyof T]: T[K]["init"]
 }
