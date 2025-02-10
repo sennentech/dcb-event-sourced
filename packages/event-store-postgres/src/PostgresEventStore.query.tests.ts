@@ -41,7 +41,7 @@ describe("memoryEventStore.query", () => {
     beforeEach(async () => {
         client = await pool.connect()
         await client.query("BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE")
-        eventStore = PostgresEventStore(client)
+        eventStore = new PostgresEventStore(client)
     })
 
     afterEach(async () => {

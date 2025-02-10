@@ -1,5 +1,5 @@
 import { Pool } from "pg"
-import { POSTGRES_TABLE_NAME } from "./catchupHandlers"
+import { POSTGRES_TABLE_NAME } from "./HandlerCatchup"
 
 export const ensureHandlersInstalled = async (pool: Pool, handlerIds: string[]) => {
     await pool.query(`

@@ -1,2 +1,2 @@
-export { catchupHandlers } from "./src/catchupHandlers"
+export { HandlerCatchup } from "./src/HandlerCatchup"
 export { ensureHandlersInstalled } from "./src/ensureHandlersInstalled"

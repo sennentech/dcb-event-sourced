@@ -25,7 +25,7 @@ import {
     StudentSubscriptions
 } from "./DecisionModels"
 import { PostgresEventStore } from "@dcb-es/event-store-postgres"
-import { catchupHandlers } from "@dcb-es/event-handling-postgres"
+import { HandlerCatchup } from "@dcb-es/event-handling-postgres"
 import { PostgresCourseSubscriptionsProjection } from "./PostgresCourseSubscriptionsProjection"
 
 export interface Api {
@@ -55,7 +55,7 @@ export const EventSourcedApi = (pool: Pool): Api => {
             const client = await pool.connect()
             await client.query("BEGIN transaction isolation level serializable")
             try {
-                const eventStore = PostgresEventStore(client)
+                const eventStore = new PostgresEventStore(client)
                 const { state, appendCondition } = await buildDecisionModel(eventStore, {
                     courseExists: CourseExists(id)
                 })
@@ -66,7 +66,9 @@ export const EventSourcedApi = (pool: Pool): Api => {
                     appendCondition
                 )
 
-                await catchupHandlers(client, eventStore, setupHandlers(client))
+                const handlerCatchup = new HandlerCatchup(client, eventStore)
+                await handlerCatchup.catchupHandlers(setupHandlers(client))
+
                 await client.query("COMMIT")
             } catch (err) {
                 await client.query("ROLLBACK")
@@ -79,7 +81,7 @@ export const EventSourcedApi = (pool: Pool): Api => {
             const client = await pool.connect()
             await client.query("BEGIN transaction isolation level serializable")
             try {
-                const eventStore = PostgresEventStore(client)
+                const eventStore = new PostgresEventStore(client)
                 const { state, appendCondition } = await buildDecisionModel(eventStore, {
                     studentAlreadyRegistered: StudentAlreadyRegistered(id),
                     nextStudentNumber: NextStudentNumber()
@@ -91,7 +93,8 @@ export const EventSourcedApi = (pool: Pool): Api => {
                     appendCondition
                 )
 
-                await catchupHandlers(client, eventStore, setupHandlers(client))
+                const handlerCatchup = new HandlerCatchup(client, eventStore)
+                await handlerCatchup.catchupHandlers(setupHandlers(client))
                 await client.query("COMMIT")
             } catch (err) {
                 await client.query("ROLLBACK")
@@ -104,7 +107,7 @@ export const EventSourcedApi = (pool: Pool): Api => {
             const client = await pool.connect()
             await client.query("BEGIN transaction isolation level serializable")
             try {
-                const eventStore = PostgresEventStore(client)
+                const eventStore = new PostgresEventStore(client)
 
                 const { state, appendCondition } = await buildDecisionModel(eventStore, {
                     courseExists: CourseExists(courseId),
@@ -117,7 +120,8 @@ export const EventSourcedApi = (pool: Pool): Api => {
 
                 await eventStore.append(new CourseCapacityWasChangedEvent({ courseId, newCapacity }), appendCondition)
 
-                await catchupHandlers(client, eventStore, setupHandlers(client))
+                const handlerCatchup = new HandlerCatchup(client, eventStore)
+                await handlerCatchup.catchupHandlers(setupHandlers(client))
                 await client.query("COMMIT")
             } catch (err) {
                 await client.query("ROLLBACK")
@@ -130,7 +134,7 @@ export const EventSourcedApi = (pool: Pool): Api => {
             const client = await pool.connect()
             await client.query("BEGIN transaction isolation level serializable")
             try {
-                const eventStore = PostgresEventStore(client)
+                const eventStore = new PostgresEventStore(client)
 
                 const { state, appendCondition } = await buildDecisionModel(eventStore, {
                     courseExists: CourseExists(courseId),
@@ -141,7 +145,8 @@ export const EventSourcedApi = (pool: Pool): Api => {
                 if (state.courseTitle === newTitle) throw new Error("New title is the same as the current title.")
                 await eventStore.append(new CourseTitleWasChangedEvent({ courseId, newTitle }), appendCondition)
 
-                await catchupHandlers(client, eventStore, setupHandlers(client))
+                const handlerCatchup = new HandlerCatchup(client, eventStore)
+                await handlerCatchup.catchupHandlers(setupHandlers(client))
                 await client.query("COMMIT")
             } catch (err) {
                 await client.query("ROLLBACK")
@@ -154,7 +159,7 @@ export const EventSourcedApi = (pool: Pool): Api => {
             const client = await pool.connect()
             await client.query("BEGIN transaction isolation level serializable")
             try {
-                const eventStore = PostgresEventStore(client)
+                const eventStore = new PostgresEventStore(client)
 
                 const { state, appendCondition } = await buildDecisionModel(eventStore, {
                     courseExists: CourseExists(courseId),
@@ -179,7 +184,8 @@ export const EventSourcedApi = (pool: Pool): Api => {
 
                 await eventStore.append(new StudentWasSubscribedEvent({ courseId, studentId }), appendCondition)
 
-                await catchupHandlers(client, eventStore, setupHandlers(client))
+                const handlerCatchup = new HandlerCatchup(client, eventStore)
+                await handlerCatchup.catchupHandlers(setupHandlers(client))
                 await client.query("COMMIT")
             } catch (err) {
                 await client.query("ROLLBACK")
@@ -192,7 +198,7 @@ export const EventSourcedApi = (pool: Pool): Api => {
             const client = await pool.connect()
             await client.query("BEGIN transaction isolation level serializable")
             try {
-                const eventStore = PostgresEventStore(client)
+                const eventStore = new PostgresEventStore(client)
 
                 const { state, appendCondition } = await buildDecisionModel(eventStore, {
                     studentAlreadySubscribed: StudentAlreadySubscribed({
@@ -208,7 +214,8 @@ export const EventSourcedApi = (pool: Pool): Api => {
 
                 await eventStore.append(new StudentWasUnsubscribedEvent({ courseId, studentId }), appendCondition)
 
-                await catchupHandlers(client, eventStore, setupHandlers(client))
+                const handlerCatchup = new HandlerCatchup(client, eventStore)
+                await handlerCatchup.catchupHandlers(setupHandlers(client))
                 await client.query("COMMIT")
             } catch (err) {
                 await client.query("ROLLBACK")

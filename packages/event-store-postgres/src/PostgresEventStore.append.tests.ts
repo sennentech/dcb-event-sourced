@@ -41,7 +41,7 @@ describe("postgresEventStore.append", () => {
     beforeEach(async () => {
         client = await pool.connect()
         await client.query("BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE")
-        eventStore = PostgresEventStore(client)
+        eventStore = new PostgresEventStore(client)
     })
 
     afterEach(async () => {
@@ -193,7 +193,7 @@ describe("postgresEventStore.append", () => {
     test("should throw error if given a transaction that is not at isolation level serializable (READ COMMITTED)", async () => {
         const client = await pool.connect()
         await client.query("BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED")
-        const eventStore = PostgresEventStore(client)
+        const eventStore = new PostgresEventStore(client)
         await expect(eventStore.append(new EventType1())).rejects.toThrow("Transaction is not serializable")
         await client.query("ROLLBACK")
         client.release()
@@ -202,7 +202,7 @@ describe("postgresEventStore.append", () => {
     test("should throw error if given a transaction that is not at isolation level serializable (default level)", async () => {
         const client = await pool.connect()
         await client.query("BEGIN TRANSACTION")
-        const eventStore = PostgresEventStore(client)
+        const eventStore = new PostgresEventStore(client)
         await expect(eventStore.append(new EventType1())).rejects.toThrow("Transaction is not serializable")
         await client.query("ROLLBACK")
         client.release()
@@ -210,7 +210,7 @@ describe("postgresEventStore.append", () => {
 
     test("should throw error if transaction is not started", async () => {
         const client = await pool.connect()
-        const eventStore = PostgresEventStore(client)
+        const eventStore = new PostgresEventStore(client)
         await expect(eventStore.append(new EventType1())).rejects.toThrow("Transaction is not serializable")
         client.release()
     })
