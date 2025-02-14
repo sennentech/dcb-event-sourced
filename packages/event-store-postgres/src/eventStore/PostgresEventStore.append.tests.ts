@@ -1,5 +1,12 @@
 import { Pool, PoolClient } from "pg"
-import { AppendCondition, DcbEvent, EventStore, SequencePosition, streamAllEventsToArray } from "@dcb-es/event-store"
+import {
+    AppendCondition,
+    DcbEvent,
+    EventStore,
+    SequencePosition,
+    streamAllEventsToArray,
+    Tags
+} from "@dcb-es/event-store"
 import { PostgresEventStore } from "./PostgresEventStore"
 import { getTestPgDatabasePool } from "../../jest.testPgDbPool"
 import { Queries } from "@dcb-es/event-store"
@@ -7,11 +14,11 @@ import { ensureEventStoreInstalled } from "./ensureEventStoreInstalled"
 
 class EventType1 implements DcbEvent {
     type: "testEvent1" = "testEvent1"
-    tags: { testTagKey?: string }
+    tags: Tags
     data: Record<string, never>
     metadata: { userId: string } = { userId: "user-1" }
 
-    constructor(tags: Record<string, string> = {}) {
+    constructor(tags: Tags = Tags.createEmpty()) {
         this.tags = tags
         this.data = {}
     }
@@ -19,12 +26,12 @@ class EventType1 implements DcbEvent {
 
 class EventType2 implements DcbEvent {
     type: "testEvent2" = "testEvent2"
-    tags: { testTagKey?: string }
+    tags: Tags
     data: Record<string, never>
     metadata: { userId: string } = { userId: "user-1" }
 
-    constructor(tagValue?: string) {
-        this.tags = tagValue ? { testTagKey: tagValue } : {}
+    constructor(tags: Tags = Tags.createEmpty()) {
+        this.tags = tags
         this.data = {}
     }
 }
@@ -69,7 +76,7 @@ describe("postgresEventStore.append", () => {
         })
         describe("when append condition with eventTypes filter and expectedCeiling provided", () => {
             const appendCondition: AppendCondition = {
-                query: [{ eventTypes: ["testEvent1"], tags: {} }],
+                query: [{ eventTypes: ["testEvent1"], tags: Tags.createEmpty() }],
                 expectedCeiling: SequencePosition.create(1)
             }
             test("should successfully append an event without throwing under specified conditions", async () => {
@@ -113,7 +120,7 @@ describe("postgresEventStore.append", () => {
 
         describe("when append condition with eventTypes filter and expectedCeiling provided", () => {
             const appendCondition: AppendCondition = {
-                query: [{ eventTypes: ["testEvent1"], tags: {} }],
+                query: [{ eventTypes: ["testEvent1"], tags: Tags.createEmpty() }],
                 expectedCeiling: SequencePosition.zero()
             }
             test("should throw an error if appended event exceeds the maximum allowed sequence number", async () => {
@@ -125,7 +132,7 @@ describe("postgresEventStore.append", () => {
 
         test("should successfully append an event without throwing under specified conditions", async () => {
             const appendCondition: AppendCondition = {
-                query: [{ eventTypes: ["testEvent1"], tags: {}, onlyLastEvent: true }],
+                query: [{ eventTypes: ["testEvent1"], tags: Tags.createEmpty(), onlyLastEvent: true }],
                 expectedCeiling: SequencePosition.create(3)
             }
 
@@ -169,7 +176,7 @@ describe("postgresEventStore.append", () => {
 
         test("should fail to append next event if append condition is no longer met", async () => {
             const appendCondition: AppendCondition = {
-                query: [{ eventTypes: ["testEvent1"], tags: {} }],
+                query: [{ eventTypes: ["testEvent1"], tags: Tags.createEmpty() }],
                 expectedCeiling: SequencePosition.create(1)
             }
 

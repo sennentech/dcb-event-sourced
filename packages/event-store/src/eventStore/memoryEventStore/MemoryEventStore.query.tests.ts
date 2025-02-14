@@ -2,27 +2,28 @@ import { MemoryEventStore } from "./MemoryEventStore"
 import { DcbEvent, Queries } from "../EventStore"
 import { SequencePosition } from "../../SequencePosition"
 import { streamAllEventsToArray } from "../../streamAllEventsToArray"
+import { Tags } from "../../Tags"
 
 class EventType1 implements DcbEvent {
     type: "testEvent1" = "testEvent1"
-    tags: { testTagKey?: string }
+    tags: Tags
     data: Record<string, never>
     metadata: Record<string, never> = {}
 
     constructor(tagValue?: string) {
-        this.tags = tagValue ? { testTagKey: tagValue } : {}
+        this.tags = tagValue ? Tags.fromObj({ testTagKey: tagValue }) : Tags.createEmpty()
         this.data = {}
     }
 }
 
 class EventType2 implements DcbEvent {
     type: "testEvent2" = "testEvent2"
-    tags: { testTagKey?: string }
+    tags: Tags
     data: Record<string, never>
     metadata: Record<string, never> = {}
 
     constructor(tagValue?: string) {
-        this.tags = tagValue ? { testTagKey: tagValue } : {}
+        this.tags = tagValue ? Tags.fromObj({ testTagKey: tagValue }) : Tags.createEmpty()
         this.data = {}
     }
 }
@@ -106,17 +107,17 @@ describe("memoryEventStore.query", () => {
         describe("when filtered by tags", () => {
             test("should return no events when tag keys do not match", async () => {
                 const events = await streamAllEventsToArray(
-                    eventStore.read([{ eventTypes: [], tags: { unmatchedId: "tag-key-1" } }])
+                    eventStore.read([{ eventTypes: [], tags: Tags.fromObj({ unmatchedId: "tag-key-1" }) }])
                 )
                 expect(events.length).toBe(0)
             })
 
             test("should return the event matching specific tag key when read forward", async () => {
                 const events = await streamAllEventsToArray(
-                    eventStore.read([{ eventTypes: [], tags: { testTagKey: "tag-key-1" } }])
+                    eventStore.read([{ eventTypes: [], tags: Tags.fromObj({ testTagKey: "tag-key-1" }) }])
                 )
                 expect(events.length).toBe(1)
-                expect(events[0].event.tags.testTagKey).toBe("tag-key-1")
+                expect(events[0].event.tags.equals(Tags.fromObj({ testTagKey: "tag-key-1" }))).toEqual(true)
             })
         })
     })
@@ -149,7 +150,7 @@ describe("memoryEventStore.query", () => {
             )
             expect(events.length).toBe(1)
             expect(events[0].event.type).toBe("testEvent2")
-            expect(events[0].event.tags.testTagKey).toBe("ev-3")
+            expect(events[0].event.tags.equals(Tags.fromObj({ testTagKey: "ev-3" }))).toEqual(true)
         })
 
         test("should respect onlyLastEvent flag on read with other criteria", async () => {
@@ -158,9 +159,9 @@ describe("memoryEventStore.query", () => {
             )
             expect(events.length).toBe(2)
             expect(events[0].event.type).toBe("testEvent1")
-            expect(events[0].event.tags.testTagKey).toBe("tag-key-1")
+            expect(events[0].event.tags.equals(Tags.fromObj({ testTagKey: "tag-key-1" }))).toEqual(true)
             expect(events[1].event.type).toBe("testEvent2")
-            expect(events[1].event.tags.testTagKey).toBe("ev-3")
+            expect(events[1].event.tags.equals(Tags.fromObj({ testTagKey: "ev-3" }))).toEqual(true)
         })
 
         test("should respect onlyLastEvent flag on read with backwards", async () => {
@@ -169,21 +170,22 @@ describe("memoryEventStore.query", () => {
             )
             expect(events.length).toBe(1)
             expect(events[0].event.type).toBe("testEvent2")
-            expect(events[0].event.tags.testTagKey).toBe("ev-3")
+            expect(events[0].event.tags.equals(Tags.fromObj({ testTagKey: "ev-3" }))).toEqual(true)
         })
 
         test("should return respect limit clause when readAll backward", async () => {
             const events = await streamAllEventsToArray(eventStore.read(Queries.all, { limit: 1, backwards: true }))
             expect(events.length).toBe(1)
             expect(events[0].event.type).toBe("testEvent2")
-            expect(events[0].event.tags.testTagKey).toBe("ev-3")
+            expect(events[0].event.tags.equals(Tags.fromObj({ testTagKey: "ev-3" }))).toEqual(true)
         })
 
         test("should return respect limit clause when read forward", async () => {
             const events = await streamAllEventsToArray(eventStore.read([{ eventTypes: ["testEvent2"] }], { limit: 1 }))
             expect(events.length).toBe(1)
             expect(events[0].event.type).toBe("testEvent2")
-            expect(events[0].event.tags.testTagKey).toBe("tag-key-2")
+
+            expect(events[0].event.tags.equals(Tags.fromObj({ testTagKey: "tag-key-2" }))).toEqual(true)
         })
 
         test("should return respect limit clause when read backward", async () => {
@@ -192,7 +194,7 @@ describe("memoryEventStore.query", () => {
             )
             expect(events.length).toBe(1)
             expect(events[0].event.type).toBe("testEvent2")
-            expect(events[0].event.tags.testTagKey).toBe("ev-3")
+            expect(events[0].event.tags.equals(Tags.fromObj({ testTagKey: "ev-3" }))).toEqual(true)
         })
 
         test("test read count works", async () => {

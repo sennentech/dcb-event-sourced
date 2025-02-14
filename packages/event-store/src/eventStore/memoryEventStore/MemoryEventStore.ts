@@ -1,7 +1,7 @@
 import { EventEnvelope, EventStore, AppendCondition, Query, DcbEvent, ReadOptions, Queries } from "../EventStore"
 import { SequencePosition } from "../../SequencePosition"
 import { Timestamp } from "../../Timestamp"
-import { isSeqOutOfRange, matchesCriterion as matchesQueryItem, deduplicateEvents } from "./utils"
+import { isSeqOutOfRange, matchesQueryItem as matchesQueryItem, deduplicateEvents } from "./utils"
 
 export const ensureIsArray = (events: DcbEvent | DcbEvent[]) => (Array.isArray(events) ? events : [events])
 

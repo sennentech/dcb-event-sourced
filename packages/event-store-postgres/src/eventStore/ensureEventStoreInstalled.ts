@@ -7,13 +7,13 @@ export const ensureEventStoreInstalled = async (pool: Pool) => {
             type TEXT NOT NULL,
             data JSONB NOT NULL,
             metadata JSONB NOT NULL,
-            tags JSONB NOT NULL,
+            tags TEXT[] NOT NULL,
             "timestamp" TIMESTAMPTZ DEFAULT now()
         );
 
         CREATE INDEX IF NOT EXISTS idx_sequence_number ON events(sequence_number);
         CREATE INDEX IF NOT EXISTS idx_type ON events(type);
-        CREATE INDEX IF NOT EXISTS idx_tags ON events USING gin (tags);
-        CREATE INDEX IF NOT EXISTS idx_data ON events USING gin (data);
+        CREATE INDEX IF NOT EXISTS idx_tags ON events USING GIN (tags);
+        CREATE INDEX IF NOT EXISTS idx_data ON events USING GIN (data);
     `)
 }

@@ -1,4 +1,4 @@
-import { Tags } from "../eventStore/EventStore"
+import { Tags } from "../Tags"
 
 export const ensureIsArray = (stringOrStringArray: string | string[]) =>
     Array.isArray(stringOrStringArray) ? stringOrStringArray : [stringOrStringArray]
@@ -6,12 +6,9 @@ export const ensureIsArray = (stringOrStringArray: string | string[]) =>
 export const matchTags = ({ tags, tagFilter }: { tags: Tags; tagFilter: Tags | undefined }): boolean => {
     if (!tagFilter) return true
 
-    for (const tagFilterKey of Object.keys(tagFilter)) {
-        const tagFilterValues = ensureIsArray(tagFilter[tagFilterKey])
-        if (!tags[tagFilterKey]) return false
+    //query item has tags that the event does not
+    if (tagFilter.values.length > 0 && tagFilter.values.some(t => !tags.values.includes(t))) return false
 
-        const tagValues = ensureIsArray(tags[tagFilterKey])
-        if (!tagFilterValues.filter(value => tagValues.includes(value)).length) return false
-    }
+    //otherwise query has tags that match event
     return true
 }

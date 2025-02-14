@@ -1,4 +1,4 @@
-import { EventHandlerWithState } from "@dcb-es/event-store"
+import { EventHandlerWithState, Tags } from "@dcb-es/event-store"
 import {
     CourseWasRegisteredEvent,
     CourseCapacityWasChangedEvent,
@@ -9,7 +9,7 @@ import {
 } from "./Events"
 
 export const CourseExists = (courseId: string): EventHandlerWithState<CourseWasRegisteredEvent, boolean> => ({
-    tagFilter: { courseId },
+    tagFilter: Tags.fromObj({ courseId }),
     init: false,
     when: {
         courseWasRegistered: () => true
@@ -19,7 +19,7 @@ export const CourseExists = (courseId: string): EventHandlerWithState<CourseWasR
 export const CourseTitle = (
     courseId: string
 ): EventHandlerWithState<CourseWasRegisteredEvent | CourseTitleWasChangedEvent, string> => ({
-    tagFilter: { courseId },
+    tagFilter: Tags.fromObj({ courseId }),
     init: "",
     when: {
         courseWasRegistered: ({ event }) => event.data.title,
@@ -33,7 +33,7 @@ export const CourseCapacity = (
     CourseWasRegisteredEvent | CourseCapacityWasChangedEvent | StudentWasSubscribedEvent | StudentWasUnsubscribedEvent,
     { subscriberCount: number; capacity: number }
 > => ({
-    tagFilter: { courseId },
+    tagFilter: Tags.fromObj({ courseId }),
     init: { subscriberCount: 0, capacity: 0 },
     when: {
         courseWasRegistered: ({ event }) => ({
@@ -56,7 +56,7 @@ export const CourseCapacity = (
 })
 
 export const StudentAlreadyRegistered = (studentId: string): EventHandlerWithState<StudentWasRegistered, boolean> => ({
-    tagFilter: { studentId },
+    tagFilter: Tags.fromObj({ studentId }),
     init: false,
     when: {
         studentWasRegistered: () => true
@@ -78,7 +78,7 @@ export const StudentAlreadySubscribed = ({
     courseId: string
     studentId: string
 }): EventHandlerWithState<StudentWasSubscribedEvent | StudentWasUnsubscribedEvent, boolean> => ({
-    tagFilter: { courseId, studentId },
+    tagFilter: Tags.fromObj({ courseId, studentId }),
     init: false,
     when: {
         studentWasSubscribed: () => true,
@@ -89,7 +89,7 @@ export const StudentAlreadySubscribed = ({
 export const StudentSubscriptions = (
     studentId: string
 ): EventHandlerWithState<StudentWasSubscribedEvent | StudentWasUnsubscribedEvent, { subscriptionCount: number }> => ({
-    tagFilter: { studentId },
+    tagFilter: Tags.fromObj({ studentId }),
     init: { subscriptionCount: 0 },
     when: {
         studentWasSubscribed: (_eventEnvelope, { subscriptionCount }) => ({

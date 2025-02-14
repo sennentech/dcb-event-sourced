@@ -2,15 +2,15 @@ import { MemoryEventStore } from "./MemoryEventStore"
 import { AppendCondition, DcbEvent, Queries } from "../EventStore"
 import { SequencePosition } from "../../SequencePosition"
 import { streamAllEventsToArray } from "../../streamAllEventsToArray"
-
+import { Tags } from "../../Tags"
 class EventType1 implements DcbEvent {
     type: "testEvent1" = "testEvent1"
-    tags: { testTagKey?: string }
+    tags: Tags
     data: Record<string, never>
     metadata: Record<string, never> = {}
 
     constructor(tagValue?: string) {
-        this.tags = tagValue ? { testTagKey: tagValue } : {}
+        this.tags = tagValue ? Tags.fromObj({ testTagKey: tagValue }) : Tags.from([])
         this.data = {}
     }
 }
@@ -36,7 +36,7 @@ describe("memoryEventStore.append", () => {
         })
         describe("when append condition with eventTypes filter and maxSequencePosition provided", () => {
             const appendCondition: AppendCondition = {
-                query: [{ eventTypes: ["testEvent1"], tags: {} }],
+                query: [{ eventTypes: ["testEvent1"], tags: Tags.createEmpty() }],
                 expectedCeiling: SequencePosition.create(1)
             }
             test("should successfully append an event without throwing under specified conditions", async () => {
@@ -73,7 +73,7 @@ describe("memoryEventStore.append", () => {
 
         describe("when append condition with eventTypes filter and maxSequencePosition provided", () => {
             const appendCondition: AppendCondition = {
-                query: [{ eventTypes: ["testEvent1"], tags: {} }],
+                query: [{ eventTypes: ["testEvent1"], tags: Tags.createEmpty() }],
                 expectedCeiling: SequencePosition.zero()
             }
             test("should throw an error if appended event exceeds the maximum allowed sequence number", async () => {

@@ -1,5 +1,6 @@
 import { EventEnvelope, QueryItem } from "../EventStore"
 import { SequencePosition } from "../../SequencePosition"
+import { matchTags } from "../../eventHandling/matchTags"
 
 export const isSeqOutOfRange = (
     sequencePosition: SequencePosition,
@@ -19,15 +20,10 @@ export const deduplicateEvents = (events: EventEnvelope[]): EventEnvelope[] => {
     return Array.from(uniqueEventsMap.values())
 }
 
-const makeArray = (str: string | string[]) => (Array.isArray(str) ? str : [str])
+export const matchesQueryItem = (queryItem: QueryItem, { event }: EventEnvelope) => {
+    //query item does not contain relevant event type
+    if (queryItem.eventTypes && queryItem.eventTypes.length > 0 && !queryItem.eventTypes.includes(event.type))
+        return false
 
-export const matchesCriterion = ({ eventTypes, tags }: QueryItem, { event }: EventEnvelope) => {
-    if (eventTypes && eventTypes.length > 0 && !eventTypes.includes(event.type)) return false
-
-    const tagKeys = Object.keys(tags ?? {})
-    if (tagKeys.length > 0 && tagKeys.some(tagKey => !(tagKey in event.tags))) return false
-
-    return tagKeys.every(tagKey =>
-        makeArray((tags ?? {})[tagKey]).some(tagValue => makeArray(event.tags[tagKey]).includes(tagValue))
-    )
+    return matchTags({ tagFilter: queryItem.tags, tags: event.tags })
 }

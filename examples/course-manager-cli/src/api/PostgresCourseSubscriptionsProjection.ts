@@ -21,33 +21,33 @@ export const PostgresCourseSubscriptionsProjection = (
     | StudentWasUnsubscribedEvent
 > => ({
     when: {
-        courseWasRegistered: async ({ event: { tags, data } }) => {
+        courseWasRegistered: async ({ event: { data } }) => {
             const repository = PostgresCourseSubscriptionsRepository(client)
-            await repository.registerCourse({ courseId: tags.courseId, title: data.title, capacity: data.capacity })
+            await repository.registerCourse({ courseId: data.courseId, title: data.title, capacity: data.capacity })
         },
-        courseTitleWasChanged: async ({ event: { tags, data } }) => {
+        courseTitleWasChanged: async ({ event: { data } }) => {
             const repository = PostgresCourseSubscriptionsRepository(client)
-            await repository.updateCourseTitle({ courseId: tags.courseId, newTitle: data.newTitle })
+            await repository.updateCourseTitle({ courseId: data.courseId, newTitle: data.newTitle })
         },
-        courseCapacityWasChanged: async ({ event: { tags, data } }) => {
+        courseCapacityWasChanged: async ({ event: { data } }) => {
             const repository = PostgresCourseSubscriptionsRepository(client)
-            await repository.updateCourseCapacity({ courseId: tags.courseId, newCapacity: data.newCapacity })
+            await repository.updateCourseCapacity({ courseId: data.courseId, newCapacity: data.newCapacity })
         },
-        studentWasRegistered: async ({ event: { tags, data } }) => {
+        studentWasRegistered: async ({ event: { data } }) => {
             const repository = PostgresCourseSubscriptionsRepository(client)
             await repository.registerStudent({
-                studentId: tags.studentId,
+                studentId: data.studentId,
                 name: data.name,
                 studentNumber: data.studentNumber
             })
         },
-        studentWasSubscribed: async ({ event: { tags } }) => {
+        studentWasSubscribed: async ({ event: { data } }) => {
             const repository = PostgresCourseSubscriptionsRepository(client)
-            await repository.subscribeStudentToCourse({ studentId: tags.studentId, courseId: tags.courseId })
+            await repository.subscribeStudentToCourse({ studentId: data.studentId, courseId: data.courseId })
         },
-        studentWasUnsubscribed: async ({ event: { tags } }) => {
+        studentWasUnsubscribed: async ({ event: { data } }) => {
             const repository = PostgresCourseSubscriptionsRepository(client)
-            await repository.unsubscribeStudentFromCourse({ studentId: tags.studentId, courseId: tags.courseId })
+            await repository.unsubscribeStudentFromCourse({ studentId: data.studentId, courseId: data.courseId })
         }
     }
 })

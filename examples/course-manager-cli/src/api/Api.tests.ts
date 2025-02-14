@@ -5,7 +5,6 @@ import {
     PostgresCourseSubscriptionsRepository
 } from "../postgresCourseSubscriptionRepository/PostgresCourseSubscriptionRespository"
 import { Api, setupHandlers } from "./Api"
-import { EventSourcedApi } from "./Api"
 import { getTestPgDatabasePool } from "../../jest.testPgDbPool"
 import { ensureEventStoreInstalled, ensureHandlersInstalled } from "@dcb-es/event-store-postgres"
 
@@ -32,7 +31,7 @@ describe("EventSourcedApi", () => {
 
         await ensureEventStoreInstalled(pool)
         await installPostgresCourseSubscriptionsRepository(pool)
-        api = EventSourcedApi(pool)
+        api = new Api(pool)
     })
 
     beforeEach(async () => {
@@ -99,7 +98,7 @@ describe("EventSourcedApi", () => {
 
     describe("with one course and 100 students in database", () => {
         beforeEach(async () => {
-            api = EventSourcedApi(pool)
+            api = new Api(pool)
             await api.registerCourse({ id: COURSE_1.id, title: COURSE_1.title, capacity: COURSE_1.capacity })
 
             for (let i = 0; i < 100; i++) {

@@ -1,5 +1,6 @@
-import { AppendCondition, EventEnvelope, EventStore, Query, Tags } from "../eventStore/EventStore"
+import { AppendCondition, EventEnvelope, EventStore, Query } from "../eventStore/EventStore"
 import { SequencePosition } from "../SequencePosition"
+import { Tags } from "../Tags"
 import { EventHandlerWithState } from "./EventHandlerWithState"
 import { matchTags } from "./matchTags"
 

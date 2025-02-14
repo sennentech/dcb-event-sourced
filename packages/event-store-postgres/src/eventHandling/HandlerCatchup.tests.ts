@@ -1,6 +1,6 @@
 import { Pool, PoolClient } from "pg"
 import { v4 as uuid } from "uuid"
-import { EventStore } from "@dcb-es/event-store"
+import { EventStore, Tags } from "@dcb-es/event-store"
 import { ensureHandlersInstalled } from "./ensureHandlersInstalled"
 import { HandlerCatchup } from "./HandlerCatchup"
 import { getTestPgDatabasePool } from "../../jest.testPgDbPool"
@@ -49,7 +49,7 @@ describe("UpdatePostgresHandlers tests", () => {
     })
 
     test("should successfully queue multiple parallel requests", async () => {
-        await eventStore.append({ type: "testEvent1", data: {}, metadata: {}, tags: {} })
+        await eventStore.append({ type: "testEvent1", data: {}, metadata: {}, tags: Tags.createEmpty() })
         const promises = Array.from({ length: 10 }, () => handlerCatchup.catchupHandlers(handlers))
         await Promise.all(promises)
         const result = await pool.query(`SELECT * FROM _event_handler_bookmarks`)

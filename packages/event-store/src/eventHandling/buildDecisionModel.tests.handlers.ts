@@ -1,3 +1,4 @@
+import { Tags } from "../Tags"
 import { EventHandlerWithState } from "./EventHandlerWithState"
 import {
     CourseWasRegisteredEvent,
@@ -7,7 +8,7 @@ import {
 } from "./buildDecisionModel.tests.events"
 
 export const CourseExists = (courseId: string): EventHandlerWithState<CourseWasRegisteredEvent, boolean> => ({
-    tagFilter: { courseId },
+    tagFilter: Tags.fromObj({ courseId }),
     init: false,
     when: {
         courseWasRegistered: async () => true
@@ -20,7 +21,7 @@ export const CourseCapacity = (
     CourseWasRegisteredEvent | CourseCapacityWasChangedEvent | StudentWasSubscribedEvent | StudentWasUnsubscribedEvent,
     { isFull: boolean; subscriberCount: number; capacity: number }
 > => ({
-    tagFilter: { courseId },
+    tagFilter: Tags.fromObj({ courseId }),
     init: { isFull: true, subscriberCount: 0, capacity: 0 },
     when: {
         courseWasRegistered: ({ event }) => ({

@@ -1,4 +1,4 @@
-import { EventHandler, EventStore, Queries, Query, SequencePosition } from "@dcb-es/event-store"
+import { EventHandler, EventStore, Queries, Query, SequencePosition, Tags } from "@dcb-es/event-store"
 import { PoolClient } from "pg"
 
 export type HandlerCheckPoints = Record<string, SequencePosition>
@@ -8,7 +8,7 @@ export class HandlerCatchup {
     constructor(
         private client: PoolClient,
         private eventStore: EventStore
-    ) { }
+    ) {}
 
     async catchupHandlers(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -95,7 +95,7 @@ export class HandlerCatchup {
             toSequencePosition = lastEventInStore?.sequencePosition ?? SequencePosition.zero()
         }
 
-        const query: Query = [{ eventTypes: Object.keys(handler.when) as string[], tags: {} }]
+        const query: Query = [{ eventTypes: Object.keys(handler.when) as string[], tags: Tags.createEmpty() }]
         for await (const event of this.eventStore.read(query, { fromSequencePosition: currentPosition.inc() })) {
             if (toSequencePosition && event.sequencePosition.value > toSequencePosition.value) {
                 break

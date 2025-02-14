@@ -3,6 +3,7 @@ import { CourseCapacity, CourseExists } from "./buildDecisionModel.tests.handler
 import { CourseCapacityWasChangedEvent, CourseWasRegisteredEvent } from "./buildDecisionModel.tests.events"
 import { MemoryEventStore } from "../eventStore/memoryEventStore/MemoryEventStore"
 import { AppendCondition, QueryItem } from "../eventStore/EventStore"
+import { Tags } from "../Tags"
 
 const COURSE_ID = "course-1"
 
@@ -43,7 +44,7 @@ describe("buildDecisionModel", () => {
             test("should include 'courseId' as a tag in appendCondition", async () => {
                 const { tags } = <QueryItem>appendCondition.query[0]
                 expect(Object.keys(tags ?? {}).length).toBe(1)
-                expect(tags?.courseId).toBe("course-1")
+                expect(tags?.equals(Tags.fromObj({ courseId: "course-1" }))).toEqual(true)
             })
         })
     })
@@ -82,7 +83,7 @@ describe("buildDecisionModel", () => {
         test("should include 'courseId' as a tag in appendCondition", async () => {
             const { tags } = <QueryItem>appendCondition.query[0]
             expect(Object.keys(tags ?? {}).length).toBe(1)
-            expect(tags?.courseId).toBe("course-1")
+            expect(tags?.equals(Tags.fromObj({ courseId: "course-1" }))).toEqual(true)
         })
     })
 
@@ -132,7 +133,7 @@ describe("buildDecisionModel", () => {
         test("should include 'courseId' as a tag in appendCondition", async () => {
             const { tags } = <QueryItem>appendCondition.query[0]
             expect(Object.keys(tags ?? {}).length).toBe(1)
-            expect(tags?.courseId).toBe("course-1")
+            expect(tags?.equals(Tags.fromObj({ courseId: "course-1" }))).toBe(true)
         })
     })
 
@@ -185,7 +186,7 @@ describe("buildDecisionModel", () => {
         test("should include 'courseId' as a tag in appendCondition", async () => {
             const { tags } = <QueryItem>appendCondition.query[0]
             expect(Object.keys(tags ?? {}).length).toBe(1)
-            expect(tags?.courseId).toBe("course-1")
+            expect(tags?.equals(Tags.fromObj({ courseId: "course-1" }))).toEqual(true)
         })
 
         test("should indicate course exists", async () => {
