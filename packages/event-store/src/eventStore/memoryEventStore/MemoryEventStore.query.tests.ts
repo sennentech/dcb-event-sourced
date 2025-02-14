@@ -1,7 +1,7 @@
 import { MemoryEventStore } from "./MemoryEventStore"
 import { DcbEvent, Queries } from "../EventStore"
-import { SequenceNumber } from "../SequenceNumber"
-import { streamAllEventsToArray } from "../streamAllEventsToArray"
+import { SequencePosition } from "../../SequencePosition"
+import { streamAllEventsToArray } from "../../streamAllEventsToArray"
 
 class EventType1 implements DcbEvent {
     type: "testEvent1" = "testEvent1"
@@ -70,26 +70,26 @@ describe("memoryEventStore.query", () => {
             await eventStore.append(new EventType2("tag-key-2"))
         })
 
-        describe("with a fromSequenceNumber filter applied", () => {
+        describe("with a fromSequencePosition filter applied", () => {
             test("should return the second event when read forward from sequence number 2", async () => {
                 const events = await streamAllEventsToArray(
-                    eventStore.read(Queries.all, { fromSequenceNumber: SequenceNumber.create(2) })
+                    eventStore.read(Queries.all, { fromSequencePosition: SequencePosition.create(2) })
                 )
                 expect(events.length).toBe(1)
-                expect(events[0].sequenceNumber.value).toBe(2)
+                expect(events[0].sequencePosition.value).toBe(2)
             })
 
             test("should return the first event when read backward from sequence number 1", async () => {
                 const events = await streamAllEventsToArray(
-                    eventStore.read(Queries.all, { fromSequenceNumber: SequenceNumber.create(1), backwards: true })
+                    eventStore.read(Queries.all, { fromSequencePosition: SequencePosition.create(1), backwards: true })
                 )
                 expect(events.length).toBe(1)
-                expect(events[0].sequenceNumber.value).toBe(1)
+                expect(events[0].sequencePosition.value).toBe(1)
             })
 
             test("should return both first and second event when read backward from sequence number 2", async () => {
                 const events = await streamAllEventsToArray(
-                    eventStore.read(Queries.all, { fromSequenceNumber: SequenceNumber.create(2), backwards: true })
+                    eventStore.read(Queries.all, { fromSequencePosition: SequencePosition.create(2), backwards: true })
                 )
                 expect(events.length).toBe(2)
             })

@@ -40,8 +40,8 @@ const tagFilterSnip = (pm: ParamManager, c: QueryItem) =>
     hasTags(c) ? `tags @> ${pm.add(JSON.stringify(tagConverter.toDb(<Tags>c.tags)))}::jsonb` : ""
 
 const fromSeqNoFilter = (pm: ParamManager, tableAlias: string, options?: ReadOptions) =>
-    options?.fromSequenceNumber
-        ? `${tableAlias ? `${tableAlias}.` : ""}sequence_number ${options?.backwards ? "<=" : ">="} ${pm.add(options?.fromSequenceNumber?.value)}`
+    options?.fromSequencePosition
+        ? `${tableAlias ? `${tableAlias}.` : ""}sequence_number ${options?.backwards ? "<=" : ">="} ${pm.add(options?.fromSequencePosition?.value)}`
         : ""
 
 const typesFilter = (c: QueryItem, pm: ParamManager) =>

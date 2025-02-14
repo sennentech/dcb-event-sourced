@@ -1,4 +1,4 @@
-import { Tags } from "@dcb-es/event-store"
+import { Tags } from "../eventStore/EventStore"
 import { matchTags } from "./matchTags"
 
 describe("matchTags", () => {

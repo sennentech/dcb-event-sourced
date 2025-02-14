@@ -1,4 +1,4 @@
-import { DcbEvent, EventEnvelope, Tags } from "@dcb-es/event-store"
+import { DcbEvent, Tags, EventEnvelope } from "../eventStore/EventStore"
 
 export interface EventHandler<TEvents extends DcbEvent<string, Tags, unknown, unknown>, TTags extends Tags = Tags> {
     tagFilter?: Partial<TTags>

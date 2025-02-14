@@ -1,7 +1,7 @@
 import { MemoryEventStore } from "./MemoryEventStore"
 import { AppendCondition, DcbEvent, Queries } from "../EventStore"
-import { SequenceNumber } from "../SequenceNumber"
-import { streamAllEventsToArray } from "../streamAllEventsToArray"
+import { SequencePosition } from "../../SequencePosition"
+import { streamAllEventsToArray } from "../../streamAllEventsToArray"
 
 class EventType1 implements DcbEvent {
     type: "testEvent1" = "testEvent1"
@@ -30,21 +30,21 @@ describe("memoryEventStore.append", () => {
         test("should assign a sequence number of 1 on appending the first event", async () => {
             await eventStore.append(new EventType1())
             const events = await streamAllEventsToArray(eventStore.read(Queries.all))
-            const lastSequenceNumber = events.at(-1)?.sequenceNumber
+            const lastSequencePosition = events.at(-1)?.sequencePosition
 
-            expect(lastSequenceNumber?.value).toBe(1)
+            expect(lastSequencePosition?.value).toBe(1)
         })
-        describe("when append condition with eventTypes filter and maxSequenceNumber provided", () => {
+        describe("when append condition with eventTypes filter and maxSequencePosition provided", () => {
             const appendCondition: AppendCondition = {
                 query: [{ eventTypes: ["testEvent1"], tags: {} }],
-                maxSequenceNumber: SequenceNumber.create(1)
+                expectedCeiling: SequencePosition.create(1)
             }
             test("should successfully append an event without throwing under specified conditions", async () => {
                 await eventStore.append(new EventType1(), appendCondition)
                 const events = await streamAllEventsToArray(eventStore.read(Queries.all))
-                const lastSequenceNumber = events.at(-1)?.sequenceNumber
+                const lastSequencePosition = events.at(-1)?.sequencePosition
 
-                expect(lastSequenceNumber?.value).toBe(1)
+                expect(lastSequencePosition?.value).toBe(1)
             })
         })
     })
@@ -58,23 +58,23 @@ describe("memoryEventStore.append", () => {
         test("should increment sequence number to 2 when a second event is appended", async () => {
             await eventStore.append(new EventType1())
             const events = await streamAllEventsToArray(eventStore.read(Queries.all))
-            const lastSequenceNumber = events.at(-1)?.sequenceNumber
+            const lastSequencePosition = events.at(-1)?.sequencePosition
 
-            expect(lastSequenceNumber?.value).toBe(2)
+            expect(lastSequencePosition?.value).toBe(2)
         })
 
         test("should update the sequence number to 3 after appending two more events", async () => {
             await eventStore.append([new EventType1(), new EventType1()])
             const events = await streamAllEventsToArray(eventStore.read(Queries.all))
-            const lastSequenceNumber = events.at(-1)?.sequenceNumber
+            const lastSequencePosition = events.at(-1)?.sequencePosition
 
-            expect(lastSequenceNumber?.value).toBe(3)
+            expect(lastSequencePosition?.value).toBe(3)
         })
 
-        describe("when append condition with eventTypes filter and maxSequenceNumber provided", () => {
+        describe("when append condition with eventTypes filter and maxSequencePosition provided", () => {
             const appendCondition: AppendCondition = {
                 query: [{ eventTypes: ["testEvent1"], tags: {} }],
-                maxSequenceNumber: SequenceNumber.zero()
+                expectedCeiling: SequencePosition.zero()
             }
             test("should throw an error if appended event exceeds the maximum allowed sequence number", async () => {
                 await expect(eventStore.append(new EventType1(), appendCondition)).rejects.toThrow(

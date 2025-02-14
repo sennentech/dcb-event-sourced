@@ -7,7 +7,7 @@ import { EventStore, DcbEvent, AppendCondition, EventEnvelope, ReadOptions, Quer
 const BATCH_SIZE = 100
 
 export class PostgresEventStore implements EventStore {
-    constructor(private client: PoolClient) {}
+    constructor(private client: PoolClient) { }
 
     async append(events: DcbEvent | DcbEvent[], appendCondition?: AppendCondition): Promise<void> {
         /*  To be completely safe, we need to ensure append with transaction isolation level set to serializable */
@@ -16,9 +16,8 @@ export class PostgresEventStore implements EventStore {
         if (isolation.toLowerCase() !== "serializable") throw new Error("Transaction is not serializable")
 
         const evts = Array.isArray(events) ? events : [events]
-        const query = appendCondition?.query
-        const maxSeqNumber = appendCondition?.maxSequenceNumber
-        const { statement, params } = appendCommand(evts, query, maxSeqNumber)
+        const { query, expectedCeiling } = appendCondition ?? {}
+        const { statement, params } = appendCommand(evts, query, expectedCeiling)
         const result = await this.client.query(statement, params)
 
         const EVentEnvelopes = result.rows.map(dbEventConverter.fromDb)

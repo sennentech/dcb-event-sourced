@@ -7,8 +7,7 @@ import {
 import { Api, setupHandlers } from "./Api"
 import { EventSourcedApi } from "./Api"
 import { getTestPgDatabasePool } from "../../jest.testPgDbPool"
-import { ensureEventStoreInstalled } from "@dcb-es/event-store-postgres"
-import { ensureHandlersInstalled } from "@dcb-es/event-handling-postgres"
+import { ensureEventStoreInstalled, ensureHandlersInstalled } from "@dcb-es/event-store-postgres"
 
 const COURSE_1 = {
     id: "course-1",

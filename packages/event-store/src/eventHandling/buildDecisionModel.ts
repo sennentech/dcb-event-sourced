@@ -1,4 +1,5 @@
-import { EventStore, AppendCondition, EventEnvelope, Query, SequenceNumber, Tags } from "@dcb-es/event-store"
+import { AppendCondition, EventEnvelope, EventStore, Query, Tags } from "../eventStore/EventStore"
+import { SequencePosition } from "../SequencePosition"
 import { EventHandlerWithState } from "./EventHandlerWithState"
 import { matchTags } from "./matchTags"
 
@@ -20,9 +21,9 @@ export async function buildDecisionModel<T extends EventHandlers>(
         eventTypes: Object.keys(proj.when) as string[]
     }))
 
-    let maxSequenceNumber = SequenceNumber.zero()
+    let expectedCeiling = SequencePosition.zero()
     for await (const eventEnvelope of eventStore.read(query)) {
-        const { event, sequenceNumber } = eventEnvelope
+        const { event, sequencePosition } = eventEnvelope
 
         for (const [handlerId, eventHandler] of Object.entries(eventHandlers)) {
             const handlerIsRelevant =
@@ -32,8 +33,8 @@ export async function buildDecisionModel<T extends EventHandlers>(
             const handler = handlerIsRelevant ? eventHandler.when[event.type] : defaultHandler
             states[handlerId] = await handler(eventEnvelope, states[handlerId] as EventHandlerStates<T>)
         }
-        if (sequenceNumber > maxSequenceNumber) maxSequenceNumber = sequenceNumber
+        if (sequencePosition > expectedCeiling) expectedCeiling = sequencePosition
     }
 
-    return { state: states as EventHandlerStates<T>, appendCondition: { query, maxSequenceNumber } }
+    return { state: states as EventHandlerStates<T>, appendCondition: { query, expectedCeiling } }
 }

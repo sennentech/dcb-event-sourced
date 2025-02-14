@@ -1,15 +1,14 @@
-import { EventStore, Queries, Query, SequenceNumber } from "@dcb-es/event-store"
-import { EventHandler } from "@dcb-es/event-handling"
+import { EventHandler, EventStore, Queries, Query, SequencePosition } from "@dcb-es/event-store"
 import { PoolClient } from "pg"
 
-export type HandlerCheckPoints = Record<string, SequenceNumber>
+export type HandlerCheckPoints = Record<string, SequencePosition>
 export const POSTGRES_TABLE_NAME = "_event_handler_bookmarks"
 
 export class HandlerCatchup {
     constructor(
         private client: PoolClient,
         private eventStore: EventStore
-    ) {}
+    ) { }
 
     async catchupHandlers(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -41,11 +40,13 @@ export class HandlerCatchup {
             )
 
             const result = Object.keys(handlers).reduce((acc, handlerId) => {
-                const sequenceNumber = selectResult.rows.find(row => row.handler_id === handlerId)?.last_sequence_number
-                if (sequenceNumber !== undefined) {
+                const sequencePosition = selectResult.rows.find(
+                    row => row.handler_id === handlerId
+                )?.last_sequence_number
+                if (sequencePosition !== undefined) {
                     return {
                         ...acc,
-                        [handlerId]: SequenceNumber.create(parseInt(sequenceNumber))
+                        [handlerId]: SequencePosition.create(parseInt(sequencePosition))
                     }
                 } else {
                     throw new Error(`Failed to retrieve sequence number for handler ${handlerId}`)
@@ -69,9 +70,9 @@ export class HandlerCatchup {
             .map((_, index) => `($${index * 2 + 1}::text, $${index * 2 + 2}::bigint)`)
             .join(", ")
 
-        const updateParams = Object.entries(locks).flatMap(([handlerId, sequenceNumber]) => [
+        const updateParams = Object.entries(locks).flatMap(([handlerId, sequencePosition]) => [
             handlerId,
-            sequenceNumber.value
+            sequencePosition.value
         ])
 
         const updateQuery = `
@@ -85,24 +86,24 @@ export class HandlerCatchup {
     private async catchupHandler(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         handler: EventHandler<any, any>,
-        currentSeqNumber: SequenceNumber,
-        toSequenceNumber?: SequenceNumber
+        currentPosition: SequencePosition,
+        toSequencePosition?: SequencePosition
     ) {
-        if (!toSequenceNumber) {
+        if (!toSequencePosition) {
             const lastEventInStore = (await this.eventStore.read(Queries.all, { backwards: true, limit: 1 }).next())
                 .value
-            toSequenceNumber = lastEventInStore?.sequenceNumber ?? SequenceNumber.zero()
+            toSequencePosition = lastEventInStore?.sequencePosition ?? SequencePosition.zero()
         }
 
         const query: Query = [{ eventTypes: Object.keys(handler.when) as string[], tags: {} }]
-        for await (const event of this.eventStore.read(query, { fromSequenceNumber: currentSeqNumber.inc() })) {
-            if (toSequenceNumber && event.sequenceNumber.value > toSequenceNumber.value) {
+        for await (const event of this.eventStore.read(query, { fromSequencePosition: currentPosition.inc() })) {
+            if (toSequencePosition && event.sequencePosition.value > toSequencePosition.value) {
                 break
             }
             if (handler.when[event.event.type]) await handler.when[event.event.type](event)
 
-            currentSeqNumber = event.sequenceNumber
+            currentPosition = event.sequencePosition
         }
-        return currentSeqNumber
+        return currentPosition
     }
 }

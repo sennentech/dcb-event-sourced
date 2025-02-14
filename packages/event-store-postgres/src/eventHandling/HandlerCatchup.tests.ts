@@ -1,10 +1,11 @@
 import { Pool, PoolClient } from "pg"
 import { v4 as uuid } from "uuid"
 import { EventStore } from "@dcb-es/event-store"
-import { getTestPgDatabasePool } from "../jest.testPgDbPool"
 import { ensureHandlersInstalled } from "./ensureHandlersInstalled"
 import { HandlerCatchup } from "./HandlerCatchup"
-import { ensureEventStoreInstalled, PostgresEventStore } from "@dcb-es/event-store-postgres"
+import { getTestPgDatabasePool } from "../../jest.testPgDbPool"
+import { ensureEventStoreInstalled } from "../eventStore/ensureEventStoreInstalled"
+import { PostgresEventStore } from "../eventStore/PostgresEventStore"
 
 describe("UpdatePostgresHandlers tests", () => {
     let pool: Pool

@@ -1,7 +1,8 @@
-import { AppendCondition, MemoryEventStore, QueryItem } from "@dcb-es/event-store"
 import { buildDecisionModel } from "./buildDecisionModel"
 import { CourseCapacity, CourseExists } from "./buildDecisionModel.tests.handlers"
 import { CourseCapacityWasChangedEvent, CourseWasRegisteredEvent } from "./buildDecisionModel.tests.events"
+import { MemoryEventStore } from "../eventStore/memoryEventStore/MemoryEventStore"
+import { AppendCondition, QueryItem } from "../eventStore/EventStore"
 
 const COURSE_ID = "course-1"
 
@@ -30,7 +31,7 @@ describe("buildDecisionModel", () => {
             })
 
             test("should set the maximum sequence number to 0 in appendCondition", async () => {
-                expect(appendCondition?.maxSequenceNumber.value).toBe(0)
+                expect(appendCondition?.expectedCeiling.value).toBe(0)
             })
 
             test("should have a single eventType of 'courseWasRegistered' in appendCondition", async () => {
@@ -69,7 +70,7 @@ describe("buildDecisionModel", () => {
         })
 
         test("should set the maximum sequence number to 1 in appendCondition", async () => {
-            expect(appendCondition?.maxSequenceNumber.value).toBe(1)
+            expect(appendCondition?.expectedCeiling.value).toBe(1)
         })
 
         test("should have a single eventType of 'courseWasRegistered' in appendCondition", async () => {
@@ -112,7 +113,7 @@ describe("buildDecisionModel", () => {
         })
 
         test("should set the maximum sequence number to 2 in appendCondition", async () => {
-            expect(appendCondition?.maxSequenceNumber.value).toBe(2)
+            expect(appendCondition?.expectedCeiling.value).toBe(2)
         })
 
         test("should have the 4 correct eventTypes in appendCondition", async () => {
@@ -165,7 +166,7 @@ describe("buildDecisionModel", () => {
         })
 
         test("should set the maximum sequence number to 2 in appendCondition", async () => {
-            expect(appendCondition?.maxSequenceNumber.value).toBe(2)
+            expect(appendCondition?.expectedCeiling.value).toBe(2)
         })
 
         test("should have the 4 correct eventTypes in appendCondition", async () => {

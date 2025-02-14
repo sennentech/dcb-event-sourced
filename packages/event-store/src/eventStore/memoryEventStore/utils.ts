@@ -1,18 +1,18 @@
 import { EventEnvelope, QueryItem } from "../EventStore"
-import { SequenceNumber } from "../SequenceNumber"
+import { SequencePosition } from "../../SequencePosition"
 
 export const isSeqOutOfRange = (
-    sequenceNumber: SequenceNumber,
-    fromSequenceNumber: SequenceNumber,
+    sequencePosition: SequencePosition,
+    fromSequencePosition: SequencePosition,
     backwards: boolean | undefined
-) => (backwards ? sequenceNumber > fromSequenceNumber : sequenceNumber < fromSequenceNumber)
+) => (backwards ? sequencePosition > fromSequencePosition : sequencePosition < fromSequencePosition)
 
 export const deduplicateEvents = (events: EventEnvelope[]): EventEnvelope[] => {
     const uniqueEventsMap = new Map<number, EventEnvelope>()
 
     for (const event of events) {
-        if (!uniqueEventsMap.has(event.sequenceNumber.value)) {
-            uniqueEventsMap.set(event.sequenceNumber.value, event)
+        if (!uniqueEventsMap.has(event.sequencePosition.value)) {
+            uniqueEventsMap.set(event.sequencePosition.value, event)
         }
     }
 

@@ -1,14 +1,14 @@
-import { DcbEvent, Query, SequenceNumber } from "@dcb-es/event-store"
+import { DcbEvent, Query, SequencePosition } from "@dcb-es/event-store"
 import { ParamManager, dbEventConverter, tagConverter } from "./utils"
 
 export const appendSql = (
     events: DcbEvent[],
     query: Query | undefined,
-    maxSeqNumber: SequenceNumber | undefined
+    expectedCeiling: SequencePosition | undefined
 ): { statement: string; params: unknown[] } => {
     const params = new ParamManager()
 
-    const maxSeqNoParam = maxSeqNumber ? params.add(maxSeqNumber?.value) : null
+    const maxSeqNoParam = expectedCeiling ? params.add(expectedCeiling?.value) : null
     const formattedEvents = events.map(dbEventConverter.toDb)
 
     //prettier-ignore

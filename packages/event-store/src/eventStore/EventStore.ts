@@ -1,5 +1,5 @@
-import { SequenceNumber } from "./SequenceNumber"
-import { Timestamp } from "./Timestamp"
+import { SequencePosition } from "../SequencePosition"
+import { Timestamp } from "../Timestamp"
 
 export type Tags = Record<string, string | string[]>
 export interface DcbEvent<Tpe extends string = string, Tgs = Tags, Dta = unknown, Mtdta = unknown> {
@@ -12,7 +12,7 @@ export interface DcbEvent<Tpe extends string = string, Tgs = Tags, Dta = unknown
 export interface EventEnvelope<T extends DcbEvent = DcbEvent> {
     event: T
     timestamp: Timestamp
-    sequenceNumber: SequenceNumber
+    sequencePosition: SequencePosition
 }
 
 export interface QueryItem {
@@ -28,12 +28,12 @@ export type Query = QueryItem[] | All
 
 export type AppendCondition = {
     query: Query
-    maxSequenceNumber: SequenceNumber
+    expectedCeiling: SequencePosition
 }
 
 export interface ReadOptions {
     backwards?: boolean
-    fromSequenceNumber?: SequenceNumber
+    fromSequencePosition?: SequencePosition
     limit?: number
 }
 

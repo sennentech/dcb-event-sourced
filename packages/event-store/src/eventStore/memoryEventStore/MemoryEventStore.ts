@@ -1,15 +1,15 @@
 import { EventEnvelope, EventStore, AppendCondition, Query, DcbEvent, ReadOptions, Queries } from "../EventStore"
-import { SequenceNumber } from "../SequenceNumber"
-import { Timestamp } from "../Timestamp"
+import { SequencePosition } from "../../SequencePosition"
+import { Timestamp } from "../../Timestamp"
 import { isSeqOutOfRange, matchesCriterion as matchesQueryItem, deduplicateEvents } from "./utils"
 
 export const ensureIsArray = (events: DcbEvent | DcbEvent[]) => (Array.isArray(events) ? events : [events])
 
 const maxSeqNo = (events: EventEnvelope[]) =>
     events
-        .map(event => event.sequenceNumber)
+        .map(event => event.sequencePosition)
         .filter(seqNum => seqNum !== undefined)
-        .pop() || SequenceNumber.zero()
+        .pop() || SequencePosition.zero()
 
 export class MemoryEventStore implements EventStore {
     private testListenerRegistry: { read: () => void; append: () => void } = {
@@ -34,9 +34,9 @@ export class MemoryEventStore implements EventStore {
         if (this.testListenerRegistry.read) this.testListenerRegistry.read()
 
         const step = options?.backwards ? -1 : 1
-        const maxSequenceNumber = maxSeqNo(this.events)
-        const defaultSeqNumber = options?.backwards ? maxSequenceNumber : SequenceNumber.zero()
-        let currentSequenceNumber = options?.fromSequenceNumber ?? defaultSeqNumber
+        const maxSequencePosition = maxSeqNo(this.events)
+        const defaultSequencePosition = options?.backwards ? maxSequencePosition : SequencePosition.zero()
+        let currentSequencePosition = options?.fromSequencePosition ?? defaultSequencePosition
         let yieldedCount = 0
 
         const allMatchedEvents =
@@ -45,24 +45,27 @@ export class MemoryEventStore implements EventStore {
                       const matchedEvents = this.events
                           .filter(
                               event =>
-                                  !isSeqOutOfRange(event.sequenceNumber, currentSequenceNumber, options?.backwards) &&
-                                  matchesQueryItem(criterion, event)
+                                  !isSeqOutOfRange(
+                                      event.sequencePosition,
+                                      currentSequencePosition,
+                                      options?.backwards
+                                  ) && matchesQueryItem(criterion, event)
                           )
                           .map(event => ({ ...event, matchedCriteria: [index.toString()] }))
-                          .sort((a, b) => a.sequenceNumber.value - b.sequenceNumber.value)
+                          .sort((a, b) => a.sequencePosition.value - b.sequencePosition.value)
 
                       return criterion.onlyLastEvent ? matchedEvents.slice(-1) : matchedEvents
                   })
                 : this.events.filter(
-                      ev => !isSeqOutOfRange(ev.sequenceNumber, currentSequenceNumber, options?.backwards)
+                      ev => !isSeqOutOfRange(ev.sequencePosition, currentSequencePosition, options?.backwards)
                   )
 
         const uniqueEvents = deduplicateEvents(allMatchedEvents)
-            .sort((a, b) => a.sequenceNumber.value - b.sequenceNumber.value)
+            .sort((a, b) => a.sequencePosition.value - b.sequencePosition.value)
             .sort((a, b) =>
                 options?.backwards
-                    ? b.sequenceNumber.value - a.sequenceNumber.value
-                    : a.sequenceNumber.value - b.sequenceNumber.value
+                    ? b.sequencePosition.value - a.sequencePosition.value
+                    : a.sequencePosition.value - b.sequencePosition.value
             )
 
         for (const event of uniqueEvents) {
@@ -71,23 +74,23 @@ export class MemoryEventStore implements EventStore {
             if (options?.limit && yieldedCount >= options.limit) {
                 break
             }
-            currentSequenceNumber = event.sequenceNumber.plus(step)
+            currentSequencePosition = event.sequencePosition.plus(step)
         }
     }
 
     async append(events: DcbEvent | DcbEvent[], appendCondition?: AppendCondition): Promise<void> {
         if (this.testListenerRegistry.append) this.testListenerRegistry.append()
-        const nextSequenceNumber = maxSeqNo(this.events).inc()
+        const nextSequencePosisition = maxSeqNo(this.events).inc()
         const eventEnvelopes: Array<EventEnvelope> = ensureIsArray(events).map((ev, i) => ({
             event: ev,
             timestamp: Timestamp.now(),
-            sequenceNumber: nextSequenceNumber.plus(i)
+            sequencePosition: nextSequencePosisition.plus(i)
         }))
 
         if (appendCondition) {
-            const { query, maxSequenceNumber } = appendCondition
+            const { query, expectedCeiling: maxSequencePosition } = appendCondition
 
-            const matchingEvents = getMatchingEvents(query, maxSequenceNumber, this.events)
+            const matchingEvents = getMatchingEvents(query, maxSequencePosition, this.events)
 
             if (matchingEvents.length > 0)
                 throw new Error("Expected Version fail: New events matching appendCondition found.")
@@ -97,14 +100,14 @@ export class MemoryEventStore implements EventStore {
     }
 }
 
-const getMatchingEvents = (query: Query, maxSeqNo: SequenceNumber, events: EventEnvelope[]) => {
+const getMatchingEvents = (query: Query, maxSeqNo: SequencePosition, events: EventEnvelope[]) => {
     if (query === Queries.all)
-        return events.filter(event => !isSeqOutOfRange(event.sequenceNumber, maxSeqNo.plus(1), false))
+        return events.filter(event => !isSeqOutOfRange(event.sequencePosition, maxSeqNo.plus(1), false))
 
     return (query ?? []).flatMap(queryItem =>
         events.filter(
             event =>
-                !isSeqOutOfRange(event.sequenceNumber, maxSeqNo.plus(1), false) && matchesQueryItem(queryItem, event)
+                !isSeqOutOfRange(event.sequencePosition, maxSeqNo.plus(1), false) && matchesQueryItem(queryItem, event)
         )
     )
 }

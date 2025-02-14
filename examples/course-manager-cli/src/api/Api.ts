@@ -1,4 +1,4 @@
-import { buildDecisionModel } from "@dcb-es/event-handling"
+import { buildDecisionModel } from "@dcb-es/event-store"
 import {
     Course,
     PostgresCourseSubscriptionsRepository,
@@ -24,8 +24,7 @@ import {
     StudentAlreadySubscribed,
     StudentSubscriptions
 } from "./DecisionModels"
-import { PostgresEventStore } from "@dcb-es/event-store-postgres"
-import { HandlerCatchup } from "@dcb-es/event-handling-postgres"
+import { HandlerCatchup, PostgresEventStore } from "@dcb-es/event-store-postgres"
 import { PostgresCourseSubscriptionsProjection } from "./PostgresCourseSubscriptionsProjection"
 
 export interface Api {

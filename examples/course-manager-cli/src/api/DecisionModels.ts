@@ -1,4 +1,4 @@
-import { EventHandlerWithState } from "@dcb-es/event-handling"
+import { EventHandlerWithState } from "@dcb-es/event-store"
 import {
     CourseWasRegisteredEvent,
     CourseCapacityWasChangedEvent,

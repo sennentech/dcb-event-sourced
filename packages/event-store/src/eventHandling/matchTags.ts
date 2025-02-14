@@ -1,4 +1,4 @@
-import { Tags } from "@dcb-es/event-store"
+import { Tags } from "../eventStore/EventStore"
 
 export const ensureIsArray = (stringOrStringArray: string | string[]) =>
     Array.isArray(stringOrStringArray) ? stringOrStringArray : [stringOrStringArray]

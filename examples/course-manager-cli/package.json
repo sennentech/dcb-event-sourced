@@ -15,8 +15,6 @@
         "prepare": "yarn build"
     },
     "dependencies": {
-        "@dcb-es/event-handling": "^5.0.1",
-        "@dcb-es/event-handling-postgres": "^4.0.1",
         "@dcb-es/event-store": "^4.0.1",
         "@dcb-es/event-store-postgres": "^4.0.1",
         "inquirer": "^8.0.0",
