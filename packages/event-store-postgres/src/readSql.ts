@@ -1,8 +1,8 @@
 import { Query, QueryItem, ReadOptions, Tags } from "@dcb-es/event-store"
 import { ParamManager, tagConverter } from "./utils"
 
-export const readSqlWithCursor = (query: Query, options?: ReadOptions) => {
-    const { sql, params } = readSql(query, options)
+export const readSqlWithCursor = (query: Query, tableName: string, options?: ReadOptions) => {
+    const { sql, params } = readSql(query, tableName, options)
 
     const cursorName = `event_cursor_${Math.random().toString(36).substring(7)}`
     return {
@@ -12,9 +12,8 @@ export const readSqlWithCursor = (query: Query, options?: ReadOptions) => {
     }
 }
 
-export const readSql = (query: Query, options?: ReadOptions) => {
+export const readSql = (query: Query, tableName: string, options?: ReadOptions) => {
     const pm = new ParamManager()
-
     const sql = `
         SELECT 
             e.sequence_number,
@@ -23,7 +22,7 @@ export const readSql = (query: Query, options?: ReadOptions) => {
             metadata,
             tags,
             to_char("timestamp" AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') "timestamp"
-        FROM events e
+        FROM ${tableName} e
         ${query?.length ? readCriteriaJoin(query, pm, options) : ""}
         ${whereClause([fromSeqNoFilter(pm, "e", options)])}
 

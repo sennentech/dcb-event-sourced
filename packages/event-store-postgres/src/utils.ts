@@ -72,3 +72,6 @@ export class ParamManager {
         return `$${this.params.length}`
     }
 }
+
+export const getTableName = (tablePrefixOverride?: string) =>
+    tablePrefixOverride ? `${tablePrefixOverride}_events` : "events"

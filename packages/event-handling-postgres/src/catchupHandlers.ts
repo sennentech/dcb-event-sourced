@@ -3,13 +3,15 @@ import { EventHandler } from "@dcb-es/event-handling"
 import { PoolClient } from "pg"
 export type HandlerCheckPoints = Record<string, SequenceNumber>
 
-export const POSTGRES_TABLE_NAME = "_event_handler_bookmarks"
+export const getTableName = (tablePrefixOverride?: string) =>
+    tablePrefixOverride ? `${tablePrefixOverride}_event_handler_bookmarks` : "_event_handler_bookmarks"
 
 export const catchupHandlers = async (
     client: PoolClient,
     eventStore: EventStore,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    handlers: Record<string, EventHandler<any, any>>
+    handlers: Record<string, EventHandler<any, any>>,
+    tablePrefixOverride?: string
 ) => {
     const currentCheckPoints = await lockHandlers(client, handlers)
 
@@ -23,19 +25,20 @@ export const catchupHandlers = async (
                 ))
         )
     )
-    await updateBookmarksAndReleaseLocks(client, currentCheckPoints)
+    await updateBookmarksAndReleaseLocks(client, currentCheckPoints, tablePrefixOverride)
 }
 
 const lockHandlers = async (
     client: PoolClient,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    handlers: Record<string, EventHandler<any, any>>
+    handlers: Record<string, EventHandler<any, any>>,
+    tablePrefixOverride?: string
 ): Promise<HandlerCheckPoints> => {
     try {
         const selectResult = await client.query(
             `
             SELECT handler_id, last_sequence_number
-            FROM ${POSTGRES_TABLE_NAME}
+            FROM ${getTableName(tablePrefixOverride)}
             WHERE handler_id = ANY($1::text[])
             FOR UPDATE NOWAIT;`,
             [Object.keys(handlers)]
@@ -63,7 +66,11 @@ const lockHandlers = async (
     }
 }
 
-const updateBookmarksAndReleaseLocks = async (client: PoolClient, locks: HandlerCheckPoints): Promise<void> => {
+const updateBookmarksAndReleaseLocks = async (
+    client: PoolClient,
+    locks: HandlerCheckPoints,
+    tablePrefixOverride?: string
+): Promise<void> => {
     if (Object.values(locks).some(lock => !lock)) throw new Error("Sequence number is required to commit")
 
     const updateValues = Object.keys(locks)
@@ -76,9 +83,9 @@ const updateBookmarksAndReleaseLocks = async (client: PoolClient, locks: Handler
     ])
 
     const updateQuery = `
-        UPDATE ${POSTGRES_TABLE_NAME} SET last_sequence_number = v.last_sequence_number
+        UPDATE ${getTableName(tablePrefixOverride)} SET last_sequence_number = v.last_sequence_number
         FROM (VALUES ${updateValues}) AS v(handler_id, last_sequence_number)
-        WHERE ${POSTGRES_TABLE_NAME}.handler_id = v.handler_id;`
+        WHERE ${getTableName(tablePrefixOverride)}.handler_id = v.handler_id;`
 
     await client.query(updateQuery, updateParams)
 }

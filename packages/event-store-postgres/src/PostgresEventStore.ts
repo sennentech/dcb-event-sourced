@@ -1,12 +1,12 @@
 import { PoolClient, QueryResult } from "pg"
-import { dbEventConverter } from "./utils"
+import { dbEventConverter, getTableName } from "./utils"
 import { readSqlWithCursor } from "./readSql"
 import { appendSql as appendCommand } from "./appendCommand"
 import { EventStore, DcbEvent, AppendCondition, EventEnvelope, ReadOptions, Query } from "@dcb-es/event-store"
 
 const BATCH_SIZE = 100
 
-export const PostgresEventStore = (client: PoolClient): EventStore => {
+export const PostgresEventStore = (client: PoolClient, tablePrefixOverride?: string): EventStore => {
     const append = async (events: DcbEvent | DcbEvent[], appendCondition?: AppendCondition): Promise<void> => {
         /*  To be completely safe, we need to ensure append with transaction isolation level set to serializable */
         const isolation = (await client.query("SELECT current_setting('transaction_isolation') as iso")).rows[0].iso
@@ -15,7 +15,7 @@ export const PostgresEventStore = (client: PoolClient): EventStore => {
         const evts = Array.isArray(events) ? events : [events]
         const query = appendCondition?.query
         const maxSeqNumber = appendCondition?.maxSequenceNumber
-        const { statement, params } = appendCommand(evts, query, maxSeqNumber)
+        const { statement, params } = appendCommand(evts, query, maxSeqNumber, getTableName(tablePrefixOverride))
         const result = await client.query(statement, params)
 
         const EVentEnvelopes = result.rows.map(dbEventConverter.fromDb)
@@ -33,7 +33,7 @@ export const PostgresEventStore = (client: PoolClient): EventStore => {
         query: Query
         options?: ReadOptions
     }): AsyncGenerator<EventEnvelope> {
-        const { sql, params, cursorName } = readSqlWithCursor(query, options)
+        const { sql, params, cursorName } = readSqlWithCursor(query, getTableName(tablePrefixOverride), options)
         await client.query(sql, params)
 
         let result: QueryResult
