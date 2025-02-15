@@ -4,13 +4,12 @@ import { EventStore, Tags } from "@dcb-es/event-store"
 import { ensureHandlersInstalled } from "./ensureHandlersInstalled"
 import { HandlerCatchup } from "./HandlerCatchup"
 import { getTestPgDatabasePool } from "../../jest.testPgDbPool"
-import { ensureEventStoreInstalled } from "../eventStore/ensureEventStoreInstalled"
 import { PostgresEventStore } from "../eventStore/PostgresEventStore"
 
 describe("UpdatePostgresHandlers tests", () => {
     let pool: Pool
     let client: PoolClient
-    let eventStore: EventStore
+    let eventStore: PostgresEventStore
     let handlerCatchup: HandlerCatchup
     const handlers = {
         [uuid().toString()]: { when: {} },
@@ -19,8 +18,10 @@ describe("UpdatePostgresHandlers tests", () => {
 
     beforeAll(async () => {
         pool = await getTestPgDatabasePool()
-        await ensureEventStoreInstalled(pool)
-        await ensureHandlersInstalled(pool, Object.keys(handlers))
+        eventStore = new PostgresEventStore(pool)
+        handlerCatchup = new HandlerCatchup(pool, eventStore)
+        await eventStore.ensureInstalled()
+        await handlerCatchup.ensureInstalled(Object.keys(handlers))
     })
     beforeEach(async () => {
         client = await pool.connect()
@@ -42,7 +43,7 @@ describe("UpdatePostgresHandlers tests", () => {
 
     test("install worked ok", async () => {
         await handlerCatchup.catchupHandlers(handlers)
-        const result = await pool.query(`SELECT * FROM _event_handler_bookmarks`)
+        const result = await pool.query(`SELECT * FROM _handler_bookmarks`)
         expect(result.rows).toHaveLength(2)
         expect(result.rows[0].handler_id).toBe(Object.keys(handlers)[0])
         expect(result.rows[1].handler_id).toBe(Object.keys(handlers)[1])
@@ -52,7 +53,7 @@ describe("UpdatePostgresHandlers tests", () => {
         await eventStore.append({ type: "testEvent1", data: {}, metadata: {}, tags: Tags.createEmpty() })
         const promises = Array.from({ length: 10 }, () => handlerCatchup.catchupHandlers(handlers))
         await Promise.all(promises)
-        const result = await pool.query(`SELECT * FROM _event_handler_bookmarks`)
+        const result = await pool.query(`SELECT * FROM _handler_bookmarks`)
         expect(result.rows).toHaveLength(2)
         expect(result.rows[0].handler_id).toBe(Object.keys(handlers)[0])
         expect(result.rows[1].handler_id).toBe(Object.keys(handlers)[1])

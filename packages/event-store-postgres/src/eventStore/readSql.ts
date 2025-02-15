@@ -1,8 +1,8 @@
-import { Query, QueryItem, ReadOptions, Tags } from "@dcb-es/event-store"
+import { Query, QueryItem, ReadOptions } from "@dcb-es/event-store"
 import { ParamManager } from "./utils"
 
-export const readSqlWithCursor = (query: Query, options?: ReadOptions) => {
-    const { sql, params } = readSql(query, options)
+export const readSqlWithCursor = (query: Query, tableName: string, options?: ReadOptions) => {
+    const { sql, params } = readSql(query, tableName, options)
     const cursorName = `event_cursor_${Math.random().toString(36).substring(7)}`
     return {
         sql: `DECLARE ${cursorName} CURSOR FOR ${sql}`,
@@ -11,7 +11,7 @@ export const readSqlWithCursor = (query: Query, options?: ReadOptions) => {
     }
 }
 
-export const readSql = (query: Query, options?: ReadOptions) => {
+const readSql = (query: Query, tableName: string, options?: ReadOptions) => {
     const pm = new ParamManager()
 
     const sql = `
@@ -22,8 +22,8 @@ export const readSql = (query: Query, options?: ReadOptions) => {
       e.metadata,
       e.tags,
       to_char(e."timestamp" AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS "timestamp"
-    FROM events e
-    ${query?.length ? readCriteriaJoin(query, pm, options) : ""}
+    FROM ${tableName} e
+    ${query?.length ? readCriteriaJoin(query, pm, tableName, options) : ""}
     ${whereClause([fromSeqNoFilter(pm, "e", options)])}
     ORDER BY e.sequence_number ${options?.backwards ? "DESC" : ""}
     ${options?.limit ? `LIMIT ${options.limit}` : ""};
@@ -51,13 +51,13 @@ const getFilterString = (c: QueryItem, pm: ParamManager, options?: ReadOptions):
     return whereClause(filters)
 }
 
-export const readCriteriaJoin = (query: Query, pm: ParamManager, options?: ReadOptions): string => {
+export const readCriteriaJoin = (query: Query, pm: ParamManager, tableName: string, options?: ReadOptions): string => {
     if (query === "All") return ""
     const criteriaQueries = query.map(
         c => `
       SELECT 
         ${c.onlyLastEvent ? "max(sequence_number)" : "sequence_number"} AS sequence_number
-      FROM events
+      FROM ${tableName}
       ${getFilterString(c, pm, options)}
     `
     )

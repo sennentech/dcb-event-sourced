@@ -1,20 +1,28 @@
 import { EventHandler, EventStore, Queries, Query, SequencePosition, Tags } from "@dcb-es/event-store"
-import { PoolClient } from "pg"
+import { Pool, PoolClient } from "pg"
+import { ensureHandlersInstalled } from "./ensureHandlersInstalled"
 
 export type HandlerCheckPoints = Record<string, SequencePosition>
-export const POSTGRES_TABLE_NAME = "_event_handler_bookmarks"
 
 export class HandlerCatchup {
+    private tableName: string
     constructor(
-        private client: PoolClient,
-        private eventStore: EventStore
-    ) {}
+        private client: Pool | PoolClient,
+        private eventStore: EventStore,
+        tablePrefix?: string
+    ) {
+        this.tableName = tablePrefix ? `${tablePrefix}_handler_bookmarks` : "_handler_bookmarks"
+    }
+
+    async ensureInstalled(handlerIds: string[]): Promise<void> {
+        await ensureHandlersInstalled(this.client, handlerIds, this.tableName)
+    }
 
     async catchupHandlers(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         handlers: Record<string, EventHandler<any, any>>
     ) {
-        const currentCheckPoints = await this.lockHandlers(handlers)
+        const currentCheckPoints = await this.lockHandlers(handlers, this.tableName)
 
         await Promise.all(
             Object.entries(handlers).map(
@@ -27,13 +35,14 @@ export class HandlerCatchup {
 
     private async lockHandlers(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        handlers: Record<string, EventHandler<any, any>>
+        handlers: Record<string, EventHandler<any, any>>,
+        tableName: string
     ): Promise<HandlerCheckPoints> {
         try {
             const selectResult = await this.client.query(
                 `
                 SELECT handler_id, last_sequence_number
-                FROM ${POSTGRES_TABLE_NAME}
+                FROM ${tableName}
                 WHERE handler_id = ANY($1::text[])
                 FOR UPDATE NOWAIT;`,
                 [Object.keys(handlers)]
@@ -76,9 +85,9 @@ export class HandlerCatchup {
         ])
 
         const updateQuery = `
-            UPDATE ${POSTGRES_TABLE_NAME} SET last_sequence_number = v.last_sequence_number
+            UPDATE ${this.tableName} SET last_sequence_number = v.last_sequence_number
             FROM (VALUES ${updateValues}) AS v(handler_id, last_sequence_number)
-            WHERE ${POSTGRES_TABLE_NAME}.handler_id = v.handler_id;`
+            WHERE ${this.tableName}.handler_id = v.handler_id;`
 
         await this.client.query(updateQuery, updateParams)
     }

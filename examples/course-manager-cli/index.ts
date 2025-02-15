@@ -1,9 +1,9 @@
 import { Pool } from "pg"
 import "source-map-support/register"
 import { startCli } from "./src/Cli"
-import { ensureEventStoreInstalled, ensureHandlersInstalled } from "@dcb-es/event-store-postgres"
 import { installPostgresCourseSubscriptionsRepository } from "./src/postgresCourseSubscriptionRepository/PostgresCourseSubscriptionRespository"
 import { Api, setupHandlers } from "./src/api/Api"
+import { HandlerCatchup, PostgresEventStore } from "@dcb-es/event-store-postgres"
 ;(async () => {
     const postgresConfig = {
         host: "localhost",
@@ -16,9 +16,11 @@ import { Api, setupHandlers } from "./src/api/Api"
     const pool = new Pool(postgresConfig)
     const installClient = await pool.connect()
     await installClient.query("BEGIN transaction isolation level serializable")
+    const eventStore = new PostgresEventStore(installClient)
+    await eventStore.ensureInstalled()
 
-    await ensureEventStoreInstalled(pool)
-    await ensureHandlersInstalled(pool, Object.keys(setupHandlers(installClient)))
+    const handlerCatchup = new HandlerCatchup(installClient, eventStore)
+    await handlerCatchup.ensureInstalled(Object.keys(setupHandlers(installClient)))
     await installPostgresCourseSubscriptionsRepository(installClient)
     await installClient.query("COMMIT")
     installClient.release()

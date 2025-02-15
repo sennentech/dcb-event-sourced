@@ -6,7 +6,7 @@ import {
 } from "../postgresCourseSubscriptionRepository/PostgresCourseSubscriptionRespository"
 import { Api, setupHandlers } from "./Api"
 import { getTestPgDatabasePool } from "../../jest.testPgDbPool"
-import { ensureEventStoreInstalled, ensureHandlersInstalled } from "@dcb-es/event-store-postgres"
+import { HandlerCatchup, PostgresEventStore } from "@dcb-es/event-store-postgres"
 
 const COURSE_1 = {
     id: "course-1",
@@ -28,16 +28,17 @@ describe("EventSourcedApi", () => {
 
     beforeAll(async () => {
         pool = await getTestPgDatabasePool()
-
-        await ensureEventStoreInstalled(pool)
+        const eventStore = new PostgresEventStore(pool)
+        await eventStore.ensureInstalled()
         await installPostgresCourseSubscriptionsRepository(pool)
         api = new Api(pool)
     })
 
     beforeEach(async () => {
         client = await pool.connect()
+        const handlerCatchup = new HandlerCatchup(pool, new PostgresEventStore(pool))
+        await handlerCatchup.ensureInstalled(Object.keys(setupHandlers(client)))
 
-        await ensureHandlersInstalled(pool, Object.keys(setupHandlers(client)))
         await client.query("BEGIN transaction isolation level serializable")
         repository = PostgresCourseSubscriptionsRepository(client)
     })
@@ -49,7 +50,6 @@ describe("EventSourcedApi", () => {
         await pool.query("TRUNCATE table courses")
         await pool.query("TRUNCATE table students")
         await pool.query("TRUNCATE table subscriptions")
-        await pool.query("TRUNCATE table _event_handler_bookmarks")
     })
 
     afterAll(async () => {

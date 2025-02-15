@@ -10,7 +10,6 @@ import {
 import { PostgresEventStore } from "./PostgresEventStore"
 import { getTestPgDatabasePool } from "../../jest.testPgDbPool"
 import { Queries } from "@dcb-es/event-store"
-import { ensureEventStoreInstalled } from "./ensureEventStoreInstalled"
 
 class EventType1 implements DcbEvent {
     type: "testEvent1" = "testEvent1"
@@ -39,11 +38,12 @@ class EventType2 implements DcbEvent {
 describe("postgresEventStore.append", () => {
     let pool: Pool
     let client: PoolClient
-    let eventStore: EventStore
+    let eventStore: PostgresEventStore
 
     beforeAll(async () => {
         pool = await getTestPgDatabasePool()
-        await ensureEventStoreInstalled(pool)
+        eventStore = new PostgresEventStore(pool)
+        await eventStore.ensureInstalled()
     })
     beforeEach(async () => {
         client = await pool.connect()

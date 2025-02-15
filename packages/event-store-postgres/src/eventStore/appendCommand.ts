@@ -4,7 +4,8 @@ import { ParamManager, dbEventConverter } from "./utils"
 export const appendSql = (
     events: DcbEvent[],
     query: Query | undefined,
-    expectedCeiling: SequencePosition | undefined
+    expectedCeiling: SequencePosition | undefined,
+    tableName: string
 ): { statement: string; params: unknown[] } => {
     const params = new ParamManager()
     const maxSeqNoParam = expectedCeiling ? params.add(expectedCeiling.value) : null
@@ -34,7 +35,7 @@ export const appendSql = (
                     .map(
                         c => `
                             SELECT 1
-                            FROM events
+                            FROM ${tableName}
                             WHERE type IN (${(c.eventTypes ?? []).map(t => params.add(t)).join(", ")})
                             AND tags @> ${params.add(c.tags?.values ?? [])}::text[]
                             AND sequence_number > ${maxSeqNoParam}::bigint
@@ -50,7 +51,7 @@ export const appendSql = (
         VALUES ${valuesClause}
       ),
       inserted AS (
-        INSERT INTO events (type, data, metadata, tags)
+        INSERT INTO ${tableName} (type, data, metadata, tags)
         SELECT type, data, metadata, tags
         FROM new_events
         ${filterClause()}
