@@ -7,11 +7,11 @@ import {
     StudentWasUnsubscribedEvent
 } from "./Events"
 import { PostgresCourseSubscriptionsRepository } from "../postgresCourseSubscriptionRepository/PostgresCourseSubscriptionRespository"
-import { PoolClient } from "pg"
+import { Pool, PoolClient } from "pg"
 import { EventHandler } from "@dcb-es/event-store"
 
 export const PostgresCourseSubscriptionsProjection = (
-    client: PoolClient
+    client: PoolClient | Pool
 ): EventHandler<
     | CourseWasRegisteredEvent
     | CourseCapacityWasChangedEvent

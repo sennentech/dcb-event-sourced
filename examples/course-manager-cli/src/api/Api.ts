@@ -25,7 +25,7 @@ import {
 import { HandlerCatchup, PostgresEventStore } from "@dcb-es/event-store-postgres"
 import { PostgresCourseSubscriptionsProjection } from "./PostgresCourseSubscriptionsProjection"
 
-export const setupHandlers = (client: PoolClient) => ({
+export const setupHandlers = (client: PoolClient | Pool) => ({
     CourseProjection: PostgresCourseSubscriptionsProjection(client)
 })
 export class Api {

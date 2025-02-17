@@ -14,17 +14,13 @@ import { HandlerCatchup, PostgresEventStore } from "@dcb-es/event-store-postgres
     }
 
     const pool = new Pool(postgresConfig)
-    const installClient = await pool.connect()
-    await installClient.query("BEGIN transaction isolation level serializable")
-    const eventStore = new PostgresEventStore(installClient)
+    const eventStore = new PostgresEventStore(pool)
     await eventStore.ensureInstalled()
 
-    const handlerCatchup = new HandlerCatchup(installClient, eventStore)
-    await handlerCatchup.ensureInstalled(Object.keys(setupHandlers(installClient)))
-    await installPostgresCourseSubscriptionsRepository(installClient)
-    await installClient.query("COMMIT")
-    installClient.release()
+    const handlerCatchup = new HandlerCatchup(pool, eventStore)
+    await handlerCatchup.ensureInstalled(Object.keys(setupHandlers(pool)))
 
+    await installPostgresCourseSubscriptionsRepository(pool)
     const api = new Api(pool)
 
     await startCli(api)
