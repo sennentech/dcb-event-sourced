@@ -221,4 +221,21 @@ describe("postgresEventStore.append", () => {
         await expect(eventStore.append(new EventType1())).rejects.toThrow("Transaction is not serializable")
         client.release()
     })
+
+    test("should use prefixed table name when provided", async () => {
+        const client = await pool.connect()
+
+        await client.query("BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE")
+        const eventStore = new PostgresEventStore(client, { postgresTablePrefix: "prefix" })
+
+        await eventStore.ensureInstalled()
+        await eventStore.append(new EventType1())
+
+        const events = await streamAllEventsToArray(eventStore.read(Queries.all))
+        const directRows = await client.query("select * from prefix_events")
+        expect(directRows.rows.length).toBe(1)
+        expect(events.length).toBe(1)
+        await client.query("ROLLBACK")
+        client.release()
+    })
 })
