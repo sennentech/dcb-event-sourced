@@ -51,7 +51,7 @@ export class MemoryEventStore implements EventStore {
                       .map(event => ({ ...event, matchedCriteria: [index.toString()] }))
                       .sort((a, b) => a.sequencePosition.value - b.sequencePosition.value)
 
-                  return criterion.onlyLastEvent ? matchedEvents.slice(-1) : matchedEvents
+                  return matchedEvents
               })
             : this.events.filter(
                   ev => !isSeqOutOfRange(ev.sequencePosition, currentSequencePosition, options?.backwards)

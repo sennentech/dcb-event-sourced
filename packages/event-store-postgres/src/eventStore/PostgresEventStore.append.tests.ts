@@ -122,23 +122,6 @@ describe("postgresEventStore.append", () => {
             })
         })
 
-        test("should successfully append an event without throwing under specified conditions", async () => {
-            const appendCondition: AppendCondition = {
-                query: Query.fromItems([{ eventTypes: ["testEvent1"], tags: Tags.createEmpty(), onlyLastEvent: true }]),
-                expectedCeiling: SequencePosition.create(3)
-            }
-
-            await eventStore.append(new EventType1(), appendCondition)
-            await eventStore.append(new EventType1(), appendCondition)
-            await eventStore.append(new EventType1(), appendCondition)
-
-            const lastSequencePosition = (await streamAllEventsToArray(eventStore.read(Query.all()))).at(
-                -1
-            )?.sequencePosition
-
-            expect(lastSequencePosition?.value).toBe(4)
-        })
-
         test("should concurrently add a single event rejecting rest when lots attempted in parallel with same append condition", async () => {
             const storeEvents = []
 

@@ -56,7 +56,7 @@ export const readCriteriaJoin = (query: Query, pm: ParamManager, tableName: stri
     const criteriaQueries = query.items.map(
         c => `
       SELECT 
-        ${c.onlyLastEvent ? "max(sequence_position)" : "sequence_position"} AS sequence_position
+         sequence_position
       FROM ${tableName}
       ${getFilterString(c, pm, options)}
     `

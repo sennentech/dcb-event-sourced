@@ -3,7 +3,6 @@ import { Tags } from "./Tags"
 export interface QueryItem {
     tags?: Tags
     eventTypes?: string[]
-    onlyLastEvent?: boolean
 }
 
 export class Query {

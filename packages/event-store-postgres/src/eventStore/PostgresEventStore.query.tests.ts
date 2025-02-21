@@ -183,47 +183,6 @@ describe("memoryEventStore.query", () => {
             expect(events.length).toBe(3)
         })
 
-        test("should respect onlyLastEvent flag on read", async () => {
-            const events = await streamAllEventsToArray(
-                eventStore.read(
-                    Query.fromItems([{ eventTypes: ["testEvent2"], tags: Tags.createEmpty(), onlyLastEvent: true }])
-                )
-            )
-            expect(events.length).toBe(1)
-            expect(events[0].event.type).toBe("testEvent2")
-            expect(events[0].event.tags.equals(Tags.fromObj({ testTagKey: "ev-3" }))).toEqual(true)
-        })
-
-        test("should respect onlyLastEvent flag on read with other criteria", async () => {
-            const events = await streamAllEventsToArray(
-                eventStore.read(
-                    Query.fromItems([
-                        { eventTypes: ["testEvent2"], tags: Tags.createEmpty(), onlyLastEvent: true },
-                        { eventTypes: ["testEvent1"], tags: Tags.createEmpty() }
-                    ])
-                )
-            )
-            expect(events.length).toBe(2)
-            expect(events[0].event.type).toBe("testEvent1")
-            expect(events[0].event.tags.equals(Tags.fromObj({ testTagKey: "ev-1" }))).toEqual(true)
-            expect(events[1].event.type).toBe("testEvent2")
-            expect(events[1].event.tags.equals(Tags.fromObj({ testTagKey: "ev-3" }))).toEqual(true)
-        })
-
-        test("should respect onlyLastEvent flag on read with backwards", async () => {
-            const events = await streamAllEventsToArray(
-                eventStore.read(
-                    Query.fromItems([{ eventTypes: ["testEvent2"], tags: Tags.createEmpty(), onlyLastEvent: true }]),
-                    {
-                        backwards: true
-                    }
-                )
-            )
-            expect(events.length).toBe(1)
-            expect(events[0].event.type).toBe("testEvent2")
-            expect(events[0].event.tags.equals(Tags.fromObj({ testTagKey: "ev-3" }))).toEqual(true)
-        })
-
         test("should return respect limit clause when readAll forward", async () => {
             const events = await streamAllEventsToArray(eventStore.read(Query.all(), { limit: 1 }))
             expect(events.length).toBe(1)
