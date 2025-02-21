@@ -3,7 +3,7 @@ import { Pool, PoolClient } from "pg"
 export const ensureInstalled = async (pool: Pool | PoolClient, tableName: string) => {
     await pool.query(`
         CREATE TABLE IF NOT EXISTS ${tableName} (
-          sequence_number BIGSERIAL PRIMARY KEY,
+          sequence_position BIGSERIAL PRIMARY KEY,
           type TEXT NOT NULL,
           data JSONB NOT NULL,
           metadata JSONB NOT NULL,
@@ -11,8 +11,8 @@ export const ensureInstalled = async (pool: Pool | PoolClient, tableName: string
           "timestamp" TIMESTAMPTZ DEFAULT now()
         );
 
-        CREATE INDEX IF NOT EXISTS ${tableName}_sequence_number_idx 
-        ON ${tableName}(sequence_number);
+        CREATE INDEX IF NOT EXISTS ${tableName}_sequence_position_idx 
+        ON ${tableName}(sequence_position);
         CREATE INDEX IF NOT EXISTS ${tableName}_type_idx 
         ON ${tableName}(type);
         CREATE INDEX IF NOT EXISTS ${tableName}_tags_idx 

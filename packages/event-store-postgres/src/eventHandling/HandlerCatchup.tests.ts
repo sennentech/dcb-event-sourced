@@ -34,7 +34,7 @@ describe("UpdatePostgresHandlers tests", () => {
         await client.query("COMMIT")
         client.release()
         await pool.query("TRUNCATE table events")
-        await pool.query("ALTER SEQUENCE events_sequence_number_seq RESTART WITH 1")
+        await pool.query("ALTER SEQUENCE events_sequence_position_seq RESTART WITH 1")
     })
 
     afterAll(async () => {

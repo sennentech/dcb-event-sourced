@@ -13,7 +13,7 @@ export type DbReadEvent = {
     metadata: unknown
     tags: string[]
     timestamp: string
-    sequence_number: string
+    sequence_position: string
 }
 
 export const dbEventConverter = {
@@ -24,7 +24,7 @@ export const dbEventConverter = {
         tags: [...dcbEvent.tags.values]
     }),
     fromDb: (dbEvent: DbReadEvent): EventEnvelope => ({
-        sequencePosition: SequencePosition.create(parseInt(dbEvent.sequence_number)),
+        sequencePosition: SequencePosition.create(parseInt(dbEvent.sequence_position)),
         timestamp: Timestamp.create(dbEvent.timestamp),
         event: {
             type: dbEvent.type,
