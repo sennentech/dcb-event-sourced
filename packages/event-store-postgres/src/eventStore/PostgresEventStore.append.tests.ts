@@ -55,7 +55,7 @@ describe("postgresEventStore.append", () => {
         await client.query("COMMIT")
         client.release()
         await pool.query("TRUNCATE table events")
-        await pool.query("ALTER SEQUENCE events_sequence_number_seq RESTART WITH 1")
+        await pool.query("ALTER SEQUENCE events_sequence_position_seq RESTART WITH 1")
     })
 
     afterAll(async () => {
@@ -180,7 +180,7 @@ describe("postgresEventStore.append", () => {
                 expectedCeiling: SequencePosition.create(1)
             }
 
-            // First append should pass and set sequence_number to 2
+            // First append should pass and set sequence_position to 2
             await eventStore.append(new EventType1(), appendCondition)
             await eventStore.append(new EventType2())
 

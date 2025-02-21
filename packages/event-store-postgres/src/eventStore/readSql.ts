@@ -16,7 +16,7 @@ const readSql = (query: Query, tableName: string, options?: ReadOptions) => {
 
     const sql = `
     SELECT 
-      e.sequence_number,
+      e.sequence_position,
       e.type,
       e.data,
       e.metadata,
@@ -25,7 +25,7 @@ const readSql = (query: Query, tableName: string, options?: ReadOptions) => {
     FROM ${tableName} e
     ${query?.length ? readCriteriaJoin(query, pm, tableName, options) : ""}
     ${whereClause([fromSeqNoFilter(pm, "e", options)])}
-    ORDER BY e.sequence_number ${options?.backwards ? "DESC" : ""}
+    ORDER BY e.sequence_position ${options?.backwards ? "DESC" : ""}
     ${options?.limit ? `LIMIT ${options.limit}` : ""};
   `
     return { sql, params: pm.params }
@@ -38,7 +38,7 @@ const tagFilterSnip = (pm: ParamManager, c: QueryItem): string =>
 
 const fromSeqNoFilter = (pm: ParamManager, tableAlias: string, options?: ReadOptions): string =>
     options?.fromSequencePosition
-        ? `${tableAlias ? `${tableAlias}.` : ""}sequence_number ${
+        ? `${tableAlias ? `${tableAlias}.` : ""}sequence_position ${
               options.backwards ? "<=" : ">="
           } ${pm.add(options.fromSequencePosition.value)}`
         : ""
@@ -56,19 +56,19 @@ export const readCriteriaJoin = (query: Query, pm: ParamManager, tableName: stri
     const criteriaQueries = query.map(
         c => `
       SELECT 
-        ${c.onlyLastEvent ? "max(sequence_number)" : "sequence_number"} AS sequence_number
+        ${c.onlyLastEvent ? "max(sequence_position)" : "sequence_position"} AS sequence_position
       FROM ${tableName}
       ${getFilterString(c, pm, options)}
     `
     )
     return `
     INNER JOIN (
-      SELECT ec.sequence_number
+      SELECT ec.sequence_position
       FROM (
         ${criteriaQueries.join(" UNION ALL ")}
       ) ec
-      GROUP BY ec.sequence_number
-    ) ec ON ec.sequence_number = e.sequence_number
+      GROUP BY ec.sequence_position
+    ) ec ON ec.sequence_position = e.sequence_position
   `
 }
 

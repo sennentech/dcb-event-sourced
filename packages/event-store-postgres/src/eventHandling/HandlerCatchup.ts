@@ -41,7 +41,7 @@ export class HandlerCatchup {
         try {
             const selectResult = await this.client.query(
                 `
-                SELECT handler_id, last_sequence_number
+                SELECT handler_id, last_sequence_position
                 FROM ${tableName}
                 WHERE handler_id = ANY($1::text[])
                 FOR UPDATE NOWAIT;`,
@@ -51,7 +51,7 @@ export class HandlerCatchup {
             const result = Object.keys(handlers).reduce((acc, handlerId) => {
                 const sequencePosition = selectResult.rows.find(
                     row => row.handler_id === handlerId
-                )?.last_sequence_number
+                )?.last_sequence_position
                 if (sequencePosition !== undefined) {
                     return {
                         ...acc,
@@ -85,8 +85,8 @@ export class HandlerCatchup {
         ])
 
         const updateQuery = `
-            UPDATE ${this.tableName} SET last_sequence_number = v.last_sequence_number
-            FROM (VALUES ${updateValues}) AS v(handler_id, last_sequence_number)
+            UPDATE ${this.tableName} SET last_sequence_position = v.last_sequence_position
+            FROM (VALUES ${updateValues}) AS v(handler_id, last_sequence_position)
             WHERE ${this.tableName}.handler_id = v.handler_id;`
 
         await this.client.query(updateQuery, updateParams)

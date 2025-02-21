@@ -38,7 +38,7 @@ export const appendSql = (
                             FROM ${tableName}
                             WHERE type IN (${(c.eventTypes ?? []).map(t => params.add(t)).join(", ")})
                             AND tags @> ${params.add(c.tags?.values ?? [])}::text[]
-                            AND sequence_number > ${maxSeqNoParam}::bigint
+                            AND sequence_position > ${maxSeqNoParam}::bigint
                         `
                     )
                     .join(" UNION ALL ")}
@@ -55,10 +55,10 @@ export const appendSql = (
         SELECT type, data, metadata, tags
         FROM new_events
         ${filterClause()}
-        RETURNING sequence_number, type, data, tags, "timestamp"
+        RETURNING sequence_position, type, data, tags, "timestamp"
       )
       SELECT
-        sequence_number,
+        sequence_position,
         type,
         data,
         tags,
