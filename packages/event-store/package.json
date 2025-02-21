@@ -1,6 +1,6 @@
 {
     "name": "@dcb-es/event-store",
-    "version": "5.0.0",
+    "version": "5.1.0",
     "description": "Event Store package for DCB event sourced projects",
     "main": "dist/index.js",
     "license": "MIT",
