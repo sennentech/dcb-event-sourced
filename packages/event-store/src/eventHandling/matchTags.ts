@@ -1,4 +1,4 @@
-import { Tags } from "../Tags"
+import { Tags } from "../eventStore/Tags"
 
 export const ensureIsArray = (stringOrStringArray: string | string[]) =>
     Array.isArray(stringOrStringArray) ? stringOrStringArray : [stringOrStringArray]

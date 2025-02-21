@@ -1,4 +1,4 @@
-import { EventHandler, EventStore, Queries, Query, SequencePosition, Tags } from "@dcb-es/event-store"
+import { EventHandler, EventStore, Query, SequencePosition, Tags } from "@dcb-es/event-store"
 import { Pool, PoolClient } from "pg"
 import { ensureHandlersInstalled } from "./ensureHandlersInstalled"
 
@@ -99,12 +99,12 @@ export class HandlerCatchup {
         toSequencePosition?: SequencePosition
     ) {
         if (!toSequencePosition) {
-            const lastEventInStore = (await this.eventStore.read(Queries.all, { backwards: true, limit: 1 }).next())
+            const lastEventInStore = (await this.eventStore.read(Query.all(), { backwards: true, limit: 1 }).next())
                 .value
             toSequencePosition = lastEventInStore?.sequencePosition ?? SequencePosition.zero()
         }
 
-        const query: Query = [{ eventTypes: Object.keys(handler.when) as string[], tags: Tags.createEmpty() }]
+        const query = Query.fromItems([{ eventTypes: Object.keys(handler.when) as string[], tags: Tags.createEmpty() }])
         for await (const event of this.eventStore.read(query, { fromSequencePosition: currentPosition.inc() })) {
             if (toSequencePosition && event.sequencePosition.value > toSequencePosition.value) {
                 break

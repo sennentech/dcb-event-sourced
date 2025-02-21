@@ -1,4 +1,4 @@
-import { Tags } from "../Tags"
+import { Tags } from "../eventStore/Tags"
 import { matchTags } from "./matchTags"
 
 describe("matchTags", () => {

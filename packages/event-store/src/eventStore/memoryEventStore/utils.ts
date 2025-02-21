@@ -1,6 +1,7 @@
-import { EventEnvelope, QueryItem } from "../EventStore"
-import { SequencePosition } from "../../SequencePosition"
+import { EventEnvelope } from "../EventStore"
+import { SequencePosition } from "../SequencePosition"
 import { matchTags } from "../../eventHandling/matchTags"
+import { QueryItem } from "../Query"
 
 export const isSeqOutOfRange = (
     sequencePosition: SequencePosition,

@@ -1,6 +1,7 @@
-import { AppendCondition, EventEnvelope, EventStore, Query } from "../eventStore/EventStore"
-import { SequencePosition } from "../SequencePosition"
-import { Tags } from "../Tags"
+import { AppendCondition, EventEnvelope, EventStore } from "../eventStore/EventStore"
+import { Query, QueryItem } from "../eventStore/Query"
+import { SequencePosition } from "../eventStore/SequencePosition"
+import { Tags } from "../eventStore/Tags"
 import { EventHandlerWithState } from "./EventHandlerWithState"
 import { matchTags } from "./matchTags"
 
@@ -17,10 +18,16 @@ export async function buildDecisionModel<T extends EventHandlers>(
     const defaultHandler = (_: EventEnvelope, state: EventHandlerStates<T>) => state
     const states = Object.fromEntries(Object.entries(eventHandlers).map(([key, value]) => [key, value.init]))
 
-    const query: Query = Object.values(eventHandlers).map(proj => ({
+    const queryItems: QueryItem[] = Object.values(eventHandlers).map(proj => ({
         tags: proj.tagFilter as Tags,
         eventTypes: Object.keys(proj.when) as string[]
     }))
+
+    if (queryItems.length === 0) {
+        throw new Error("Event handlers must have at least one event handler")
+    }
+
+    const query = Query.fromItems(queryItems)
 
     let expectedCeiling = SequencePosition.zero()
     for await (const eventEnvelope of eventStore.read(query)) {

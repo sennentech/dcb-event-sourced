@@ -23,7 +23,7 @@ const readSql = (query: Query, tableName: string, options?: ReadOptions) => {
       e.tags,
       to_char(e."timestamp" AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"') AS "timestamp"
     FROM ${tableName} e
-    ${query?.length ? readCriteriaJoin(query, pm, tableName, options) : ""}
+    ${query.isAll ? "" : readCriteriaJoin(query, pm, tableName, options)}
     ${whereClause([fromSeqNoFilter(pm, "e", options)])}
     ORDER BY e.sequence_position ${options?.backwards ? "DESC" : ""}
     ${options?.limit ? `LIMIT ${options.limit}` : ""};
@@ -52,8 +52,8 @@ const getFilterString = (c: QueryItem, pm: ParamManager, options?: ReadOptions):
 }
 
 export const readCriteriaJoin = (query: Query, pm: ParamManager, tableName: string, options?: ReadOptions): string => {
-    if (query === "All") return ""
-    const criteriaQueries = query.map(
+    if (query.isAll) return ""
+    const criteriaQueries = query.items.map(
         c => `
       SELECT 
         ${c.onlyLastEvent ? "max(sequence_position)" : "sequence_position"} AS sequence_position

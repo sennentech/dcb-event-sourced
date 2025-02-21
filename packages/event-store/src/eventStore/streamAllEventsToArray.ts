@@ -1,4 +1,4 @@
-import { EventEnvelope } from "./eventStore/EventStore"
+import { EventEnvelope } from "../eventStore/EventStore"
 
 export const streamAllEventsToArray = async (generator: AsyncGenerator<EventEnvelope>): Promise<EventEnvelope[]> => {
     const results: EventEnvelope[] = []

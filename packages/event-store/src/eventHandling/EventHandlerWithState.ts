@@ -1,5 +1,5 @@
 import { DcbEvent, EventEnvelope } from "../eventStore/EventStore"
-import { Tags } from "../Tags"
+import { Tags } from "../eventStore/Tags"
 
 export interface EventHandlerWithState<
     TEvents extends DcbEvent<string, Tags, unknown, unknown>,

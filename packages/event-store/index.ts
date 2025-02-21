@@ -1,20 +1,12 @@
-export {
-    EventStore,
-    DcbEvent,
-    EventEnvelope,
-    QueryItem,
-    Query,
-    Queries,
-    AppendCondition,
-    ReadOptions
-} from "./src/eventStore/EventStore"
+export { EventStore, DcbEvent, EventEnvelope, AppendCondition, ReadOptions } from "./src/eventStore/EventStore"
 
-export { Tags } from "./src/Tags"
-export { SequencePosition } from "./src/SequencePosition"
-export { Timestamp } from "./src/Timestamp"
+export { Query, QueryItem } from "./src/eventStore/Query"
+export { Tags } from "./src/eventStore/Tags"
+export { SequencePosition } from "./src/eventStore/SequencePosition"
+export { Timestamp } from "./src/eventStore/Timestamp"
 
 export { MemoryEventStore } from "./src/eventStore/memoryEventStore/MemoryEventStore"
-export { streamAllEventsToArray } from "./src/streamAllEventsToArray"
+export { streamAllEventsToArray } from "./src/eventStore/streamAllEventsToArray"
 
 export { EventHandler } from "./src/eventHandling/EventHandler"
 export { EventHandlerWithState } from "./src/eventHandling/EventHandlerWithState"

@@ -1,8 +1,9 @@
 import { MemoryEventStore } from "./MemoryEventStore"
-import { AppendCondition, DcbEvent, Queries } from "../EventStore"
-import { SequencePosition } from "../../SequencePosition"
-import { streamAllEventsToArray } from "../../streamAllEventsToArray"
-import { Tags } from "../../Tags"
+import { AppendCondition, DcbEvent } from "../EventStore"
+import { SequencePosition } from "../SequencePosition"
+import { streamAllEventsToArray } from "../streamAllEventsToArray"
+import { Tags } from "../Tags"
+import { Query } from "../Query"
 class EventType1 implements DcbEvent {
     type: "testEvent1" = "testEvent1"
     tags: Tags
@@ -24,24 +25,24 @@ describe("memoryEventStore.append", () => {
         })
 
         test("should return an empty array when no events are stored", async () => {
-            const events = await streamAllEventsToArray(eventStore.read(Queries.all))
+            const events = await streamAllEventsToArray(eventStore.read(Query.all()))
             expect(events.length).toBe(0)
         })
         test("should assign a sequence number of 1 on appending the first event", async () => {
             await eventStore.append(new EventType1())
-            const events = await streamAllEventsToArray(eventStore.read(Queries.all))
+            const events = await streamAllEventsToArray(eventStore.read(Query.all()))
             const lastSequencePosition = events.at(-1)?.sequencePosition
 
             expect(lastSequencePosition?.value).toBe(1)
         })
         describe("when append condition with eventTypes filter and maxSequencePosition provided", () => {
             const appendCondition: AppendCondition = {
-                query: [{ eventTypes: ["testEvent1"], tags: Tags.createEmpty() }],
+                query: Query.fromItems([{ eventTypes: ["testEvent1"], tags: Tags.createEmpty() }]),
                 expectedCeiling: SequencePosition.create(1)
             }
             test("should successfully append an event without throwing under specified conditions", async () => {
                 await eventStore.append(new EventType1(), appendCondition)
-                const events = await streamAllEventsToArray(eventStore.read(Queries.all))
+                const events = await streamAllEventsToArray(eventStore.read(Query.all()))
                 const lastSequencePosition = events.at(-1)?.sequencePosition
 
                 expect(lastSequencePosition?.value).toBe(1)
@@ -57,7 +58,7 @@ describe("memoryEventStore.append", () => {
 
         test("should increment sequence number to 2 when a second event is appended", async () => {
             await eventStore.append(new EventType1())
-            const events = await streamAllEventsToArray(eventStore.read(Queries.all))
+            const events = await streamAllEventsToArray(eventStore.read(Query.all()))
             const lastSequencePosition = events.at(-1)?.sequencePosition
 
             expect(lastSequencePosition?.value).toBe(2)
@@ -65,7 +66,7 @@ describe("memoryEventStore.append", () => {
 
         test("should update the sequence number to 3 after appending two more events", async () => {
             await eventStore.append([new EventType1(), new EventType1()])
-            const events = await streamAllEventsToArray(eventStore.read(Queries.all))
+            const events = await streamAllEventsToArray(eventStore.read(Query.all()))
             const lastSequencePosition = events.at(-1)?.sequencePosition
 
             expect(lastSequencePosition?.value).toBe(3)
@@ -73,7 +74,7 @@ describe("memoryEventStore.append", () => {
 
         describe("when append condition with eventTypes filter and maxSequencePosition provided", () => {
             const appendCondition: AppendCondition = {
-                query: [{ eventTypes: ["testEvent1"], tags: Tags.createEmpty() }],
+                query: Query.fromItems([{ eventTypes: ["testEvent1"], tags: Tags.createEmpty() }]),
                 expectedCeiling: SequencePosition.zero()
             }
             test("should throw an error if appended event exceeds the maximum allowed sequence number", async () => {

@@ -1,15 +1,7 @@
 import { Pool, PoolClient } from "pg"
-import {
-    AppendCondition,
-    DcbEvent,
-    EventStore,
-    SequencePosition,
-    streamAllEventsToArray,
-    Tags
-} from "@dcb-es/event-store"
+import { AppendCondition, DcbEvent, Query, SequencePosition, streamAllEventsToArray, Tags } from "@dcb-es/event-store"
 import { PostgresEventStore } from "./PostgresEventStore"
 import { getTestPgDatabasePool } from "../../jest.testPgDbPool"
-import { Queries } from "@dcb-es/event-store"
 
 class EventType1 implements DcbEvent {
     type: "testEvent1" = "testEvent1"
@@ -64,24 +56,24 @@ describe("postgresEventStore.append", () => {
 
     describe("when event store empty", () => {
         test("should return an empty array when no events are stored", async () => {
-            const events = await streamAllEventsToArray(eventStore.read(Queries.all))
+            const events = await streamAllEventsToArray(eventStore.read(Query.all()))
             expect(events.length).toBe(0)
         })
         test("should assign a sequence number of 1 on appending the first event", async () => {
             await eventStore.append(new EventType1())
-            const lastSequencePosition = (await streamAllEventsToArray(eventStore.read(Queries.all))).at(
+            const lastSequencePosition = (await streamAllEventsToArray(eventStore.read(Query.all()))).at(
                 -1
             )?.sequencePosition
             expect(lastSequencePosition?.value).toBe(1)
         })
         describe("when append condition with eventTypes filter and expectedCeiling provided", () => {
             const appendCondition: AppendCondition = {
-                query: [{ eventTypes: ["testEvent1"], tags: Tags.createEmpty() }],
+                query: Query.fromItems([{ eventTypes: ["testEvent1"], tags: Tags.createEmpty() }]),
                 expectedCeiling: SequencePosition.create(1)
             }
             test("should successfully append an event without throwing under specified conditions", async () => {
                 await eventStore.append(new EventType1(), appendCondition)
-                const lastSequencePosition = (await streamAllEventsToArray(eventStore.read(Queries.all))).at(
+                const lastSequencePosition = (await streamAllEventsToArray(eventStore.read(Query.all()))).at(
                     -1
                 )?.sequencePosition
                 expect(lastSequencePosition?.value).toBe(1)
@@ -89,7 +81,7 @@ describe("postgresEventStore.append", () => {
 
             test("should store and return metadata on event successfully", async () => {
                 await eventStore.append(new EventType1())
-                const events = await streamAllEventsToArray(eventStore.read(Queries.all))
+                const events = await streamAllEventsToArray(eventStore.read(Query.all()))
                 const lastEvent = events.at(-1)?.event as EventType1
                 expect(lastEvent.metadata.userId).toBe("user-1")
             })
@@ -103,7 +95,7 @@ describe("postgresEventStore.append", () => {
 
         test("should increment sequence number to 2 when a second event is appended", async () => {
             await eventStore.append(new EventType1())
-            const lastSequencePosition = (await streamAllEventsToArray(eventStore.read(Queries.all))).at(
+            const lastSequencePosition = (await streamAllEventsToArray(eventStore.read(Query.all()))).at(
                 -1
             )?.sequencePosition
             expect(lastSequencePosition?.value).toBe(2)
@@ -111,7 +103,7 @@ describe("postgresEventStore.append", () => {
 
         test("should update the sequence number to 3 after appending two more events", async () => {
             await eventStore.append([new EventType1(), new EventType1()])
-            const lastSequencePosition = (await streamAllEventsToArray(eventStore.read(Queries.all))).at(
+            const lastSequencePosition = (await streamAllEventsToArray(eventStore.read(Query.all()))).at(
                 -1
             )?.sequencePosition
 
@@ -120,7 +112,7 @@ describe("postgresEventStore.append", () => {
 
         describe("when append condition with eventTypes filter and expectedCeiling provided", () => {
             const appendCondition: AppendCondition = {
-                query: [{ eventTypes: ["testEvent1"], tags: Tags.createEmpty() }],
+                query: Query.fromItems([{ eventTypes: ["testEvent1"], tags: Tags.createEmpty() }]),
                 expectedCeiling: SequencePosition.zero()
             }
             test("should throw an error if appended event exceeds the maximum allowed sequence number", async () => {
@@ -132,7 +124,7 @@ describe("postgresEventStore.append", () => {
 
         test("should successfully append an event without throwing under specified conditions", async () => {
             const appendCondition: AppendCondition = {
-                query: [{ eventTypes: ["testEvent1"], tags: Tags.createEmpty(), onlyLastEvent: true }],
+                query: Query.fromItems([{ eventTypes: ["testEvent1"], tags: Tags.createEmpty(), onlyLastEvent: true }]),
                 expectedCeiling: SequencePosition.create(3)
             }
 
@@ -140,7 +132,7 @@ describe("postgresEventStore.append", () => {
             await eventStore.append(new EventType1(), appendCondition)
             await eventStore.append(new EventType1(), appendCondition)
 
-            const lastSequencePosition = (await streamAllEventsToArray(eventStore.read(Queries.all))).at(
+            const lastSequencePosition = (await streamAllEventsToArray(eventStore.read(Query.all()))).at(
                 -1
             )?.sequencePosition
 
@@ -151,7 +143,7 @@ describe("postgresEventStore.append", () => {
             const storeEvents = []
 
             const appendCondition: AppendCondition = {
-                query: [{ eventTypes: ["testEvent1"] }],
+                query: Query.fromItems([{ eventTypes: ["testEvent1"] }]),
                 expectedCeiling: SequencePosition.create(1)
             }
 
@@ -160,7 +152,7 @@ describe("postgresEventStore.append", () => {
             }
             const results = await Promise.allSettled(storeEvents)
             expect(results.filter(r => r.status === "fulfilled").length).toBe(1)
-            const events = await streamAllEventsToArray(eventStore.read(Queries.all))
+            const events = await streamAllEventsToArray(eventStore.read(Query.all()))
             expect(events.length).toBe(2)
         })
 
@@ -176,7 +168,7 @@ describe("postgresEventStore.append", () => {
 
         test("should fail to append next event if append condition is no longer met", async () => {
             const appendCondition: AppendCondition = {
-                query: [{ eventTypes: ["testEvent1"], tags: Tags.createEmpty() }],
+                query: Query.fromItems([{ eventTypes: ["testEvent1"], tags: Tags.createEmpty() }]),
                 expectedCeiling: SequencePosition.create(1)
             }
 
@@ -184,7 +176,7 @@ describe("postgresEventStore.append", () => {
             await eventStore.append(new EventType1(), appendCondition)
             await eventStore.append(new EventType2())
 
-            const events = await streamAllEventsToArray(eventStore.read(Queries.all))
+            const events = await streamAllEventsToArray(eventStore.read(Query.all()))
             expect(events.at(-2)?.sequencePosition?.value).toBe(2)
 
             // Second append should pass and as its unrelated (different event type)
@@ -231,7 +223,7 @@ describe("postgresEventStore.append", () => {
         await eventStore.ensureInstalled()
         await eventStore.append(new EventType1())
 
-        const events = await streamAllEventsToArray(eventStore.read(Queries.all))
+        const events = await streamAllEventsToArray(eventStore.read(Query.all()))
         const directRows = await client.query("select * from prefix_events")
         expect(directRows.rows.length).toBe(1)
         expect(events.length).toBe(1)

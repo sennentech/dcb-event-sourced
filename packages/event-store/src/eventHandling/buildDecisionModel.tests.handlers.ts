@@ -1,4 +1,4 @@
-import { Tags } from "../Tags"
+import { Tags } from "../eventStore/Tags"
 import { EventHandlerWithState } from "./EventHandlerWithState"
 import {
     CourseWasRegisteredEvent,

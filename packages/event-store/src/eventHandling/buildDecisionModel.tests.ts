@@ -2,8 +2,9 @@ import { buildDecisionModel } from "./buildDecisionModel"
 import { CourseCapacity, CourseExists } from "./buildDecisionModel.tests.handlers"
 import { CourseCapacityWasChangedEvent, CourseWasRegisteredEvent } from "./buildDecisionModel.tests.events"
 import { MemoryEventStore } from "../eventStore/memoryEventStore/MemoryEventStore"
-import { AppendCondition, QueryItem } from "../eventStore/EventStore"
-import { Tags } from "../Tags"
+import { AppendCondition } from "../eventStore/EventStore"
+import { Tags } from "../eventStore/Tags"
+import { QueryItem } from "../eventStore/Query"
 
 const COURSE_ID = "course-1"
 
@@ -36,13 +37,13 @@ describe("buildDecisionModel", () => {
             })
 
             test("should have a single eventType of 'courseWasRegistered' in appendCondition", async () => {
-                const { eventTypes } = <QueryItem>appendCondition.query[0]
+                const { eventTypes } = <QueryItem>appendCondition.query.items[0]
                 expect(eventTypes?.length).toBe(1)
                 expect(eventTypes?.[0]).toBe("courseWasRegistered")
             })
 
             test("should include 'courseId' as a tag in appendCondition", async () => {
-                const { tags } = <QueryItem>appendCondition.query[0]
+                const { tags } = <QueryItem>appendCondition.query.items[0]
                 expect(Object.keys(tags ?? {}).length).toBe(1)
                 expect(tags?.equals(Tags.fromObj({ courseId: "course-1" }))).toEqual(true)
             })
@@ -75,13 +76,13 @@ describe("buildDecisionModel", () => {
         })
 
         test("should have a single eventType of 'courseWasRegistered' in appendCondition", async () => {
-            const { eventTypes } = <QueryItem>appendCondition.query[0]
+            const { eventTypes } = <QueryItem>appendCondition.query.items[0]
             expect(eventTypes?.length).toBe(1)
             expect(eventTypes?.[0]).toBe("courseWasRegistered")
         })
 
         test("should include 'courseId' as a tag in appendCondition", async () => {
-            const { tags } = <QueryItem>appendCondition.query[0]
+            const { tags } = <QueryItem>appendCondition.query.items[0]
             expect(Object.keys(tags ?? {}).length).toBe(1)
             expect(tags?.equals(Tags.fromObj({ courseId: "course-1" }))).toEqual(true)
         })
@@ -118,7 +119,7 @@ describe("buildDecisionModel", () => {
         })
 
         test("should have the 4 correct eventTypes in appendCondition", async () => {
-            const { eventTypes } = <QueryItem>appendCondition.query[0]
+            const { eventTypes } = <QueryItem>appendCondition.query.items[0]
             expect(eventTypes?.length).toBe(4)
             expect(
                 [
@@ -131,7 +132,7 @@ describe("buildDecisionModel", () => {
         })
 
         test("should include 'courseId' as a tag in appendCondition", async () => {
-            const { tags } = <QueryItem>appendCondition.query[0]
+            const { tags } = <QueryItem>appendCondition.query.items[0]
             expect(Object.keys(tags ?? {}).length).toBe(1)
             expect(tags?.equals(Tags.fromObj({ courseId: "course-1" }))).toBe(true)
         })
@@ -171,7 +172,7 @@ describe("buildDecisionModel", () => {
         })
 
         test("should have the 4 correct eventTypes in appendCondition", async () => {
-            const { eventTypes } = <QueryItem>appendCondition.query[0]
+            const { eventTypes } = <QueryItem>appendCondition.query.items[0]
             expect(eventTypes?.length).toBe(4)
             expect(
                 [
@@ -184,7 +185,7 @@ describe("buildDecisionModel", () => {
         })
 
         test("should include 'courseId' as a tag in appendCondition", async () => {
-            const { tags } = <QueryItem>appendCondition.query[0]
+            const { tags } = <QueryItem>appendCondition.query.items[0]
             expect(Object.keys(tags ?? {}).length).toBe(1)
             expect(tags?.equals(Tags.fromObj({ courseId: "course-1" }))).toEqual(true)
         })

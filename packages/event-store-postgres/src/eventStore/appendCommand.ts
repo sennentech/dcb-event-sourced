@@ -1,4 +1,4 @@
-import { DcbEvent, Query, SequencePosition, Tags } from "@dcb-es/event-store"
+import { DcbEvent, Query, SequencePosition } from "@dcb-es/event-store"
 import { ParamManager, dbEventConverter } from "./utils"
 
 export const appendSql = (
@@ -28,10 +28,10 @@ export const appendSql = (
 
     // Build filtering clause if needed
     const filterClause = (): string => {
-        if (!query || query.length === 0 || query === "All") return ""
+        if (!query || query.isAll) return ""
         return `
             WHERE NOT EXISTS (
-                ${query
+                ${query.items
                     .map(
                         c => `
                             SELECT 1

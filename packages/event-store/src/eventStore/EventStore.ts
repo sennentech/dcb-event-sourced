@@ -1,6 +1,7 @@
-import { SequencePosition } from "../SequencePosition"
-import { Tags } from "../Tags"
-import { Timestamp } from "../Timestamp"
+import { Query } from "./Query"
+import { SequencePosition } from "./SequencePosition"
+import { Tags } from "./Tags"
+import { Timestamp } from "./Timestamp"
 
 export interface DcbEvent<Tpe extends string = string, Tgs = Tags, Dta = unknown, Mtdta = unknown> {
     type: Tpe
@@ -14,17 +15,6 @@ export interface EventEnvelope<T extends DcbEvent = DcbEvent> {
     timestamp: Timestamp
     sequencePosition: SequencePosition
 }
-
-export interface QueryItem {
-    tags?: Tags
-    eventTypes?: string[]
-    onlyLastEvent?: boolean
-}
-
-/* helper to enable eventStore.query(Queries.all) */
-export const Queries: { all: All } = { all: "All" }
-export type All = "All"
-export type Query = QueryItem[] | All
 
 export type AppendCondition = {
     query: Query
