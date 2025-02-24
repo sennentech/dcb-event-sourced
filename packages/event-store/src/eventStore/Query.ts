@@ -10,11 +10,6 @@ export class Query {
     #isAll: boolean
 
     private constructor(queryItems: QueryItem[] | "All") {
-        if (queryItems !== "All") {
-            if (!Array.isArray(queryItems) || queryItems.length === 0) {
-                throw new Error("Query must be 'All' or a non-empty array of QueryItems")
-            }
-        }
         this.#isAll = queryItems === "All"
         this.#items = queryItems === "All" ? [] : queryItems
     }
@@ -24,10 +19,14 @@ export class Query {
     }
 
     static fromItems(queryItems: QueryItem[]) {
+        if (!Array.isArray(queryItems) || queryItems.length === 0) {
+            throw new Error("Query must be 'All' or a non-empty array of QueryItems")
+        }
         return new Query(queryItems)
     }
 
     get items() {
+        if (this.#isAll) throw new Error("Cannot access items on 'All' query")
         return this.#items
     }
 
