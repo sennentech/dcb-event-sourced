@@ -1,6 +1,6 @@
 import { EventHandler, EventStore, Query, SequencePosition, Tags } from "@dcb-es/event-store"
 import { Pool, PoolClient } from "pg"
-import { ensureHandlersInstalled } from "./ensureHandlersInstalled"
+import { ensureHandlersInstalled, registerhandlers } from "./ensureHandlersInstalled"
 
 export type HandlerCheckPoints = Record<string, SequencePosition>
 
@@ -16,6 +16,10 @@ export class HandlerCatchup {
 
     async ensureInstalled(handlerIds: string[]): Promise<void> {
         await ensureHandlersInstalled(this.client, handlerIds, this.tableName)
+    }
+
+    async registerHandlers(handlerIds: string[]): Promise<void> {
+        await registerhandlers(this.client, handlerIds, this.tableName)
     }
 
     async catchupHandlers(
