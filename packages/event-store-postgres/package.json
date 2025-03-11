@@ -3,7 +3,7 @@
     "description": "Postgres implementation of event store form @dcv-es/event-store",
     "author": "Paul Grimshaw",
     "license": "MIT",
-    "version": "6.1.2",
+    "version": "6.2.0",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
     "scripts": {
