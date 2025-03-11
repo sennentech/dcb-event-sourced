@@ -1,7 +1,6 @@
 import { Pool, PoolClient } from "pg"
 import { v4 as uuid } from "uuid"
-import { EventStore, Tags } from "@dcb-es/event-store"
-import { ensureHandlersInstalled } from "./ensureHandlersInstalled"
+import { Tags } from "@dcb-es/event-store"
 import { HandlerCatchup } from "./HandlerCatchup"
 import { getTestPgDatabasePool } from "../../jest.testPgDbPool"
 import { PostgresEventStore } from "../eventStore/PostgresEventStore"
@@ -43,6 +42,19 @@ describe("UpdatePostgresHandlers tests", () => {
 
     test("install worked ok", async () => {
         await handlerCatchup.catchupHandlers(handlers)
+        const result = await pool.query(`SELECT * FROM _handler_bookmarks`)
+        expect(result.rows).toHaveLength(2)
+        expect(result.rows[0].handler_id).toBe(Object.keys(handlers)[0])
+        expect(result.rows[1].handler_id).toBe(Object.keys(handlers)[1])
+    })
+
+    test("register handlers worked ok", async () => {
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS _handler_bookmarks (
+                handler_id TEXT PRIMARY KEY,
+                last_sequence_position BIGINT
+            );`)
+        await handlerCatchup.registerHandlers(Object.keys(handlers))
         const result = await pool.query(`SELECT * FROM _handler_bookmarks`)
         expect(result.rows).toHaveLength(2)
         expect(result.rows[0].handler_id).toBe(Object.keys(handlers)[0])

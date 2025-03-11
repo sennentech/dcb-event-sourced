@@ -7,6 +7,10 @@ export const ensureHandlersInstalled = async (pool: Pool | PoolClient, handlerId
             last_sequence_position BIGINT
         );`)
 
+    await registerhandlers(pool, handlerIds, tableName)
+}
+
+export const registerhandlers = async (pool: Pool | PoolClient, handlerIds: string[], tableName: string) => {
     await pool.query(
         `
         INSERT INTO ${tableName} (handler_id, last_sequence_position)
