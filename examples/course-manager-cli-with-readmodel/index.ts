@@ -1,8 +1,9 @@
 import { Pool } from "pg"
 import "source-map-support/register"
 import { startCli } from "./src/Cli"
-import { Api } from "./src/api/Api"
-import { PostgresEventStore } from "@dcb-es/event-store-postgres"
+import { installPostgresCourseSubscriptionsRepository } from "./src/postgresCourseSubscriptionRepository/PostgresCourseSubscriptionRespository"
+import { Api, setupHandlers } from "./src/api/Api"
+import { HandlerCatchup, PostgresEventStore } from "@dcb-es/event-store-postgres"
 ;(async () => {
     const postgresConfig = {
         host: "localhost",
@@ -16,6 +17,10 @@ import { PostgresEventStore } from "@dcb-es/event-store-postgres"
     const eventStore = new PostgresEventStore(pool)
     await eventStore.ensureInstalled()
 
+    const handlerCatchup = new HandlerCatchup(pool, eventStore)
+    await handlerCatchup.ensureInstalled(Object.keys(setupHandlers(pool)))
+
+    await installPostgresCourseSubscriptionsRepository(pool)
     const api = new Api(pool)
 
     await startCli(api)

@@ -16,6 +16,8 @@ export const startCli = async (api: Api) => {
                 "Update course title",
                 "Subscribe student to course",
                 "Unsubscribe student from course",
+                "Find course",
+                "Find student",
                 "Reset database",
                 "Exit"
             ]
@@ -79,6 +81,26 @@ export const startCli = async (api: Api) => {
                     ])
                     await api.unsubscribeStudentFromCourse({ courseId, studentId })
                     log(`Student ${studentId} unsubscribed from course ${courseId}`)
+                    break
+                }
+
+                case "Find course": {
+                    const { courseId } = await inquirer.prompt([
+                        { name: "courseId", message: "Course ID:", type: "input" }
+                    ])
+                    const course = await api.findCourseById(courseId)
+                    log(`Found course:`)
+                    log(course)
+                    break
+                }
+
+                case "Find student": {
+                    const { studentId } = await inquirer.prompt([
+                        { name: "studentId", message: "Student ID:", type: "input" }
+                    ])
+                    const course = await api.findStudentById(studentId)
+                    log(`Found student:`)
+                    log(course)
                     break
                 }
 

@@ -1,5 +1,9 @@
 import { buildDecisionModel } from "@dcb-es/event-store"
-import { Pool } from "pg"
+import {
+    PostgresCourseSubscriptionsRepository,
+    STUDENT_SUBSCRIPTION_LIMIT
+} from "../postgresCourseSubscriptionRepository/PostgresCourseSubscriptionRespository"
+import { Pool, PoolClient } from "pg"
 import {
     CourseWasRegisteredEvent,
     StudentWasRegistered,
@@ -18,15 +22,27 @@ import {
     StudentAlreadySubscribed,
     StudentSubscriptions
 } from "./DecisionModels"
-import { PostgresEventStore } from "@dcb-es/event-store-postgres"
+import { HandlerCatchup, PostgresEventStore } from "@dcb-es/event-store-postgres"
+import { PostgresCourseSubscriptionsProjection } from "./PostgresCourseSubscriptionsProjection"
 
-const STUDENT_SUBSCRIPTION_LIMIT = 5
-
+export const setupHandlers = (client: PoolClient | Pool) => ({
+    CourseProjection: PostgresCourseSubscriptionsProjection(client)
+})
 export class Api {
     private pool: Pool
+    private readModelRepository: ReturnType<typeof PostgresCourseSubscriptionsRepository>
 
     constructor(pool: Pool) {
         this.pool = pool
+        this.readModelRepository = PostgresCourseSubscriptionsRepository(pool)
+    }
+
+    async findCourseById(courseId: string) {
+        return this.readModelRepository.findCourseById(courseId)
+    }
+
+    async findStudentById(studentId: string) {
+        return this.readModelRepository.findStudentById(studentId)
     }
 
     async registerCourse(cmd: { id: string; title: string; capacity: number }) {
@@ -44,6 +60,8 @@ export class Api {
                 appendCondition
             )
 
+            const handlerCatchup = new HandlerCatchup(client, eventStore)
+            await handlerCatchup.catchupHandlers(setupHandlers(client))
             await client.query("COMMIT")
         } catch (err) {
             await client.query("ROLLBACK")
@@ -70,6 +88,8 @@ export class Api {
                 appendCondition
             )
 
+            const handlerCatchup = new HandlerCatchup(client, eventStore)
+            await handlerCatchup.catchupHandlers(setupHandlers(client))
             await client.query("COMMIT")
         } catch (err) {
             await client.query("ROLLBACK")
@@ -97,6 +117,8 @@ export class Api {
 
             await eventStore.append(new CourseCapacityWasChangedEvent({ courseId, newCapacity }), appendCondition)
 
+            const handlerCatchup = new HandlerCatchup(client, eventStore)
+            await handlerCatchup.catchupHandlers(setupHandlers(client))
             await client.query("COMMIT")
         } catch (err) {
             await client.query("ROLLBACK")
@@ -122,6 +144,8 @@ export class Api {
             if (state.courseTitle === newTitle) throw new Error("New title is the same as the current title.")
             await eventStore.append(new CourseTitleWasChangedEvent({ courseId, newTitle }), appendCondition)
 
+            const handlerCatchup = new HandlerCatchup(client, eventStore)
+            await handlerCatchup.catchupHandlers(setupHandlers(client))
             await client.query("COMMIT")
         } catch (err) {
             await client.query("ROLLBACK")
@@ -161,6 +185,8 @@ export class Api {
 
             await eventStore.append(new StudentWasSubscribedEvent({ courseId, studentId }), appendCondition)
 
+            const handlerCatchup = new HandlerCatchup(client, eventStore)
+            await handlerCatchup.catchupHandlers(setupHandlers(client))
             await client.query("COMMIT")
         } catch (err) {
             await client.query("ROLLBACK")
@@ -191,6 +217,8 @@ export class Api {
 
             await eventStore.append(new StudentWasUnsubscribedEvent({ courseId, studentId }), appendCondition)
 
+            const handlerCatchup = new HandlerCatchup(client, eventStore)
+            await handlerCatchup.catchupHandlers(setupHandlers(client))
             await client.query("COMMIT")
         } catch (err) {
             await client.query("ROLLBACK")
