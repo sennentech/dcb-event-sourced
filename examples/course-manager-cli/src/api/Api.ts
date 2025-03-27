@@ -1,5 +1,4 @@
 import { buildDecisionModel } from "@dcb-es/event-store"
-import { Pool } from "pg"
 import {
     CourseWasRegisteredEvent,
     StudentWasRegistered,
@@ -18,185 +17,112 @@ import {
     StudentAlreadySubscribed,
     StudentSubscriptions
 } from "./DecisionModels"
-import { PostgresEventStore } from "@dcb-es/event-store-postgres"
+import { EventStore } from "@dcb-es/event-store"
 
 const STUDENT_SUBSCRIPTION_LIMIT = 5
 
 export class Api {
-    private pool: Pool
-
-    constructor(pool: Pool) {
-        this.pool = pool
-    }
+    constructor(private eventStore: EventStore) {}
 
     async registerCourse(cmd: { id: string; title: string; capacity: number }) {
-        const client = await this.pool.connect()
-        await client.query("BEGIN transaction isolation level serializable")
-        try {
-            const eventStore = new PostgresEventStore(client)
-            const { state, appendCondition } = await buildDecisionModel(eventStore, {
-                courseExists: CourseExists(cmd.id)
-            })
+        const { state, appendCondition } = await buildDecisionModel(this.eventStore, {
+            courseExists: CourseExists(cmd.id)
+        })
 
-            if (state.courseExists) throw new Error(`Course with id ${cmd.id} already exists`)
-            await eventStore.append(
-                new CourseWasRegisteredEvent({ courseId: cmd.id, title: cmd.title, capacity: cmd.capacity }),
-                appendCondition
-            )
+        if (state.courseExists) throw new Error(`Course with id ${cmd.id} already exists`)
 
-            await client.query("COMMIT")
-        } catch (err) {
-            await client.query("ROLLBACK")
-            throw err
-        } finally {
-            client.release()
-        }
+        await this.eventStore.append(
+            new CourseWasRegisteredEvent({ courseId: cmd.id, title: cmd.title, capacity: cmd.capacity }),
+            appendCondition
+        )
     }
 
     async registerStudent(cmd: { id: string; name: string }) {
         const { id, name } = cmd
-        const client = await this.pool.connect()
-        await client.query("BEGIN transaction isolation level serializable")
-        try {
-            const eventStore = new PostgresEventStore(client)
-            const { state, appendCondition } = await buildDecisionModel(eventStore, {
-                studentAlreadyRegistered: StudentAlreadyRegistered(id),
-                nextStudentNumber: NextStudentNumber()
-            })
+        const { state, appendCondition } = await buildDecisionModel(this.eventStore, {
+            studentAlreadyRegistered: StudentAlreadyRegistered(id),
+            nextStudentNumber: NextStudentNumber()
+        })
 
-            if (state.studentAlreadyRegistered) throw new Error(`Student with id ${id} already registered.`)
-            await eventStore.append(
-                new StudentWasRegistered({ studentId: id, name: name, studentNumber: state.nextStudentNumber }),
-                appendCondition
-            )
+        if (state.studentAlreadyRegistered) throw new Error(`Student with id ${id} already registered.`)
 
-            await client.query("COMMIT")
-        } catch (err) {
-            await client.query("ROLLBACK")
-            throw err
-        } finally {
-            client.release()
-        }
+        await this.eventStore.append(
+            new StudentWasRegistered({ studentId: id, name, studentNumber: state.nextStudentNumber }),
+            appendCondition
+        )
     }
 
     async updateCourseCapacity(cmd: { courseId: string; newCapacity: number }) {
         const { courseId, newCapacity } = cmd
-        const client = await this.pool.connect()
-        await client.query("BEGIN transaction isolation level serializable")
-        try {
-            const eventStore = new PostgresEventStore(client)
 
-            const { state, appendCondition } = await buildDecisionModel(eventStore, {
-                courseExists: CourseExists(courseId),
-                CourseCapacity: CourseCapacity(courseId)
-            })
+        const { state, appendCondition } = await buildDecisionModel(this.eventStore, {
+            courseExists: CourseExists(courseId),
+            CourseCapacity: CourseCapacity(courseId)
+        })
 
-            if (!state.courseExists) throw new Error(`Course ${courseId} doesn't exist.`)
-            if (state.CourseCapacity.capacity === newCapacity)
-                throw new Error("New capacity is the same as the current capacity.")
+        if (!state.courseExists) throw new Error(`Course ${courseId} doesn't exist.`)
+        if (state.CourseCapacity.capacity === newCapacity)
+            throw new Error("New capacity is the same as the current capacity.")
 
-            await eventStore.append(new CourseCapacityWasChangedEvent({ courseId, newCapacity }), appendCondition)
-
-            await client.query("COMMIT")
-        } catch (err) {
-            await client.query("ROLLBACK")
-            throw err
-        } finally {
-            client.release()
-        }
+        await this.eventStore.append(new CourseCapacityWasChangedEvent({ courseId, newCapacity }), appendCondition)
     }
 
     async updateCourseTitle(cmd: { courseId: string; newTitle: string }) {
         const { courseId, newTitle } = cmd
-        const client = await this.pool.connect()
-        await client.query("BEGIN transaction isolation level serializable")
-        try {
-            const eventStore = new PostgresEventStore(client)
 
-            const { state, appendCondition } = await buildDecisionModel(eventStore, {
-                courseExists: CourseExists(courseId),
-                courseTitle: CourseTitle(courseId)
-            })
+        const { state, appendCondition } = await buildDecisionModel(this.eventStore, {
+            courseExists: CourseExists(courseId),
+            courseTitle: CourseTitle(courseId)
+        })
 
-            if (!state.courseExists) throw new Error(`Course ${courseId} doesn't exist.`)
-            if (state.courseTitle === newTitle) throw new Error("New title is the same as the current title.")
-            await eventStore.append(new CourseTitleWasChangedEvent({ courseId, newTitle }), appendCondition)
+        if (!state.courseExists) throw new Error(`Course ${courseId} doesn't exist.`)
+        if (state.courseTitle === newTitle) throw new Error("New title is the same as the current title.")
 
-            await client.query("COMMIT")
-        } catch (err) {
-            await client.query("ROLLBACK")
-            throw err
-        } finally {
-            client.release()
-        }
+        await this.eventStore.append(new CourseTitleWasChangedEvent({ courseId, newTitle }), appendCondition)
     }
 
     async subscribeStudentToCourse(cmd: { courseId: string; studentId: string }) {
         const { courseId, studentId } = cmd
-        const client = await this.pool.connect()
-        await client.query("BEGIN transaction isolation level serializable")
-        try {
-            const eventStore = new PostgresEventStore(client)
 
-            const { state, appendCondition } = await buildDecisionModel(eventStore, {
-                courseExists: CourseExists(courseId),
-                courseCapacity: CourseCapacity(courseId),
-                studentAlreadySubscribed: StudentAlreadySubscribed({
-                    courseId: courseId,
-                    studentId: studentId
-                }),
-                studentSubscriptions: StudentSubscriptions(studentId)
-            })
+        const { state, appendCondition } = await buildDecisionModel(this.eventStore, {
+            courseExists: CourseExists(courseId),
+            courseCapacity: CourseCapacity(courseId),
+            studentAlreadySubscribed: StudentAlreadySubscribed({
+                courseId: courseId,
+                studentId: studentId
+            }),
+            studentSubscriptions: StudentSubscriptions(studentId)
+        })
 
-            if (!state.courseExists) throw new Error(`Course ${courseId} doesn't exist.`)
+        if (!state.courseExists) throw new Error(`Course ${courseId} doesn't exist.`)
 
-            if (state.courseCapacity.subscriberCount >= state.courseCapacity.capacity)
-                throw new Error(`Course ${courseId} is full.`)
+        if (state.courseCapacity.subscriberCount >= state.courseCapacity.capacity)
+            throw new Error(`Course ${courseId} is full.`)
 
-            if (state.studentAlreadySubscribed)
-                throw new Error(`Student ${studentId} already subscribed to course ${courseId}.`)
+        if (state.studentAlreadySubscribed)
+            throw new Error(`Student ${studentId} already subscribed to course ${courseId}.`)
 
-            if (state.studentSubscriptions.subscriptionCount >= STUDENT_SUBSCRIPTION_LIMIT)
-                throw new Error(`Student ${studentId} is already subscribed to the maximum number of courses`)
+        if (state.studentSubscriptions.subscriptionCount >= STUDENT_SUBSCRIPTION_LIMIT)
+            throw new Error(`Student ${studentId} is already subscribed to the maximum number of courses`)
 
-            await eventStore.append(new StudentWasSubscribedEvent({ courseId, studentId }), appendCondition)
-
-            await client.query("COMMIT")
-        } catch (err) {
-            await client.query("ROLLBACK")
-            throw err
-        } finally {
-            client.release()
-        }
+        await this.eventStore.append(new StudentWasSubscribedEvent({ courseId, studentId }), appendCondition)
     }
 
     async unsubscribeStudentFromCourse(cmd: { courseId: string; studentId: string }) {
         const { courseId, studentId } = cmd
-        const client = await this.pool.connect()
-        await client.query("BEGIN transaction isolation level serializable")
-        try {
-            const eventStore = new PostgresEventStore(client)
 
-            const { state, appendCondition } = await buildDecisionModel(eventStore, {
-                studentAlreadySubscribed: StudentAlreadySubscribed({
-                    courseId: courseId,
-                    studentId: studentId
-                }),
-                courseExists: CourseExists(courseId)
-            })
+        const { state, appendCondition } = await buildDecisionModel(this.eventStore, {
+            studentAlreadySubscribed: StudentAlreadySubscribed({
+                courseId: courseId,
+                studentId: studentId
+            }),
+            courseExists: CourseExists(courseId)
+        })
 
-            if (!state.courseExists) throw new Error(`Course ${courseId} doesn't exist.`)
-            if (!state.studentAlreadySubscribed)
-                throw new Error(`Student ${studentId} is not subscribed to course ${courseId}.`)
+        if (!state.courseExists) throw new Error(`Course ${courseId} doesn't exist.`)
+        if (!state.studentAlreadySubscribed)
+            throw new Error(`Student ${studentId} is not subscribed to course ${courseId}.`)
 
-            await eventStore.append(new StudentWasUnsubscribedEvent({ courseId, studentId }), appendCondition)
-
-            await client.query("COMMIT")
-        } catch (err) {
-            await client.query("ROLLBACK")
-            throw err
-        } finally {
-            client.release()
-        }
+        await this.eventStore.append(new StudentWasUnsubscribedEvent({ courseId, studentId }), appendCondition)
     }
 }
