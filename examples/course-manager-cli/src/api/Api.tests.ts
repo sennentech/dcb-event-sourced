@@ -18,12 +18,13 @@ describe("EventSourcedApi", () => {
         pool = await getTestPgDatabasePool()
         const eventStore = new PostgresEventStore(pool)
         await eventStore.ensureInstalled()
-        api = new Api(pool)
     })
 
     beforeEach(async () => {
         client = await pool.connect()
         await client.query("BEGIN transaction isolation level serializable")
+        const eventStore = new PostgresEventStore(client)
+        api = new Api(eventStore)
     })
 
     afterEach(async () => {
@@ -38,7 +39,6 @@ describe("EventSourcedApi", () => {
 
     describe("with one course and 100 students in database", () => {
         beforeEach(async () => {
-            api = new Api(pool)
             await api.registerCourse({ id: COURSE_1.id, title: COURSE_1.title, capacity: COURSE_1.capacity })
 
             for (let i = 0; i < 100; i++) {

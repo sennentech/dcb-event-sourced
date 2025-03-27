@@ -16,7 +16,7 @@ import { PostgresEventStore } from "@dcb-es/event-store-postgres"
     const eventStore = new PostgresEventStore(pool)
     await eventStore.ensureInstalled()
 
-    const api = new Api(pool)
+    const api = new Api(eventStore)
 
     await startCli(api)
 })()
